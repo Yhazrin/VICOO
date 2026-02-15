@@ -1,0 +1,163 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vicoo</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ['Plus Jakarta Sans', 'sans-serif'],
+              display: ['Space Grotesk', 'sans-serif'],
+            },
+            colors: {
+              primary: '#FFD166',     // vicoo Yellow
+              secondary: '#0df259',   // Vibe Green
+              accent: '#EF476F',      // Pop Pink
+              info: '#118AB2',        // Deep Blue
+              dark: '#101010',        // Ink Black
+              light: '#f8f9fa',       // Canvas White
+              ink: '#1a1a1a',         // High Contrast Ink
+            },
+            transitionTimingFunction: {
+              'elastic': 'cubic-bezier(0.68, -0.6, 0.32, 1.6)',
+              'silky': 'cubic-bezier(0.25, 0.8, 0.25, 1)', // Smooth Rive-like easing
+            },
+            boxShadow: {
+              'neo': '4px 4px 0px 0px #1a1a1a',
+              'neo-sm': '2px 2px 0px 0px #1a1a1a',
+              'neo-lg': '6px 6px 0px 0px #1a1a1a',
+              'neo-hover': '8px 8px 0px 0px #1a1a1a',
+            },
+            borderWidth: {
+              '3': '3px',
+            },
+            animation: {
+              'float': 'float 6s ease-in-out infinite',
+              'float-delayed': 'float 6s ease-in-out 3s infinite',
+              'bounce-slow': 'bounce 3s infinite',
+              'blink': 'blink 4s infinite', 
+              'wiggle': 'wiggle 2s ease-in-out infinite',
+              'pop': 'pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              'spin-slow': 'spin 10s linear infinite',
+              'orbit': 'orbit 8s linear infinite',
+              'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
+              'squash': 'squash 0.6s ease-in-out infinite alternate',
+              'shiver': 'shiver 0.2s linear infinite',
+              'type': 'type 0.1s linear infinite alternate',
+              'glitch': 'glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite',
+              'scan': 'scan 2s linear infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-10px)' },
+              },
+              blink: {
+                '0%, 96%, 100%': { transform: 'scaleY(1)' },
+                '98%': { transform: 'scaleY(0.1)' },
+              },
+              wiggle: {
+                '0%, 100%': { transform: 'rotate(-3deg)' },
+                '50%': { transform: 'rotate(3deg)' },
+              },
+              pop: {
+                '0%': { transform: 'scale(0)', opacity: '0' },
+                '100%': { transform: 'scale(1)', opacity: '1' },
+              },
+              orbit: {
+                'from': { transform: 'rotate(0deg)' },
+                'to': { transform: 'rotate(360deg)' },
+              },
+              'pulse-glow': {
+                '0%, 100%': { filter: 'drop-shadow(0 0 0px rgba(0,0,0,0))' },
+                '50%': { filter: 'drop-shadow(0 0 8px rgba(255, 209, 102, 0.6))' },
+              },
+              squash: {
+                 '0%': { transform: 'scale(1, 1) translateY(0)' },
+                 '100%': { transform: 'scale(1.1, 0.9) translateY(10px)' }
+              },
+              shiver: {
+                 '0%': { transform: 'translate(1px, 1px) rotate(0deg)' },
+                 '25%': { transform: 'translate(-1px, -2px) rotate(-1deg)' },
+                 '50%': { transform: 'translate(-3px, 0px) rotate(1deg)' },
+                 '75%': { transform: 'translate(3px, 2px) rotate(0deg)' },
+                 '100%': { transform: 'translate(1px, -1px) rotate(1deg)' }
+              },
+              type: {
+                 '0%': { transform: 'translateY(0)' },
+                 '100%': { transform: 'translateY(4px)' }
+              },
+              glitch: {
+                '0%': { transform: 'translate(0)' },
+                '20%': { transform: 'translate(-2px, 2px)' },
+                '40%': { transform: 'translate(-2px, -2px)' },
+                '60%': { transform: 'translate(2px, 2px)' },
+                '80%': { transform: 'translate(2px, -2px)' },
+                '100%': { transform: 'translate(0)' }
+              },
+              scan: {
+                '0%': { transform: 'translateY(-100%)' },
+                '100%': { transform: 'translateY(200%)' }
+              }
+            }
+          },
+        },
+      }
+    </script>
+    <style>
+      body {
+        background-color: #f8f9fa;
+        color: #1a1a1a;
+      }
+      /* Custom scrollbar for that clean look */
+      ::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 5px;
+        border: 2px solid #f8f9fa;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+      }
+      
+      .bg-dot-pattern {
+        background-image: radial-gradient(#1a1a1a 1px, transparent 1px);
+        background-size: 24px 24px;
+        opacity: 0.1;
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://esm.sh/react-dom@^19.2.4/",
+    "react/": "https://esm.sh/react@^19.2.4/",
+    "react": "https://esm.sh/react@^19.2.4"
+  }
+}
+</script>
+<link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
