@@ -1,7 +1,13 @@
 // api.ts - Vicoo API Service for Mobile
-import { API_BASE } from '@env';
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
+import { resolveApiBase } from '@vicoo/sdk/env';
 
-const API_URL = API_BASE || 'http://localhost:8000';
+const API_URL = resolveApiBase({
+  platform: Platform.OS as 'web' | 'ios' | 'android',
+  expoExtraApiBase: Constants.expoConfig?.extra?.apiBase as string | undefined,
+  processEnvApiBase: process.env.EXPO_PUBLIC_API_BASE
+});
 
 interface ApiError {
   code: string;
