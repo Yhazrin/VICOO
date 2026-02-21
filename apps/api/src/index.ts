@@ -17,8 +17,8 @@ import downloaderRouter from './routes/downloader.js';
 import workflowRouter from './routes/workflow.js';
 import claudeRouter from './routes/claude.js';
 import authRouter, { authMiddleware } from './middleware/auth.js';
-import { initDatabase, saveDatabase, getOne } from './db/index.js';
-import { v4 as uuidv4 } from 'uuid';
+import { initDatabase, saveDatabase } from './db/index.js';
+import { seedDatabase } from './db/seed.js';
 import { graphqlHTTP } from 'express-graphql';
 import { schema } from './graphql/schema.js';
 import { startAutoGraphService } from './services/auto-graph.js';
@@ -39,91 +39,17 @@ app.use(express.urlencoded({ extended: true }));
 import path from 'path';
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Seed data if empty
-async function seedIfEmpty() {
-  const count = getOne<{ count: number }>('SELECT COUNT(*) as count FROM notes');
-  if ((count?.count || 0) > 0) return;
-
-  console.log('Seeding database...');
-
-  // Create default user
-  saveDatabase(); // Make sure db is saved first
-
-  const notes = [
-    {
-      id: uuidv4(),
-      title: 'Welcome to Vicoo',
-      category: 'idea',
-      snippet: 'Your visual coordinator for knowledge management',
-      content: '# Welcome to Vicoo\n\nThis is your new knowledge workspace. Start creating notes and exploring the galaxy view!',
-      published: 1,
-      color: '#FFD166',
-      tags: ['welcome', 'intro']
-    },
-    {
-      id: uuidv4(),
-      title: 'React Best Practices',
-      category: 'code',
-      snippet: 'Key patterns for React development',
-      content: '# React Best Practices\n\n- Use functional components with hooks\n- Keep state local when possible\n- Memoize expensive computations',
-      published: 1,
-      color: '#118AB2',
-      tags: ['react', 'javascript', 'frontend']
-    },
-    {
-      id: uuidv4(),
-      title: 'Design System Ideas',
-      category: 'design',
-      snippet: 'Neubrutalism-lite design concepts',
-      content: '# Design System\n\n## Colors\n- Primary: #FFD166\n- Secondary: #0df259\n- Accent: #EF476F',
-      published: 0,
-      color: '#EF476F',
-      tags: ['design', 'ui', 'ideas']
-    },
-    {
-      id: uuidv4(),
-      title: 'Project Planning Meeting',
-      category: 'meeting',
-      snippet: 'Q1 planning discussion notes',
-      content: '# Q1 Planning\n\n- Define MVP scope\n- Set milestone dates\n- Assign team responsibilities',
-      published: 1,
-      color: '#0df259',
-      tags: ['meeting', 'planning']
-    }
-  ];
-
-  // Import the runQuery function
-  const { runQuery } = await import('./db/index.js');
-
-  for (const note of notes) {
-    runQuery(
-      `INSERT INTO notes (id, user_id, title, category, snippet, content, published, color, timestamp)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [note.id, 'dev_user_1', note.title, note.category, note.snippet, note.content, note.published, note.color]
-    );
-
-    for (const tagName of note.tags) {
-      const tagId = uuidv4();
-      runQuery('INSERT OR IGNORE INTO tags (id, name) VALUES (?, ?)', [tagId, tagName]);
-      const tag = getOne<{ id: string }>('SELECT id FROM tags WHERE name = ?', [tagName]);
-      if (tag) {
-        runQuery('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)', [note.id, tag.id]);
-      }
-    }
-  }
-
-  saveDatabase();
-  console.log('✅ Database seeded with sample data');
-}
-
 // Initialize database and start server
 async function start() {
   try {
     // Initialize database
     await initDatabase();
 
-    // Seed if empty
-    await seedIfEmpty();
+    // Optional development seed only.
+    // For production, use explicit migration scripts instead of runtime seed data.
+    if (process.env.AUTO_SEED_ON_START === 'true') {
+      await seedDatabase();
+    }
 
     // Routes
     app.use('/health', healthRouter);
