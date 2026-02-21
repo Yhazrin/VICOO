@@ -1,69 +1,75 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NeoButton } from '../components/NeoButton';
 import { NeoCard } from '../components/NeoCard';
 import { Mascot } from '../components/Mascot';
-
-interface Category {
-    id: string;
-    label: string;
-    color: string;
-    count: number;
-    subTags: string[];
-}
-
-interface Cluster {
-    id: string;
-    suggestedLabel: string;
-    confidence: number;
-    items: string[];
-    reason: string;
-}
+import { useApi } from '../contexts/ApiContext';
+import type { Category, Cluster } from '@vicoo/types';
 
 export const Taxonomy: React.FC = () => {
-  // Mock AI Clusters instead of raw Inbox
-  const [clusters, setClusters] = useState<Cluster[]>([
-    { 
-        id: 'c1', 
-        suggestedLabel: 'Frontend / React', 
-        confidence: 94, 
-        items: ['Notes from coffee chat (React 19)', 'Untitled snippet 23 (useEffect)', 'Link: css-tricks.com'],
-        reason: 'Detected semantic overlap in JS frameworks.'
-    },
-    { 
-        id: 'c2', 
-        suggestedLabel: 'Ethics & AI', 
-        confidence: 82, 
-        items: ['AI Ethics Draft', 'Screenshot 2024-10-12 (News)'],
-        reason: 'Keywords: bias, regulation, safety.'
+  const { categories, clusters, refreshTaxonomy, createCategory, acceptCluster, rejectCluster } = useApi();
+  
+  // Local state for optimistic UI
+  const [localClusters, setLocalClusters] = useState<Cluster[]>([]);
+  const [localCategories, setLocalCategories] = useState<Category[]>([]);
+  
+  // Sync API data
+  useEffect(() => {
+    refreshTaxonomy();
+  }, [refreshTaxonomy]);
+  
+  useEffect(() => {
+    if (clusters.length > 0) {
+      setLocalClusters(clusters);
     }
-  ]);
+  }, [clusters]);
+  
+  useEffect(() => {
+    if (categories.length > 0) {
+      setLocalCategories(categories);
+    }
+  }, [categories]);
 
-  const [categories, setCategories] = useState<Category[]>([
-      { id: 'dev', label: 'Development', color: 'bg-info/20', count: 12, subTags: ['TypeScript', 'Node.js', 'Python', 'DevOps'] },
-      { id: 'design', label: 'Design', color: 'bg-accent/20', count: 8, subTags: ['Figma', 'UI Patterns', 'Typography'] },
-      { id: 'biz', label: 'Business', color: 'bg-secondary/20', count: 5, subTags: ['Strategy', 'Marketing', 'Q4 Goals'] },
-  ]);
-
-  const handleAcceptCluster = (clusterId: string) => {
-      const cluster = clusters.find(c => c.id === clusterId);
+  const handleAcceptCluster = async (clusterId: string) => {
+      const cluster = localClusters.find(c => c.id === clusterId);
       if (!cluster) return;
 
-      // Simulate API call to merge
-      setCategories(prev => [
+      try {
+        // Create a new category from the cluster
+        await createCategory({ 
+          name: cluster.suggestedLabel,
+          color: '#' + Math.floor(Math.random()*16777215).toString(16) // Random color
+        });
+        
+        // Accept the cluster
+        await acceptCluster(clusterId);
+        
+        // Update local state
+        setLocalClusters(prev => prev.filter(c => c.id !== clusterId));
+      } catch (err) {
+        console.error('Failed to accept cluster:', err);
+        // Fallback to local update
+        setLocalCategories(prev => [
           { 
-              id: Date.now().toString(), 
-              label: cluster.suggestedLabel, 
-              color: 'bg-primary/20', 
-              count: cluster.items.length, 
-              subTags: ['New'] 
+            id: clusterId, 
+            name: cluster.suggestedLabel, 
+            color: '#' + Math.floor(Math.random()*16777215).toString(16),
+            noteCount: cluster.noteCount || cluster.items?.length || 0,
+            notes: []
           }, 
           ...prev
-      ]);
-      setClusters(prev => prev.filter(c => c.id !== clusterId));
+        ]);
+        setLocalClusters(prev => prev.filter(c => c.id !== clusterId));
+      }
   };
 
-  const handleRejectCluster = (clusterId: string) => {
-      setClusters(prev => prev.filter(c => c.id !== clusterId));
+  const handleRejectCluster = async (clusterId: string) => {
+      try {
+        await rejectCluster(clusterId);
+        setLocalClusters(prev => prev.filter(c => c.id !== clusterId));
+      } catch (err) {
+        // Fallback to local
+        setLocalClusters(prev => prev.filter(c => c.id !== clusterId));
+      }
   };
 
   return (
@@ -87,42 +93,42 @@ export const Taxonomy: React.FC = () => {
                   <span className="material-icons-round text-primary animate-pulse">auto_awesome</span>
                   Detected Patterns
                </h3>
-               <span className="bg-gray-200 dark:bg-gray-800 text-xs font-bold px-2 py-0.5 rounded border border-ink dark:border-gray-600 dark:text-white">{clusters.length} Suggestions</span>
+               <span className="bg-gray-200 dark:bg-gray-800 text-xs font-bold px-2 py-0.5 rounded border border-ink dark:border-gray-600 dark:text-white">{localClusters.length} Suggestions</span>
             </div>
             
             <div className="flex-1 space-y-4 overflow-y-auto pr-2 pb-12">
-               {clusters.length === 0 ? (
+               {localClusters.length === 0 ? (
                    <div className="h-64 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 border-3 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
                        <span className="material-icons-round text-4xl mb-2">check_circle</span>
                        <p className="font-bold">No new patterns detected.</p>
                        <p className="text-sm">Add more notes to trigger the engine.</p>
                    </div>
-               ) : (
-                   clusters.map((cluster) => (
+              ) : (
+                  localClusters.map((cluster) => (
                       <div key={cluster.id} className="animate-pop">
                           <NeoCard className="p-0 overflow-hidden border-2 hover:border-primary transition-colors bg-white dark:bg-gray-900">
                               {/* Header */}
                               <div className="bg-gray-50 dark:bg-gray-800 p-4 border-b-2 border-ink dark:border-gray-600 flex justify-between items-start">
                                   <div>
                                       <p className="text-xs font-bold text-gray-400 uppercase mb-1">Suggestion</p>
-                                      <h4 className="font-bold text-lg text-ink dark:text-white">Create "{cluster.suggestedLabel}"</h4>
+                                      <h4 className="font-bold text-lg text-ink dark:text-white">Create "{cluster.suggestedLabel || cluster.name}"</h4>
                                   </div>
                                   <div className="flex items-center gap-1 bg-green-100 text-green-800 border border-green-300 px-2 py-1 rounded text-xs font-bold dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
                                       <span className="material-icons-round text-xs">bolt</span>
-                                      {cluster.confidence}% Match
+                                      {cluster.confidence || 85}% Match
                                   </div>
                               </div>
                               
                               {/* Reason & Items */}
                               <div className="p-4">
                                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3 italic">
-                                      "{cluster.reason}"
+                                      "{cluster.reason || 'Detected semantic patterns in your notes.'}"
                                   </p>
                                   <ul className="space-y-2 mb-4">
-                                      {cluster.items.map((item, i) => (
+                                      {(cluster.items || cluster.notes || []).slice(0, 5).map((item: any, i: number) => (
                                           <li key={i} className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-2 rounded text-ink dark:text-gray-200">
                                               <span className="material-icons-round text-xs text-gray-400">article</span>
-                                              {item}
+                                              {typeof item === 'string' ? item : item.title || 'Note'}
                                           </li>
                                       ))}
                                   </ul>
@@ -167,7 +173,7 @@ export const Taxonomy: React.FC = () => {
 
             <div className="flex-1 bg-white dark:bg-gray-900 border-3 border-ink dark:border-gray-500 rounded-2xl p-6 relative overflow-y-auto">
                <div className="space-y-6">
-                  {categories.map(cat => (
+                  {localCategories.map(cat => (
                       <div 
                         key={cat.id}
                         className="transition-all duration-300 rounded-xl p-2 hover:bg-gray-50 dark:hover:bg-gray-800 border-2 border-transparent hover:border-gray-200 dark:hover:border-gray-600"
@@ -176,13 +182,13 @@ export const Taxonomy: React.FC = () => {
                             <button className="w-6 h-6 bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 text-ink dark:text-white">
                                 <span className="material-icons-round text-sm">expand_more</span>
                             </button>
-                            <span className={`font-bold text-xl px-2 rounded ${cat.color} border-2 border-ink dark:border-gray-500 shadow-sm dark:text-white`}>
-                                {cat.label}
+                            <span className={`font-bold text-xl px-2 rounded ${cat.color || 'bg-primary/20'} border-2 border-ink dark:border-gray-500 shadow-sm dark:text-white`}>
+                                {cat.name || cat.label}
                             </span>
-                            <span className="text-xs font-bold text-gray-400 ml-auto">{cat.count} items</span>
+                            <span className="text-xs font-bold text-gray-400 ml-auto">{(cat.noteCount || cat.count || 0)} items</span>
                         </div>
                         <div className="pl-8 flex flex-wrap gap-2">
-                            {cat.subTags.map(tag => (
+                            {(cat.tags || cat.subTags || []).map(tag => (
                                 <span key={tag} className="bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-1 text-xs font-bold shadow-sm cursor-pointer hover:border-primary dark:hover:border-primary text-ink dark:text-gray-200 transition-colors">
                                     #{tag}
                                 </span>
@@ -197,7 +203,7 @@ export const Taxonomy: React.FC = () => {
                
                {/* Mascot Helper */}
                <div className="absolute bottom-4 right-4 pointer-events-none">
-                  <Mascot state={clusters.length > 0 ? "thinking" : "idle"} className="w-24 h-24" />
+                  <Mascot state={localClusters.length > 0 ? "thinking" : "idle"} className="w-24 h-24" />
                </div>
             </div>
          </div>

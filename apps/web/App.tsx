@@ -1,25 +1,31 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect, Suspense, lazy } from 'react';
 import { View } from './types';
 import { Sidebar } from './components/Sidebar';
-import { Dashboard } from './pages/Dashboard';
-import { Search } from './pages/Search';
-import { Library } from './pages/Library';
-import { GalaxyView } from './pages/GalaxyView';
-import { Taxonomy } from './pages/Taxonomy';
-import { Habitat } from './pages/Habitat';
-import { Editor } from './pages/Editor';
-import { Settings } from './pages/Settings';
-import { Timeline } from './pages/Timeline';
-import { Analytics } from './pages/Analytics';
-import { Templates } from './pages/Templates';
-import { FocusMode } from './pages/FocusMode';
-import { PublicGateway } from './pages/PublicGateway';
-import { Spark } from './pages/Spark'; 
 import { AnimatedLogo } from './components/AnimatedLogo';
 import { DraggableMascot } from './components/DraggableMascot';
 import { CommandPalette } from './components/CommandPalette';
+import { PageSkeleton } from './components/PageSkeleton';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
+import { ApiProvider } from './contexts/ApiContext';
+import { eventBus, Events } from '@vicoo/events';
+
+// Lazy load page components
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Search = lazy(() => import('./pages/Search').then(m => ({ default: m.Search })));
+const Library = lazy(() => import('./pages/Library').then(m => ({ default: m.Library })));
+const GalaxyView = lazy(() => import('./pages/GalaxyView').then(m => ({ default: m.GalaxyView })));
+const Taxonomy = lazy(() => import('./pages/Taxonomy').then(m => ({ default: m.Taxonomy })));
+const Habitat = lazy(() => import('./pages/Habitat').then(m => ({ default: m.Habitat })));
+const Editor = lazy(() => import('./pages/Editor').then(m => ({ default: m.Editor })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
+const Timeline = lazy(() => import('./pages/Timeline').then(m => ({ default: m.Timeline })));
+const Analytics = lazy(() => import('./pages/Analytics').then(m => ({ default: m.Analytics })));
+const Templates = lazy(() => import('./pages/Templates').then(m => ({ default: m.Templates })));
+const FocusMode = lazy(() => import('./pages/FocusMode').then(m => ({ default: m.FocusMode })));
+const PublicGateway = lazy(() => import('./pages/PublicGateway').then(m => ({ default: m.PublicGateway })));
+const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })));
+const VibeCodingSession = lazy(() => import('./pages/VibeCodingSession').then(m => ({ default: m.VibeCodingSession })));
 
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
@@ -54,8 +60,35 @@ const AppContent: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  // Listen for navigation events from Settings
+  useEffect(() => {
+    const handleNavigate = (e: CustomEvent) => {
+      const view = e.detail as View;
+      if (Object.values(View).includes(view)) {
+        setCurrentView(view);
+      }
+    };
+    window.addEventListener('navigate-to-view', handleNavigate as EventListener);
+    return () => window.removeEventListener('navigate-to-view', handleNavigate as EventListener);
+  }, []);
+
+  // Emit navigation events to mascot when view changes
+  useEffect(() => {
+    if (currentView !== View.FOCUS && currentView !== previousView) {
+      eventBus.emit(Events.MASCOT_STATE, {
+        state: 'navigating',
+        message: `Going to ${currentView}...`,
+        duration: 1000
+      });
+    }
+  }, [currentView, previousView]);
+
   const handleOpenNote = (noteId: string) => {
-      setActiveNoteId(noteId);
+      if (noteId === 'new') {
+        setActiveNoteId(null); // New note
+      } else {
+        setActiveNoteId(noteId); // Existing note
+      }
       setCurrentView(View.EDITOR);
   };
 
@@ -63,13 +96,24 @@ const AppContent: React.FC = () => {
       setPreviousView(currentView); // Save the current view state
       setFocusOrigin(rect);
       setFocusState('expanding');
-      // Note: We keep currentView as is during expansion so the background doesn't flash empty
+      // Emit focus enter event
+      eventBus.emit(Events.MASCOT_STATE, {
+        state: 'focus_enter',
+        message: 'Focus mode!',
+        duration: 2000
+      });
   };
 
   const handleExitFocusMode = () => {
       setFocusState('collapsing');
       // Crucial: Restore the main view IMMEDIATELY so it renders behind the collapsing overlay
       setCurrentView(previousView);
+      // Emit focus exit event
+      eventBus.emit(Events.MASCOT_STATE, {
+        state: 'focus_exit',
+        message: 'Back to normal',
+        duration: 1500
+      });
   };
 
   if (loading) {
@@ -134,7 +178,9 @@ const AppContent: React.FC = () => {
       <main className="flex-1 overflow-y-auto relative">
         <div className="absolute inset-0 bg-dot-pattern pointer-events-none z-0 dark:opacity-5"></div>
         <div className="relative z-10 h-full">
-           {renderContent(currentView, setCurrentView, handleOpenNote)}
+           <Suspense fallback={<PageSkeleton />}>
+             {renderContent(currentView, setCurrentView, handleOpenNote, activeNoteId)}
+           </Suspense>
         </div>
       </main>
       
@@ -155,21 +201,22 @@ const AppContent: React.FC = () => {
 };
 
 // Helper to extract content rendering
-const renderContent = (view: View, setView: any, openNote: any) => {
+const renderContent = (view: View, setView: any, openNote: any, activeNoteId?: string | null) => {
     switch (view) {
-      case View.DASHBOARD: return <Dashboard onNavigate={setView} />;
-      case View.SEARCH: return <Search />;
+      case View.DASHBOARD: return <Dashboard onNavigate={setView} onOpenNote={openNote} />;
+      case View.SEARCH: return <Search onOpenNote={openNote} />;
       case View.LIBRARY: return <Library onOpenNote={openNote} />;
-      case View.GALAXY: return <GalaxyView />;
+      case View.GALAXY: return <GalaxyView onOpenNote={openNote} />;
       case View.TAXONOMY: return <Taxonomy />;
       case View.HABITAT: return <Habitat />;
-      case View.EDITOR: return <Editor initialNoteId={null} />;
+      case View.EDITOR: return <Editor initialNoteId={activeNoteId} />;
       case View.SETTINGS: return <Settings />;
       case View.TIMELINE: return <Timeline />;
       case View.ANALYTICS: return <Analytics />;
       case View.TEMPLATES: return <Templates />;
-      case View.SPARK: return <Spark />;
-      case View.PUBLIC_GATEWAY: return <PublicGateway onLogin={() => setView(View.DASHBOARD)} />;
+      case View.VIBE_CODING: return <VibeCodingSession />;
+      case View.PUBLIC_GATEWAY: return <PublicGateway onLogin={() => setView(View.AUTH)} />;
+      case View.AUTH: return <Auth onLogin={() => setView(View.DASHBOARD)} />;
       case View.FOCUS: return null; // Rendered in Overlay
       default: return <Dashboard onNavigate={setView} />;
     }
@@ -285,15 +332,17 @@ const FocusTransitionLayer: React.FC<{
     };
 
     return (
-        <div 
-            style={style} 
+        <div
+            style={style}
             className="will-change-[top,left,width,height,border-radius,background-color]"
             onTransitionEnd={handleTransitionEnd}
         >
-            <div 
+            <div
                 className={`w-full h-full transition-opacity duration-500 ease-out ${showContent ? 'opacity-100' : 'opacity-0'}`}
             >
-               <FocusMode onExit={onExitRequest} />
+               <Suspense fallback={<PageSkeleton />}>
+                 <FocusMode onExit={onExitRequest} />
+               </Suspense>
             </div>
         </div>
     );
@@ -303,7 +352,9 @@ const App: React.FC = () => {
   return (
     <ThemeProvider>
       <LanguageProvider>
-        <AppContent />
+        <ApiProvider>
+          <AppContent />
+        </ApiProvider>
       </LanguageProvider>
     </ThemeProvider>
   );

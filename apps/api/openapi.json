@@ -1,0 +1,1155 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Vicoo API",
+    "description": "API for Vicoo - Your Visual Coordinator",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Vicoo Team"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8000",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health check",
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "description": "Health check successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "ok": { "type": "boolean" },
+                        "timestamp": { "type": "string", "format": "date-time" },
+                        "version": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/dev-token": {
+      "post": {
+        "summary": "Generate development token",
+        "operationId": "generateDevToken",
+        "responses": {
+          "200": {
+            "description": "Token generated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "token": { "type": "string" },
+                        "expiresAt": { "type": "string", "nullable": true }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "summary": "Get current user",
+        "operationId": "getCurrentUser",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "User info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "object",
+                      "properties": {
+                        "id": { "type": "string" },
+                        "name": { "type": "string" },
+                        "email": { "type": "string" }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notes": {
+      "get": {
+        "summary": "List all notes",
+        "operationId": "listNotes",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } },
+          { "name": "category", "in": "query", "schema": { "type": "string" } },
+          { "name": "tag", "in": "query", "schema": { "type": "string" } },
+          { "name": "published", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notes list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NoteListResponse" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new note",
+        "operationId": "createNote",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NoteCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Note created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NoteResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notes/{id}": {
+      "get": {
+        "summary": "Get a note by ID",
+        "operationId": "getNote",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Note found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NoteResponse" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a note",
+        "operationId": "updateNote",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NoteUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Note updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NoteResponse" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a note",
+        "operationId": "deleteNote",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Note deleted" }
+        }
+      }
+    },
+    "/api/notes/published": {
+      "get": {
+        "summary": "List published notes",
+        "operationId": "listPublishedNotes",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published notes list",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NoteListResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tags": {
+      "get": {
+        "summary": "Get all tags",
+        "operationId": "listTags",
+        "responses": {
+          "200": {
+            "description": "Tags list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Tag" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new tag",
+        "operationId": "createTag",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TagCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Tag created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Tag" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/tags/{id}": {
+      "get": {
+        "summary": "Get a tag by ID",
+        "operationId": "getTag",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Tag found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Tag" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a tag",
+        "operationId": "updateTag",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TagUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Tag updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Tag" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a tag",
+        "operationId": "deleteTag",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Tag deleted" }
+        }
+      }
+    },
+    "/api/nodes": {
+      "get": {
+        "summary": "Get all nodes",
+        "operationId": "listNodes",
+        "responses": {
+          "200": {
+            "description": "Nodes list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Node" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new node",
+        "operationId": "createNode",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NodeCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Node created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Node" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nodes/orphans": {
+      "get": {
+        "summary": "Get orphan nodes",
+        "operationId": "listOrphanNodes",
+        "responses": {
+          "200": {
+            "description": "Orphan nodes list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Node" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/nodes/{id}": {
+      "get": {
+        "summary": "Get a node by ID",
+        "operationId": "getNode",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Node found",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Node" }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a node",
+        "operationId": "updateNode",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/NodeUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Node updated",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Node" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a node",
+        "operationId": "deleteNode",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Node deleted" }
+        }
+      }
+    },
+    "/api/links": {
+      "get": {
+        "summary": "Get all links",
+        "operationId": "listLinks",
+        "responses": {
+          "200": {
+            "description": "Links list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Link" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new link",
+        "operationId": "createLink",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LinkCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Link created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Link" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/links/{id}": {
+      "delete": {
+        "summary": "Delete a link",
+        "operationId": "deleteLink",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "204": { "description": "Link deleted" }
+        }
+      }
+    },
+    "/api/search": {
+      "get": {
+        "summary": "Search notes",
+        "operationId": "searchNotes",
+        "parameters": [
+          { "name": "q", "in": "query", "required": true, "schema": { "type": "string" } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 20 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/SearchResult" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/search/semantic": {
+      "post": {
+        "summary": "Semantic search",
+        "operationId": "semanticSearch",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": { "type": "string" },
+                  "limit": { "type": "integer", "default": 5 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Semantic search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/SearchResult" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "summary": "Get all categories",
+        "operationId": "listCategories",
+        "responses": {
+          "200": {
+            "description": "Categories list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Category" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a new category",
+        "operationId": "createCategory",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CategoryCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Category created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Category" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/clusters": {
+      "get": {
+        "summary": "Get AI clusters",
+        "operationId": "listClusters",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Clusters list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/Cluster" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/overview": {
+      "get": {
+        "summary": "Get analytics overview",
+        "operationId": "getAnalyticsOverview",
+        "responses": {
+          "200": {
+            "description": "Analytics overview",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/AnalyticsOverview" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/analytics/activity": {
+      "get": {
+        "summary": "Get activity data",
+        "operationId": "getActivity",
+        "parameters": [
+          { "name": "days", "in": "query", "schema": { "type": "integer", "default": 30 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity data",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": { "type": "string" },
+                          "notes": { "type": "integer" }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/timeline": {
+      "get": {
+        "summary": "Get timeline events",
+        "operationId": "listTimeline",
+        "parameters": [
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 50 } },
+          { "name": "offset", "in": "query", "schema": { "type": "integer", "default": 0 } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Timeline events",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/TimelineEvent" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a timeline event",
+        "operationId": "createTimelineEvent",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/TimelineEventCreate" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Timeline event created",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TimelineEvent" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/settings": {
+      "get": {
+        "summary": "Get user settings",
+        "operationId": "getSettings",
+        "responses": {
+          "200": {
+            "description": "User settings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/UserSettings" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update user settings",
+        "operationId": "updateSettings",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserSettingsUpdate" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Settings updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/UserSettings" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/feed": {
+      "get": {
+        "summary": "Get dashboard feed",
+        "operationId": "getFeed",
+        "responses": {
+          "200": {
+            "description": "Feed items",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": { "$ref": "#/components/schemas/FeedItem" }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/focus/stats": {
+      "get": {
+        "summary": "Get focus statistics",
+        "operationId": "getFocusStats",
+        "responses": {
+          "200": {
+            "description": "Focus stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": { "$ref": "#/components/schemas/FocusStats" }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Note": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "category": { "type": "string", "enum": ["code", "design", "meeting", "idea"] },
+          "snippet": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "timestamp": { "type": "string", "format": "date-time" },
+          "content": { "type": "string" },
+          "summary": { "type": "string" },
+          "published": { "type": "boolean" },
+          "coverImage": { "type": "string" },
+          "color": { "type": "string" },
+          "icon": { "type": "string" }
+        }
+      },
+      "NoteCreate": {
+        "type": "object",
+        "required": ["title"],
+        "properties": {
+          "title": { "type": "string" },
+          "category": { "type": "string", "enum": ["code", "design", "meeting", "idea"], "default": "idea" },
+          "tags": { "type": "array", "items": { "type": "string" }, "default": [] },
+          "content": { "type": "string", "default": "" },
+          "snippet": { "type": "string" },
+          "published": { "type": "boolean", "default": false },
+          "color": { "type": "string" },
+          "icon": { "type": "string" }
+        }
+      },
+      "NoteUpdate": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "category": { "type": "string", "enum": ["code", "design", "meeting", "idea"] },
+          "tags": { "type": "array", "items": { "type": "string" } },
+          "content": { "type": "string" },
+          "snippet": { "type": "string" },
+          "published": { "type": "boolean" },
+          "coverImage": { "type": "string" },
+          "color": { "type": "string" },
+          "icon": { "type": "string" }
+        }
+      },
+      "NoteListResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "type": "array", "items": { "$ref": "#/components/schemas/Note" } },
+          "meta": {
+            "type": "object",
+            "properties": {
+              "total": { "type": "integer" },
+              "limit": { "type": "integer" },
+              "offset": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "NoteResponse": {
+        "type": "object",
+        "properties": {
+          "data": { "$ref": "#/components/schemas/Note" }
+        }
+      },
+      "Tag": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "color": { "type": "string" },
+          "count": { "type": "integer" }
+        }
+      },
+      "TagCreate": {
+        "type": "object",
+        "required": ["name"],
+        "properties": {
+          "name": { "type": "string" },
+          "color": { "type": "string" }
+        }
+      },
+      "TagUpdate": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "color": { "type": "string" }
+        }
+      },
+      "Node": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "label": { "type": "string" },
+          "type": { "type": "string", "enum": ["planet", "moon"] },
+          "color": { "type": "string" },
+          "icon": { "type": "string" },
+          "description": { "type": "string" },
+          "linkedNoteId": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "NodeCreate": {
+        "type": "object",
+        "required": ["label"],
+        "properties": {
+          "x": { "type": "number", "default": 0 },
+          "y": { "type": "number", "default": 0 },
+          "label": { "type": "string" },
+          "type": { "type": "string", "enum": ["planet", "moon"], "default": "planet" },
+          "color": { "type": "string", "default": "#FFD166" },
+          "icon": { "type": "string", "default": "circle" },
+          "description": { "type": "string" },
+          "linkedNoteId": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" }, "default": [] }
+        }
+      },
+      "NodeUpdate": {
+        "type": "object",
+        "properties": {
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "label": { "type": "string" },
+          "type": { "type": "string", "enum": ["planet", "moon"] },
+          "color": { "type": "string" },
+          "icon": { "type": "string" },
+          "description": { "type": "string" },
+          "linkedNoteId": { "type": "string" },
+          "tags": { "type": "array", "items": { "type": "string" } }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "source": { "type": "string" },
+          "target": { "type": "string" },
+          "type": { "type": "string", "enum": ["solid", "dashed"] }
+        }
+      },
+      "LinkCreate": {
+        "type": "object",
+        "required": ["source", "target"],
+        "properties": {
+          "source": { "type": "string" },
+          "target": { "type": "string" },
+          "type": { "type": "string", "enum": ["solid", "dashed"], "default": "solid" }
+        }
+      },
+      "SearchResult": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "snippet": { "type": "string" },
+          "relevance": { "type": "number" },
+          "timestamp": { "type": "string" }
+        }
+      },
+      "Category": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "label": { "type": "string" },
+          "color": { "type": "string" },
+          "subTags": { "type": "array", "items": { "type": "string" } },
+          "count": { "type": "integer" }
+        }
+      },
+      "CategoryCreate": {
+        "type": "object",
+        "required": ["label"],
+        "properties": {
+          "label": { "type": "string" },
+          "color": { "type": "string", "default": "#6B7280" },
+          "subTags": { "type": "array", "items": { "type": "string" }, "default": [] }
+        }
+      },
+      "Cluster": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "suggestedLabel": { "type": "string" },
+          "confidence": { "type": "number" },
+          "items": { "type": "array", "items": { "type": "string" } },
+          "reason": { "type": "string" },
+          "status": { "type": "string", "enum": ["pending", "accepted", "rejected"] }
+        }
+      },
+      "AnalyticsOverview": {
+        "type": "object",
+        "properties": {
+          "totalNotes": { "type": "integer" },
+          "totalNodes": { "type": "integer" },
+          "totalTags": { "type": "integer" },
+          "publishedNotes": { "type": "integer" },
+          "orphanNotes": { "type": "integer" },
+          "last30Days": {
+            "type": "object",
+            "properties": {
+              "created": { "type": "integer" },
+              "modified": { "type": "integer" },
+              "deleted": { "type": "integer" }
+            }
+          }
+        }
+      },
+      "TimelineEvent": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "date": { "type": "string" },
+          "type": { "type": "string", "enum": ["milestone", "task", "note"] },
+          "relatedNoteId": { "type": "string" },
+          "color": { "type": "string" }
+        }
+      },
+      "TimelineEventCreate": {
+        "type": "object",
+        "required": ["title", "date"],
+        "properties": {
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "date": { "type": "string" },
+          "type": { "type": "string", "enum": ["milestone", "task", "note"], "default": "note" },
+          "relatedNoteId": { "type": "string" },
+          "color": { "type": "string", "default": "#FFD166" }
+        }
+      },
+      "UserSettings": {
+        "type": "object",
+        "properties": {
+          "theme": { "type": "string", "enum": ["light", "dark", "system"] },
+          "language": { "type": "string", "enum": ["en", "zh"] },
+          "mascotSkin": { "type": "string", "enum": ["bot", "cat", "orb"] },
+          "fontSize": { "type": "string", "enum": ["small", "medium", "large"] },
+          "focusSettings": {
+            "type": "object",
+            "properties": {
+              "defaultDuration": { "type": "integer" },
+              "breakDuration": { "type": "integer" },
+              "soundEnabled": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "UserSettingsUpdate": {
+        "type": "object",
+        "properties": {
+          "theme": { "type": "string", "enum": ["light", "dark", "system"] },
+          "language": { "type": "string", "enum": ["en", "zh"] },
+          "mascotSkin": { "type": "string", "enum": ["bot", "cat", "orb"] },
+          "fontSize": { "type": "string", "enum": ["small", "medium", "large"] },
+          "focusSettings": {
+            "type": "object",
+            "properties": {
+              "defaultDuration": { "type": "integer" },
+              "breakDuration": { "type": "integer" },
+              "soundEnabled": { "type": "boolean" }
+            }
+          }
+        }
+      },
+      "FeedItem": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["draft", "suggestion", "memory", "task"] },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "priority": { "type": "string", "enum": ["high", "medium", "low"] },
+          "timestamp": { "type": "string" }
+        }
+      },
+      "FocusStats": {
+        "type": "object",
+        "properties": {
+          "totalSessions": { "type": "integer" },
+          "completedSessions": { "type": "integer" },
+          "totalMinutes": { "type": "integer" },
+          "todaySessions": { "type": "integer" },
+          "weekSessions": { "type": "integer" },
+          "streak": { "type": "integer" },
+          "completionRate": { "type": "integer" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": { "type": "string" },
+              "message": { "type": "string" },
+              "details": { "type": "object" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,40 +1,63 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Mascot } from '../components/Mascot';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
 
 interface Track {
     id: string;
     title: string;
     artist: string;
-    color1: string; // Primary gradient color
-    color2: string; // Secondary gradient color
-    cover: string; // Emoji or Image URL
-    url: string; // Audio URL
+    color1: string;
+    color2: string;
+    cover: string;
+    coverUrl: string | null;
+    url: string;
 }
 
-const PLAYLIST: Track[] = [
+// 白噪音类型
+interface WhiteNoise {
+    id: string;
+    name: string;
+    icon: string;
+    url: string;
+    volume: number;
+    isPlaying: boolean;
+}
+
+// 白噪音预设
+const WHITE_NOISE_PRESETS: WhiteNoise[] = [
+    { id: 'rain', name: 'Rain', icon: '🌧️', url: 'https://cdn.pixabay.com/download/audio/2022/07/04/audio_38205c19d8.mp3?filename=soft-rain-ambient-111154.mp3', volume: 0.3, isPlaying: false },
+    { id: 'thunder', name: 'Thunder', icon: '⛈️', url: 'https://cdn.pixabay.com/download/audio/2022/03/15/audio_c8c8a73467.mp3?filename=rain-and-thunder-16705.mp3', volume: 0.2, isPlaying: false },
+    { id: 'wind', name: 'Wind', icon: '💨', url: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_04d8081699.mp3?filename=forest-lullaby-110624.mp3', volume: 0.2, isPlaying: false },
+    { id: 'fire', name: 'Fire', icon: '🔥', url: 'https://cdn.pixabay.com/download/audio/2021/08/04/audio_0625c153045.mp3?filename=fire-crackle-001-15679.mp3', volume: 0.3, isPlaying: false },
+    { id: 'waves', name: 'Waves', icon: '🌊', url: 'https://cdn.pixabay.com/download/audio/2022/06/07/audio_3e74a0c0eb.mp3?filename=sea-waves-16898.mp3', volume: 0.3, isPlaying: false },
+    { id: 'birds', name: 'Birds', icon: '🐦', url: 'https://cdn.pixabay.com/download/audio/2021/09/06/audio_8d93a53e5d.mp3?filename=birds-in-forest-12168.mp3', volume: 0.2, isPlaying: false },
+];
+
+// 默认播放列表
+const DEFAULT_PLAYLIST: Track[] = [
     { 
         id: '1', title: 'Lofi Loft', artist: 'Vicoo Beats', 
         color1: '#EF476F', color2: '#FFD166', 
-        cover: '☕️', 
+        cover: '☕️', coverUrl: null,
         url: 'https://cdn.pixabay.com/download/audio/2022/05/27/audio_1808fbf07a.mp3?filename=lofi-study-112191.mp3' 
     },
     { 
         id: '2', title: 'Deep Space', artist: 'Neural Network', 
         color1: '#118AB2', color2: '#073B4C', 
-        cover: '🌌', 
+        cover: '🌌', coverUrl: null,
         url: 'https://cdn.pixabay.com/download/audio/2022/03/24/audio_077dc81646.mp3?filename=ambient-piano-amp-drone-10781.mp3' 
     },
     { 
         id: '3', title: 'Forest Rain', artist: 'Nature Sounds', 
         color1: '#06D6A0', color2: '#118AB2', 
-        cover: '🌿', 
+        cover: '🌿', coverUrl: null,
         url: 'https://cdn.pixabay.com/download/audio/2021/08/09/audio_04d8081699.mp3?filename=forest-lullaby-110624.mp3' 
     },
     { 
         id: '4', title: 'Neon Drive', artist: 'Synthwave Boy', 
         color1: '#FF006E', color2: '#8338EC', 
-        cover: '🏎️', 
+        cover: '🏎️', coverUrl: null,
         url: 'https://cdn.pixabay.com/download/audio/2022/01/18/audio_d0a13f69d2.mp3?filename=retro-city-14099.mp3' 
     }
 ];
@@ -45,6 +68,8 @@ interface FocusModeProps {
 
 export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
     const { t } = useLanguage();
+    const { playlist, refreshPlaylist, focusStats, refreshFocusStats } = useApi();
+    
     // Timer State
     const [timeLeft, setTimeLeft] = useState(25 * 60); 
     const [isActive, setIsActive] = useState(false);
@@ -56,8 +81,35 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
     const [volume, setVolume] = useState(0.5);
     const [isPlayerExpanded, setIsPlayerExpanded] = useState(false);
     
+    // White Noise State
+    const [whiteNoises, setWhiteNoises] = useState<WhiteNoise[]>(WHITE_NOISE_PRESETS);
+    const [isNoisePanelOpen, setIsNoisePanelOpen] = useState(false);
+    const whiteNoiseRefs = useRef<{ [key: string]: HTMLAudioElement }>({});
+    
+    // Focus Stats & AI Analysis
+    const [showStatsPanel, setShowStatsPanel] = useState(false);
+    const [aiRecommendedTime, setAiRecommendedTime] = useState<string | null>(null);
+
+    // Session History
+    const [sessionHistory, setSessionHistory] = useState<{ date: string; duration: number }[]>([]);
+    
     const audioRef = useRef<HTMLAudioElement>(null);
-    const currentTrack = PLAYLIST[currentTrackIndex];
+    
+    // Convert API playlist to Track format, or use default
+    const userPlaylist: Track[] = playlist.length > 0 
+        ? playlist.map(m => ({
+            id: m.id,
+            title: m.title,
+            artist: m.artist,
+            color1: m.color1,
+            color2: m.color2,
+            cover: m.coverEmoji,
+            coverUrl: m.coverUrl,
+            url: m.url
+          }))
+        : DEFAULT_PLAYLIST;
+    
+    const currentTrack = userPlaylist[currentTrackIndex];
 
     // Timer Logic
     useEffect(() => {
@@ -86,8 +138,8 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
 
     const handleTrackChange = (direction: 'next' | 'prev') => {
         let newIndex = direction === 'next' ? currentTrackIndex + 1 : currentTrackIndex - 1;
-        if (newIndex >= PLAYLIST.length) newIndex = 0;
-        if (newIndex < 0) newIndex = PLAYLIST.length - 1;
+        if (newIndex >= userPlaylist.length) newIndex = 0;
+        if (newIndex < 0) newIndex = userPlaylist.length - 1;
         setCurrentTrackIndex(newIndex);
         if (isActive) setIsPlaying(true);
     };
@@ -101,6 +153,74 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
     const toggleTimer = () => {
         setIsActive(!isActive);
         if (!isActive && !isPlaying) setIsPlaying(true);
+    };
+
+    // 白噪音控制
+    const toggleWhiteNoise = (noiseId: string) => {
+        setWhiteNoises(prev => prev.map(noise => {
+            if (noise.id === noiseId) {
+                const newIsPlaying = !noise.isPlaying;
+                // 控制音频播放
+                if (whiteNoiseRefs.current[noiseId]) {
+                    if (newIsPlaying) {
+                        whiteNoiseRefs.current[noiseId].play().catch(() => {});
+                    } else {
+                        whiteNoiseRefs.current[noiseId].pause();
+                    }
+                }
+                return { ...noise, isPlaying: newIsPlaying };
+            }
+            return noise;
+        }));
+    };
+
+    const updateWhiteNoiseVolume = (noiseId: string, volume: number) => {
+        setWhiteNoises(prev => prev.map(noise => {
+            if (noise.id === noiseId && whiteNoiseRefs.current[noiseId]) {
+                whiteNoiseRefs.current[noiseId].volume = volume;
+                return { ...noise, volume };
+            }
+            return noise;
+        }));
+    };
+
+    // AI 推荐专注时段分析
+    useEffect(() => {
+        if (focusStats) {
+            // 基于历史数据分析最佳专注时段
+            const hour = new Date().getHours();
+            let recommended = '';
+            if (hour >= 9 && hour <= 11) {
+                recommended = '☀️ 上午黄金时段 - 适合高强度思考任务';
+            } else if (hour >= 14 && hour <= 16) {
+                recommended = '🌤️ 下午时段 - 适合创意工作';
+            } else if (hour >= 20 && hour <= 22) {
+                recommended = '🌙 晚间时段 - 适合深度学习';
+            } else {
+                recommended = '💡 根据您的习惯，任何时段都可以高效工作';
+            }
+            setAiRecommendedTime(recommended);
+            
+            // 模拟历史数据
+            const mockHistory = [
+                { date: '今天', duration: focusStats.todaySessions * 25 },
+                { date: '昨天', duration: (focusStats.todaySessions - 1) * 25 },
+                { date: '上周', duration: focusStats.weekSessions * 25 },
+            ];
+            setSessionHistory(mockHistory);
+        }
+    }, [focusStats]);
+
+    // 加载专注统计
+    useEffect(() => {
+        refreshFocusStats();
+    }, [refreshFocusStats]);
+
+    // 格式化专注时间
+    const formatFocusTime = (minutes: number) => {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
     };
 
     return (
@@ -118,32 +238,48 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                 onEnded={() => handleTrackChange('next')}
             />
 
-            {/* Dynamic Ambient Background Blobs */}
+            {/* Dynamic Ambient Background - Album Cover or Color Blobs */}
             <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-                <div 
-                    className={`
-                        absolute top-[-10%] left-[-10%] w-[70vw] h-[70vw] rounded-full mix-blend-screen filter blur-[80px] opacity-40
-                        transition-all duration-[2000ms] ease-in-out
-                        ${isPlaying ? 'animate-orbit' : ''}
-                    `}
-                    style={{ 
-                        backgroundColor: currentTrack.color1,
-                        animationDuration: '15s' 
-                    }}
-                ></div>
+                {/* Album Cover Background - Glassmorphism Effect */}
+                {currentTrack.coverUrl ? (
+                    <div 
+                        className="absolute inset-0 transition-all duration-1000"
+                        style={{
+                            backgroundImage: `url(${currentTrack.coverUrl})`,
+                            backgroundSize: 'cover',
+                            backgroundPosition: 'center',
+                            filter: 'blur(60px) brightness(0.4)',
+                            transform: 'scale(1.2)',
+                        }}
+                    />
+                ) : (
+                    <>
+                        <div 
+                            className={`
+                                absolute top-[-10%] left-[-10%] w-[70vw] h-[70vw] rounded-full mix-blend-screen filter blur-[80px] opacity-40
+                                transition-all duration-[2000ms] ease-in-out
+                                ${isPlaying ? 'animate-orbit' : ''}
+                            `}
+                            style={{ 
+                                backgroundColor: currentTrack.color1,
+                                animationDuration: '15s' 
+                            }}
+                        ></div>
 
-                <div 
-                    className={`
-                        absolute bottom-[-10%] right-[-10%] w-[80vw] h-[80vw] rounded-full mix-blend-screen filter blur-[100px] opacity-30
-                        transition-all duration-[2000ms] ease-in-out
-                        ${isPlaying ? 'animate-orbit' : ''}
-                    `}
-                    style={{ 
-                        backgroundColor: currentTrack.color2,
-                        animationDuration: '20s',
-                        animationDirection: 'reverse'
-                    }}
-                ></div>
+                        <div 
+                            className={`
+                                absolute bottom-[-10%] right-[-10%] w-[80vw] h-[80vw] rounded-full mix-blend-screen filter blur-[100px] opacity-30
+                                transition-all duration-[2000ms] ease-in-out
+                                ${isPlaying ? 'animate-orbit' : ''}
+                            `}
+                            style={{ 
+                                backgroundColor: currentTrack.color2,
+                                animationDuration: '20s',
+                                animationDirection: 'reverse'
+                            }}
+                        ></div>
+                    </>
+                )}
             </div>
 
             {/* Top Bar with Slide-Down Entrance */}
@@ -163,13 +299,111 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         </span>
                      </div>
                 </div>
-                <button 
-                    onClick={onExit}
-                    className="group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 hover:bg-white hover:text-ink hover:border-white transition-all text-white shadow-lg will-change-transform"
-                >
-                    <span className="material-icons-round text-sm group-hover:rotate-180 transition-transform">close</span> {t('focus.exit')}
-                </button>
+                <div className="flex items-center gap-2">
+                    {/* White Noise Toggle */}
+                    <button 
+                        onClick={() => setIsNoisePanelOpen(!isNoisePanelOpen)}
+                        className={`group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 transition-all text-white shadow-lg hover:bg-white/10 ${isNoisePanelOpen ? 'border-primary bg-primary/20' : ''}`}
+                    >
+                        <span className="material-icons-round text-sm">waves</span>
+                        Noise
+                    </button>
+                    {/* Stats Toggle */}
+                    <button 
+                        onClick={() => setShowStatsPanel(!showStatsPanel)}
+                        className={`group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 transition-all text-white shadow-lg hover:bg-white/10 ${showStatsPanel ? 'border-primary bg-primary/20' : ''}`}
+                    >
+                        <span className="material-icons-round text-sm">analytics</span>
+                        Stats
+                    </button>
+                    <button 
+                        onClick={onExit}
+                        className="group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 hover:bg-white hover:text-ink hover:border-white transition-all text-white shadow-lg will-change-transform"
+                    >
+                        <span className="material-icons-round text-sm group-hover:rotate-180 transition-transform">close</span> {t('focus.exit')}
+                    </button>
+                </div>
             </div>
+
+            {/* White Noise Panel */}
+            {isNoisePanelOpen && (
+                <div className="absolute top-20 right-6 z-50 bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 w-72 animate-fade-in">
+                    <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3 flex items-center gap-2">
+                        <span className="material-icons-round text-sm">waves</span> White Noise Mixer
+                    </div>
+                    <div className="space-y-2">
+                        {whiteNoises.map(noise => (
+                            <div key={noise.id} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/10 transition-colors">
+                                <button
+                                    onClick={() => toggleWhiteNoise(noise.id)}
+                                    className={`w-8 h-8 rounded-lg flex items-center justify-center text-lg ${noise.isPlaying ? 'bg-primary text-ink' : 'bg-white/10 text-white'}`}
+                                >
+                                    {noise.icon}
+                                </button>
+                                <span className="flex-1 text-sm font-bold text-white">{noise.name}</span>
+                                <input 
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.1"
+                                    value={noise.volume}
+                                    onChange={(e) => updateWhiteNoiseVolume(noise.id, parseFloat(e.target.value))}
+                                    className="w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
+                                />
+                                {/* 隐藏的音频元素 */}
+                                <audio
+                                    ref={el => { if (el) whiteNoiseRefs.current[noise.id] = el; }}
+                                    src={noise.url}
+                                    loop
+                                    volume={noise.volume}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+
+            {/* Stats Panel */}
+            {showStatsPanel && (
+                <div className="absolute top-20 left-6 z-50 bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 w-80 animate-fade-in">
+                    <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3 flex items-center gap-2">
+                        <span className="material-icons-round text-sm">analytics</span> Focus Analytics
+                    </div>
+                    {aiRecommendedTime && (
+                        <div className="mb-4 p-3 bg-primary/20 rounded-xl border border-primary/30">
+                            <div className="text-xs font-bold text-primary mb-1">AI Recommendation</div>
+                            <div className="text-sm font-bold text-white">{aiRecommendedTime}</div>
+                        </div>
+                    )}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="bg-white/10 rounded-xl p-3 text-center">
+                            <div className="text-2xl font-black text-white">{focusStats?.totalSessions || 0}</div>
+                            <div className="text-xs font-bold opacity-60 text-white">Sessions</div>
+                        </div>
+                        <div className="bg-white/10 rounded-xl p-3 text-center">
+                            <div className="text-2xl font-black text-white">{focusStats?.streak || 0}</div>
+                            <div className="text-xs font-bold opacity-60 text-white">Day Streak</div>
+                        </div>
+                        <div className="bg-white/10 rounded-xl p-3 text-center">
+                            <div className="text-2xl font-black text-white">{formatFocusTime(focusStats?.totalMinutes || 0)}</div>
+                            <div className="text-xs font-bold opacity-60 text-white">Total Time</div>
+                        </div>
+                        <div className="bg-white/10 rounded-xl p-3 text-center">
+                            <div className="text-2xl font-black text-white">{focusStats?.completionRate ? Math.round(focusStats.completionRate * 100) : 0}%</div>
+                            <div className="text-xs font-bold opacity-60 text-white">Completion</div>
+                        </div>
+                    </div>
+                    <div className="border-t border-white/10 pt-3">
+                        <div className="text-xs font-bold opacity-60 mb-2">Recent History</div>
+                        {sessionHistory.map((session, i) => (
+                            <div key={i} className="flex justify-between text-sm py-1">
+                                <span className="text-white/60">{session.date}</span>
+                                <span className="font-bold text-white">{formatFocusTime(session.duration)}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Timer */}
             <div className="relative z-20 max-w-3xl w-full px-6 flex flex-col items-center">
@@ -349,7 +583,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         <div className="border-t border-white/10 pt-4 mt-4 shrink-0">
                             <p className="text-[10px] font-bold uppercase opacity-40 mb-2 text-white">{t('focus.up_next')}</p>
                             <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                                {PLAYLIST.map((track, i) => (
+                                {userPlaylist.map((track, i) => (
                                     <button 
                                         key={track.id}
                                         onClick={() => { setCurrentTrackIndex(i); setIsPlaying(true); }}

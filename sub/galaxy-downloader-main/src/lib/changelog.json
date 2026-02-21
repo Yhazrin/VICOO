@@ -1,0 +1,184 @@
+{
+  "versions": [
+    {
+      "version": "1.9.0",
+      "date": "2026-01-03",
+      "changes": {
+        "zh": [
+          "全面优化移动端界面布局"
+        ],
+        "en": [
+          "Comprehensive optimization of mobile interface layout"
+        ],
+        "zh-tw": [
+          "全面最佳化行動端介面佈局"
+        ]
+      }
+    },
+    {
+      "version": "1.8.0",
+      "date": "2025-12-26",
+      "changes": {
+        "zh": [
+          "支持抖音口令解析，可直接粘贴分享口令",
+          "支持小红书口令解析，可直接粘贴分享口令"
+        ],
+        "en": [
+          "Support Douyin command parsing, paste share commands directly",
+          "Support Xiaohongshu command parsing, paste share commands directly"
+        ],
+        "zh-tw": [
+          "支援抖音口令解析，可直接貼上分享口令",
+          "支援小紅書口令解析，可直接貼上分享口令"
+        ]
+      }
+    },
+    {
+      "version": "1.7.0",
+      "date": "2025-12-21",
+      "changes": {
+        "zh": [
+          "支持小红书视频音频提取"
+        ],
+        "en": [
+          "Support Xiaohongshu video audio extraction"
+        ],
+        "zh-tw": [
+          "支援小紅書影片音訊提取"
+        ]
+      }
+    },
+    {
+      "version": "1.6.0",
+      "date": "2025-12-21",
+      "changes": {
+        "zh": [
+          "支持抖音 /video/ 格式链接解析"
+        ],
+        "en": [
+          "Support Douyin /video/ URL format parsing"
+        ],
+        "zh-tw": [
+          "支援抖音 /video/ 格式連結解析"
+        ]
+      }
+    },
+    {
+      "version": "1.5.0",
+      "date": "2025-12-17",
+      "changes": {
+        "zh": [
+          "支持小红书图片预览",
+          "支持小红书图片打包下载"
+        ],
+        "en": [
+          "Support Xiaohongshu image preview",
+          "Support Xiaohongshu image package download"
+        ],
+        "zh-tw": [
+          "支援小紅書圖片預覽",
+          "支援小紅書圖片打包下載"
+        ]
+      }
+    },
+    {
+      "version": "1.4.0",
+      "date": "2025-12-16",
+      "changes": {
+        "zh": [
+          "支持小红书视频和图片下载"
+        ],
+        "en": [
+          "Support Xiaohongshu video and image download"
+        ],
+        "zh-tw": [
+          "支援小紅書影片和圖片下載"
+        ]
+      }
+    },
+    {
+      "version": "1.3.0",
+      "date": "2025-12-13",
+      "changes": {
+        "zh": [
+          "新增抖音视频音频提取功能（浏览器端转换）"
+        ],
+        "en": [
+          "Add Douyin video audio extraction (browser-side conversion)"
+        ],
+        "zh-tw": [
+          "新增抖音影片音訊提取功能（瀏覽器端轉換）"
+        ]
+      }
+    },
+    {
+      "version": "1.2.1",
+      "date": "2025-12-12",
+      "changes": {
+        "zh": [
+          "更换独立域名"
+        ],
+        "en": [
+          "Switch to independent domain"
+        ],
+        "zh-tw": [
+          "更換獨立域名"
+        ]
+      }
+    },
+    {
+      "version": "1.2.0",
+      "date": "2025-12-01",
+      "changes": {
+        "zh": [
+          "支持B站多P视频下载",
+          "显示视频时长"
+        ],
+        "en": [
+          "Support Bilibili multi-part video download",
+          "Display video duration"
+        ],
+        "zh-tw": [
+          "支援B站多P影片下載",
+          "顯示影片時長"
+        ]
+      }
+    },
+    {
+      "version": "1.1.0",
+      "date": "",
+      "changes": {
+        "zh": [
+          "新增抖音视频下载功能",
+          "自动识别视频平台"
+        ],
+        "en": [
+          "Add Douyin video download",
+          "Auto-detect video platform"
+        ],
+        "zh-tw": [
+          "新增抖音影片下載功能",
+          "自動識別影片平台"
+        ]
+      }
+    },
+    {
+      "version": "1.0.0",
+      "date": "",
+      "changes": {
+        "zh": [
+          "首次发布",
+          "支持B站视频音频下载"
+        ],
+        "en": [
+          "Initial release",
+          "Support Bilibili audio and video download"
+        ],
+        "zh-tw": [
+          "首次發佈",
+          "支援B站影片音訊下載"
+        ]
+      }
+    }
+  ]
+}

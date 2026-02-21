@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
+import { useApi } from '../contexts/ApiContext';
+import type { TimelineEvent as ApiTimelineEvent } from '@vicoo/types';
 
 // Enhanced Types for Complex Timeline
 type EventType = 'Code' | 'Design' | 'Meeting' | 'Idea' | 'Milestone';
@@ -34,9 +36,37 @@ interface TimelineGroup {
 
 export const Timeline: React.FC = () => {
   const [filterType, setFilterType] = useState<EventType | 'All'>('All');
+  const { timelineEvents, refreshTimeline } = useApi();
+  
+  // Local state for timeline events
+  const [events, setEvents] = useState<TimelineEvent[]>([]);
+  
+  // Load events from API
+  useEffect(() => {
+    refreshTimeline();
+  }, [refreshTimeline]);
+  
+  // Transform API events to TimelineEvent format
+  useEffect(() => {
+    if (timelineEvents.length > 0) {
+      const transformed: TimelineEvent[] = timelineEvents.map(e => ({
+        id: e.id,
+        date: new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        fullDate: new Date(e.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+        title: e.title,
+        type: (e.type as EventType) || 'Idea',
+        status: (e.status as EventStatus) || 'planned',
+        description: e.description,
+        progress: e.progress,
+        tags: e.tags || [],
+        blockerReason: e.blockerReason
+      }));
+      setEvents(transformed);
+    }
+  }, [timelineEvents]);
 
-  // Mock Data: Richer dataset showing complex project states
-  const rawEvents: TimelineEvent[] = [
+  // Group events by Month if no API data
+  const rawEvents: TimelineEvent[] = events.length > 0 ? events : [
     {
         id: '1', date: 'Today', fullDate: 'Oct 26, 2023', title: 'MindVault v2.0 Release', type: 'Milestone', status: 'in-progress',
         description: 'Finalizing the public gateway and timeline refactor. Preparing for Product Hunt launch.',

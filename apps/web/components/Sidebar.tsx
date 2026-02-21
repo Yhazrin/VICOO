@@ -30,7 +30,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
       items: [
         { id: View.DASHBOARD, label: t('nav.dashboard'), icon: 'dashboard' },
         { id: View.EDITOR, label: t('nav.write'), icon: 'edit_note' },
-        { id: View.SPARK, label: t('nav.spark'), icon: 'auto_awesome_mosaic' },
+        { id: View.VIBE_CODING, label: 'Vibe Coding', icon: 'terminal' },
         { id: View.SEARCH, label: t('nav.search'), icon: 'psychology' },
       ]
     },

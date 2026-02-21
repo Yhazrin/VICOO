@@ -1,0 +1,191 @@
+/* Vicoo Global Styles - Neo-brutalism Design System */
+
+/* Color Palette */
+page {
+  --primary: #FFD166;
+  --secondary: #0df259;
+  --accent: #EF476F;
+  --info: #118AB2;
+  --ink: #1a1a1a;
+  --white: #ffffff;
+  --light: #f5f5f5;
+  --dark: #121212;
+
+  background-color: var(--light);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+/* Neo-brutalism Components */
+.neo-card {
+  background: var(--white);
+  border: 3rpx solid var(--ink);
+  border-radius: 16rpx;
+  box-shadow: 4rpx 4rpx 0rpx 0rpx var(--ink);
+  padding: 24rpx;
+  margin: 16rpx;
+}
+
+.neo-card-primary {
+  border-color: var(--primary);
+}
+
+.neo-card-secondary {
+  border-color: var(--secondary);
+}
+
+.neo-card-accent {
+  border-color: var(--accent);
+}
+
+.neo-card-info {
+  border-color: var(--info);
+}
+
+/* Buttons */
+.neo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 32rpx;
+  border: 3rpx solid var(--ink);
+  border-radius: 12rpx;
+  background: var(--white);
+  box-shadow: 3rpx 3rpx 0rpx 0rpx var(--ink);
+  font-weight: 600;
+  font-size: 28rpx;
+  transition: all 0.1s ease;
+}
+
+.neo-button:active {
+  transform: translate(2rpx, 2rpx);
+  box-shadow: 1rpx 1rpx 0rpx 0rpx var(--ink);
+}
+
+.neo-button-primary {
+  background: var(--primary);
+}
+
+.neo-button-secondary {
+  background: var(--secondary);
+}
+
+.neo-button-accent {
+  background: var(--accent);
+  color: var(--white);
+}
+
+/* Input */
+.neo-input {
+  width: 100%;
+  padding: 20rpx 24rpx;
+  border: 3rpx solid var(--ink);
+  border-radius: 12rpx;
+  background: var(--white);
+  font-size: 28rpx;
+  box-sizing: border-box;
+}
+
+.neo-input:focus {
+  outline: none;
+  box-shadow: 4rpx 4rpx 0rpx 0rpx var(--primary);
+}
+
+/* Tags */
+.neo-tag {
+  display: inline-block;
+  padding: 8rpx 16rpx;
+  border: 2rpx solid var(--ink);
+  border-radius: 8rpx;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.neo-tag-idea { background: var(--secondary); }
+.neo-tag-code { background: var(--info); color: var(--white); }
+.neo-tag-design { background: var(--accent); color: var(--white); }
+.neo-tag-meeting { background: var(--primary); }
+
+/* Typography */
+.title-large {
+  font-size: 40rpx;
+  font-weight: 800;
+  letter-spacing: -1rpx;
+}
+
+.title-medium {
+  font-size: 32rpx;
+  font-weight: 700;
+}
+
+.title-small {
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.text-body {
+  font-size: 28rpx;
+  font-weight: 400;
+}
+
+.text-caption {
+  font-size: 22rpx;
+  color: #666;
+}
+
+/* Layout */
+.container {
+  padding: 24rpx;
+}
+
+.flex-row {
+  display: flex;
+  flex-direction: row;
+}
+
+.flex-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.items-center {
+  align-items: center;
+}
+
+.justify-between {
+  justify-content: space-between;
+}
+
+.gap-sm { gap: 8rpx; }
+.gap-md { gap: 16rpx; }
+.gap-lg { gap: 24rpx; }
+
+/* Utility */
+.mt-sm { margin-top: 8rpx; }
+.mt-md { margin-top: 16rpx; }
+.mt-lg { margin-top: 24rpx; }
+.mb-sm { margin-bottom: 8rpx; }
+.mb-md { margin-bottom: 16rpx; }
+.mb-lg { margin-bottom: 24rpx; }
+
+.p-sm { padding: 8rpx; }
+.p-md { padding: 16rpx; }
+.p-lg { padding: 24rpx; }
+
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+.rounded { border-radius: 12rpx; }
+.rounded-lg { border-radius: 16rpx; }
+
+/* Animations */
+@keyframes pop {
+  0% { transform: scale(0.9); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop {
+  animation: pop 0.3s ease-out;
+}

@@ -1,0 +1,68 @@
+<!--pages/index/index.wxml-->
+<view class="container">
+  <!-- Header -->
+  <view class="header">
+    <view class="title-large">vicoo</view>
+    <view class="text-caption">Your Visual Coordinator</view>
+  </view>
+
+  <!-- Stats Cards -->
+  <view class="stats-grid">
+    <view class="neo-card neo-card-primary stat-card" bindtap="goToLibrary">
+      <view class="stat-value">{{stats.total}}</view>
+      <view class="stat-label">Total Notes</view>
+    </view>
+    <view class="neo-card neo-card-secondary stat-card" bindtap="goToLibrary">
+      <view class="stat-value">{{stats.ideas}}</view>
+      <view class="stat-label">Ideas</view>
+    </view>
+    <view class="neo-card neo-card-info stat-card" bindtap="goToLibrary">
+      <view class="stat-value">{{stats.code}}</view>
+      <view class="stat-label">Code</view>
+    </view>
+    <view class="neo-card neo-card-accent stat-card" bindtap="goToLibrary">
+      <view class="stat-value">{{stats.meeting}}</view>
+      <view class="stat-label">Meetings</view>
+    </view>
+  </view>
+
+  <!-- Quick Actions -->
+  <view class="actions">
+    <button class="neo-button neo-button-primary w-full" bindtap="createNote">
+      <text class="icon">+</text> New Note
+    </button>
+    <button class="neo-button w-full mt-md" bindtap="goToSearch">
+      <text class="icon">🔍</text> Search
+    </button>
+  </view>
+
+  <!-- Recent Notes -->
+  <view class="section-title title-medium mt-lg mb-md">Recent Notes</view>
+
+  <view wx:if="{{loading}}" class="loading">
+    <text>Loading...</text>
+  </view>
+
+  <view wx:else>
+    <view wx:if="{{recentNotes.length === 0}}" class="empty-state">
+      <text>No notes yet. Create your first note!</text>
+    </view>
+
+    <view wx:for="{{recentNotes}}" wx:key="id" class="neo-card note-card" data-id="{{item.id}}" bindtap="goToEditor">
+      <view class="note-header">
+        <view class="note-category neo-tag neo-tag-{{item.category}}">{{item.category}}</view>
+        <text class="note-date">{{item.timestamp}}</text>
+      </view>
+      <view class="note-title title-small">{{item.title}}</view>
+      <view class="note-snippet text-body">{{item.snippet}}</view>
+      <view class="note-tags" wx:if="{{item.tags.length > 0}}">
+        <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag">#{{tag}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Version -->
+  <view class="version text-caption mt-lg">
+    v{{version}}
+  </view>
+</view>

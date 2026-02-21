@@ -1,0 +1,676 @@
+openapi: 3.0.1
+info:
+    description: |
+        VICOO 个人知识管理助手 API
+        
+        提供笔记管理、知识图谱、AI问答、标签系统等功能，
+        服务于 AI 智能助手的全局知识库问答能力。
+    title: VICOO 知识管理助手插件
+    version: v1
+servers:
+    - url: http://localhost:8000
+      description: 本地开发服务器
+paths:
+    # ==================== AI 智能问答 ====================
+    /api/ai/chat:
+        post:
+            operationId: ai_chat
+            summary: AI 智能问答
+            description: |
+                基于知识库和网络搜索的智能问答接口。
+                【模式 (mode)】auto/knowledge/search/action
+                【提供者 (provider)】auto/coze/claude
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - message
+                            properties:
+                                message:
+                                    type: string
+                                mode:
+                                    type: string
+                                    enum: [auto, knowledge, search, action]
+                                provider:
+                                    type: string
+                                    enum: [auto, coze, claude]
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+    /api/ai/status:
+        get:
+            operationId: ai_status
+            summary: AI 服务状态
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 笔记管理 ====================
+    /api/notes:
+        get:
+            operationId: list_notes
+            summary: 获取笔记列表
+            parameters:
+                - name: limit
+                  in: query
+                  schema:
+                      type: integer
+                - name: offset
+                  in: query
+                  schema:
+                      type: integer
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            operationId: create_note
+            summary: 创建笔记
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            required:
+                                - title
+                            properties:
+                                title:
+                                    type: string
+                                content:
+                                    type: string
+                                category:
+                                    type: string
+                                tags:
+                                    type: array
+                                    items:
+                                        type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/notes/{id}:
+        get:
+            operationId: get_note
+            summary: 获取笔记详情
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        patch:
+            operationId: update_note
+            summary: 更新笔记
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        delete:
+            operationId: delete_note
+            summary: 删除笔记
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 搜索 ====================
+    /api/search:
+        get:
+            operationId: search_notes
+            summary: 搜索笔记
+            parameters:
+                - name: q
+                  in: query
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/search/semantic:
+        post:
+            operationId: semantic_search
+            summary: 语义搜索
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                query:
+                                    type: string
+                                limit:
+                                    type: integer
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/search/ai-summary:
+        post:
+            operationId: ai_summary
+            summary: AI摘要生成
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                noteId:
+                                    type: string
+                                text:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/search/ai-tags:
+        post:
+            operationId: ai_tags
+            summary: AI标签推荐
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                noteId:
+                                    type: string
+                                text:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 标签管理 ====================
+    /api/tags:
+        get:
+            operationId: list_tags
+            summary: 获取标签列表
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            operationId: create_tag
+            summary: 创建标签
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                name:
+                                    type: string
+                                color:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/tags/{id}:
+        delete:
+            operationId: delete_tag
+            summary: 删除标签
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 知识图谱 ====================
+    /api/nodes:
+        get:
+            operationId: list_nodes
+            summary: 获取图谱节点
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            operationId: create_node
+            summary: 创建图谱节点
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                label:
+                                    type: string
+                                description:
+                                    type: string
+                                category:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/nodes/{id}:
+        get:
+            operationId: get_node
+            summary: 获取图谱节点详情
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        patch:
+            operationId: update_node
+            summary: 更新图谱节点
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        delete:
+            operationId: delete_node
+            summary: 删除图谱节点
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            operationId: connect_node
+            summary: 连接图谱节点
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                targetId:
+                                    type: string
+                                label:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/links:
+        get:
+            operationId: list_links
+            summary: 获取图谱连接
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            operationId: create_link
+            summary: 创建图谱连接
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                sourceId:
+                                    type: string
+                                targetId:
+                                    type: string
+                                label:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/links/{id}:
+        delete:
+            operationId: delete_link
+            summary: 删除图谱连接
+            parameters:
+                - name: id
+                  in: path
+                  required: true
+                  schema:
+                      type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/graph/generate-from-notes:
+        post:
+            operationId: generate_graph
+            summary: 从笔记生成图谱
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                clearExisting:
+                                    type: boolean
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 工作流 ====================
+    /api/workflow/search:
+        post:
+            operationId: workflow_search
+            summary: 智能搜索工作流
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                query:
+                                    type: string
+                                platform:
+                                    type: string
+                                contentType:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/workflow/parse:
+        post:
+            operationId: parse_url
+            summary: 解析URL内容
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                url:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/workflow/coze/chat:
+        post:
+            operationId: coze_chat
+            summary: Coze智能体对话
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                query:
+                                    type: string
+                                conversation_id:
+                                    type: string
+                                user_id:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 数据统计 ====================
+    /api/analytics/overview:
+        get:
+            operationId: analytics_overview
+            summary: 数据概览
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    /api/analytics/activity:
+        get:
+            operationId: analytics_activity
+            summary: 活动数据
+            parameters:
+                - name: days
+                  in: query
+                  schema:
+                      type: integer
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 设置 ====================
+    /api/settings:
+        get:
+            operationId: get_settings
+            summary: 获取设置
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        patch:
+            operationId: update_settings
+            summary: 更新设置
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== Coze配置 ====================
+    /api/workflow/coze/config:
+        get:
+            operationId: get_coze_config
+            summary: 获取Coze配置
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+        post:
+            operationId: set_coze_config
+            summary: 设置Coze配置
+            requestBody:
+                required: true
+                content:
+                    application/json:
+                        schema:
+                            type: object
+                            properties:
+                                apiToken:
+                                    type: string
+                                botId:
+                                    type: string
+                                baseUrl:
+                                    type: string
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object
+
+    # ==================== 健康检查 ====================
+    /health:
+        get:
+            operationId: health_check
+            summary: 服务健康检查
+            responses:
+                "200":
+                    description: 成功
+                    content:
+                        application/json:
+                            schema:
+                                type: object

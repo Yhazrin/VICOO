@@ -6,7 +6,6 @@ export const translations = {
     'nav.system': 'System',
     'nav.dashboard': 'Dashboard',
     'nav.write': 'Write',
-    'nav.spark': 'Spark',
     'nav.search': 'Neural Query',
     'nav.library': 'The Stack',
     'nav.galaxy': 'Galaxy View',
@@ -87,6 +86,8 @@ export const translations = {
     'editor.summarized': 'Summarized',
     'editor.public': 'Public',
     'editor.private': 'Private',
+    'editor.saving': 'Saving...',
+    'editor.saved': 'Saved',
     'editor.linked_mentions': 'Linked Mentions',
     'editor.scanning': 'Scanning for concepts...',
     'editor.detected': 'Detected Entities',
@@ -126,20 +127,10 @@ export const translations = {
     'public.hero_desc': 'My personal vicoo node. A collection of raw thoughts, AI-assisted research, and polished tutorials.',
     'public.search_placeholder': 'Search my brain...',
     'public.latest_vibes': 'Latest Vibes',
-    'public.newsletter_title': "Don't miss the spark",
+    'public.newsletter_title': "Don't miss the latest",
     'public.newsletter_desc': 'Get notified when I drop a new research deep dive or tutorial. No spam, just code.',
     'public.subscribe': 'Subscribe',
     'public.footer': 'Built with vicoo',
-
-    // Spark
-    'spark.title': 'The Spark',
-    'spark.subtitle': 'Serendipity Engine. Find connections where none existed.',
-    'spark.streak': 'Streak',
-    'spark.days': 'Days',
-    'spark.fuse': 'Fuse Ideas',
-    'spark.input_placeholder': "How do these connect? (e.g. 'Efficiency in structure')",
-    'spark.success_title': 'New Synapse Created!',
-    'spark.spark_again': 'Spark Again',
 
     // Command Palette
     'cmd.placeholder': 'Type a command or search...',
@@ -171,7 +162,6 @@ export const translations = {
     'nav.system': '系统',
     'nav.dashboard': '仪表盘',
     'nav.write': '写作',
-    'nav.spark': '灵感火花',
     'nav.search': '神经检索',
     'nav.library': '堆栈',
     'nav.galaxy': '星系视图',
@@ -295,16 +285,6 @@ export const translations = {
     'public.newsletter_desc': '当我发布新的研究深度挖掘或教程时获得通知。没有垃圾邮件，只有代码。',
     'public.subscribe': '订阅',
     'public.footer': '构建于 vicoo',
-
-    // Spark
-    'spark.title': '灵感火花',
-    'spark.subtitle': '意外发现引擎。在不存在的地方寻找连接。',
-    'spark.streak': '连续打卡',
-    'spark.days': '天',
-    'spark.fuse': '融合想法',
-    'spark.input_placeholder': "这些有什么联系？ (例如 '结构效率')",
-    'spark.success_title': '新突触已创建！',
-    'spark.spark_again': '再次激发',
 
     // Command Palette
     'cmd.placeholder': '输入命令或搜索...',

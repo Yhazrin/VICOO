@@ -1,0 +1,14 @@
+{
+  "name": "vicoo-weapp",
+  "version": "1.0.0",
+  "description": "Vicoo WeChat Mini Program",
+  "main": "src/app.ts",
+  "scripts": {
+    "dev": "echo 'Use WeChat DevTools to develop'",
+    "build": "echo 'Use WeChat CLI to build'"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "~5.8.2"
+  }
+}

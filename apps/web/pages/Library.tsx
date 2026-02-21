@@ -2,17 +2,31 @@ import React, { useState, useMemo } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
 
-// Added timestamps for real sorting logic
-const mockNotes = [
-  { id: '0', title: 'Quick thoughts on AI...', content: 'Thinking about how LLMs will change coding interviews and the future of software engineering.', tag: 'Inbox', date: 'Just now', timestamp: 1700000000006, color: 'white', icon: 'bolt' },
-  { id: '1', title: 'React Performance Tips', content: 'Use React.memo and useMemo sparingly. Virtualize long lists to improve rendering speed.', tag: 'Code', date: '2h ago', timestamp: 1700000000005, color: 'info', icon: 'code' },
-  { id: '2', title: 'Q4 Marketing Strategy', content: 'Focus on developer communities and open source sponsorships. key metrics: GitHub stars and Discord engagement.', tag: 'Meeting', date: '1d ago', timestamp: 1700000000004, color: 'primary', icon: 'mic' },
-  { id: '3', title: 'Neubrutalism UI Kit', content: 'Design tokens for the new aesthetic. Bold borders, high contrast, flat colors, and drop shadows.', tag: 'Design', date: '3d ago', timestamp: 1700000000003, color: 'accent', icon: 'palette' },
-  { id: '4', title: 'Serverless Architecture', content: 'Lambda vs Edge functions. Cold start times analysis and cost optimization strategies.', tag: 'Code', date: '1w ago', timestamp: 1700000000002, color: 'info', icon: 'dns' },
-  { id: '5', title: 'Startup Idea: AI Cat Feeder', content: 'Facial recognition for cats to dispense specific diets based on weight and health data.', tag: 'Idea', date: '2w ago', timestamp: 1700000000001, color: 'secondary', icon: 'lightbulb' },
-  { id: '6', title: 'Client Feedback - Oct', content: 'They love the new dashboard but want dark mode adjustments and faster load times on mobile.', tag: 'Meeting', date: '2w ago', timestamp: 1700000000000, color: 'primary', icon: 'record_voice_over' },
-];
+// Map API category to display tag
+const categoryToTag: Record<string, string> = {
+  idea: 'Idea',
+  code: 'Code',
+  design: 'Design',
+  meeting: 'Meeting',
+};
+
+// Map category to color
+const categoryToColor: Record<string, string> = {
+  idea: 'secondary',
+  code: 'info',
+  design: 'accent',
+  meeting: 'primary',
+};
+
+// Map category to icon
+const categoryToIcon: Record<string, string> = {
+  idea: 'lightbulb',
+  code: 'code',
+  design: 'palette',
+  meeting: 'mic',
+};
 
 interface LibraryProps {
     onOpenNote: (id: string) => void;
@@ -20,35 +34,48 @@ interface LibraryProps {
 
 export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
   const { t } = useLanguage();
+  const { notes, loading, error, refreshNotes } = useApi();
   const [filter, setFilter] = useState('All');
-  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // Newest first by default
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [searchQuery, setSearchQuery] = useState('');
-  const [tags, setTags] = useState(['All', 'Inbox', 'Code', 'Design', 'Meeting', 'Idea']);
+
+  // Derive tags from notes
+  const tags = useMemo(() => {
+    const tagSet = new Set(['All', 'Inbox']);
+    notes.forEach(note => {
+      tagSet.add(categoryToTag[note.category] || note.category);
+      note.tags.forEach(tag => tagSet.add(tag));
+    });
+    return Array.from(tagSet);
+  }, [notes]);
+
   const [isAddingTag, setIsAddingTag] = useState(false);
   const [newTagValue, setNewTagValue] = useState('');
   
   // Memoized sorting and filtering
   const processedNotes = useMemo(() => {
-      let filtered = mockNotes.filter(n => {
-          const matchesTag = filter === 'All' || n.tag === filter;
+      let filtered = notes.filter(n => {
+          const noteTag = categoryToTag[n.category] || n.category;
+          const matchesTag = filter === 'All' || filter === 'Inbox' ? true : noteTag === filter || n.tags.includes(filter);
           const query = searchQuery.toLowerCase();
-          const matchesSearch = 
+          const matchesSearch =
             n.title.toLowerCase().includes(query) ||
-            n.content.toLowerCase().includes(query) ||
-            n.tag.toLowerCase().includes(query) ||
-            n.date.toLowerCase().includes(query);
+            (n.content && n.content.toLowerCase().includes(query)) ||
+            (n.snippet && n.snippet.toLowerCase().includes(query)) ||
+            noteTag.toLowerCase().includes(query) ||
+            n.tags.some(tag => tag.toLowerCase().includes(query));
 
           return matchesTag && matchesSearch;
       });
 
       return filtered.sort((a, b) => {
-          return sortOrder === 'desc' 
-            ? b.timestamp - a.timestamp 
-            : a.timestamp - b.timestamp;
+          const timeA = new Date(a.timestamp).getTime();
+          const timeB = new Date(b.timestamp).getTime();
+          return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
       });
-  }, [filter, searchQuery, sortOrder]);
+  }, [notes, filter, searchQuery, sortOrder]);
 
-  const inboxCount = mockNotes.filter(n => n.tag === 'Inbox').length;
+  const inboxCount = notes.filter(n => !n.published).length;
 
   const handleAddTag = () => {
     const trimmedTag = newTagValue.trim();
@@ -206,54 +233,79 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
 
       {/* Grid with Staggered Animation */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
-        {processedNotes.length === 0 ? (
+        {loading ? (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 animate-pop">
+                <span className="material-icons-round text-6xl mb-4 opacity-20 animate-spin">sync</span>
+                <p className="font-bold text-xl">Loading notes...</p>
+            </div>
+        ) : error ? (
+            <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 animate-pop">
+                <span className="material-icons-round text-6xl mb-4 opacity-20">error_outline</span>
+                <p className="font-bold text-xl">Error: {error}</p>
+                <button onClick={refreshNotes} className="mt-4 px-4 py-2 bg-primary border-2 border-ink rounded-lg font-bold">
+                    Retry
+                </button>
+            </div>
+        ) : processedNotes.length === 0 ? (
             <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 animate-pop">
                 <span className="material-icons-round text-6xl mb-4 opacity-20">filter_none</span>
                 <p className="font-bold text-xl">{t('lib.no_results')} "{searchQuery || filter}"</p>
                 <p className="text-sm mt-2">Try adjusting your search or filters.</p>
             </div>
         ) : (
-            processedNotes.map((note, index) => (
-            <div 
-                key={note.id}
-                className="animate-pop"
-                style={{ animationDelay: `${index * 0.05}s` }}
-            >
-                <NeoCard 
-                    color={note.color as any} 
-                    className={`p-5 flex flex-col cursor-pointer group hover:-translate-y-1 h-full relative overflow-hidden ${note.tag === 'Inbox' ? 'border-dashed' : ''}`}
-                    onClick={() => onOpenNote(note.id)}
-                >
-                    {/* Hover Geometry Effect */}
-                    <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"></div>
+            processedNotes.map((note, index) => {
+                const noteTag = categoryToTag[note.category] || note.category;
+                const noteColor = note.color || categoryToColor[note.category] || 'white';
+                const noteIcon = note.icon || categoryToIcon[note.category] || 'note';
+                const displayDate = new Date(note.timestamp).toLocaleDateString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    month: 'short',
+                    day: 'numeric'
+                });
 
-                    <div className="flex justify-between items-start mb-4 relative z-10">
-                        <div className="w-10 h-10 bg-white dark:bg-black/10 border-2 border-ink dark:border-white/20 rounded-lg flex items-center justify-center shadow-sm group-hover:rotate-12 transition-transform duration-300">
-                           <span className="material-icons-round">{note.icon}</span>
+                return (
+                <div
+                    key={note.id}
+                    className="animate-pop"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                    <NeoCard
+                        color={noteColor as any}
+                        className={`p-5 flex flex-col cursor-pointer group hover:-translate-y-1 h-full relative overflow-hidden ${!note.published ? 'border-dashed' : ''}`}
+                        onClick={() => onOpenNote(note.id)}
+                    >
+                        {/* Hover Geometry Effect */}
+                        <div className="absolute -right-10 -bottom-10 w-32 h-32 bg-white/20 rounded-full scale-0 group-hover:scale-100 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]"></div>
+
+                        <div className="flex justify-between items-start mb-4 relative z-10">
+                            <div className="w-10 h-10 bg-white dark:bg-black/10 border-2 border-ink dark:border-white/20 rounded-lg flex items-center justify-center shadow-sm group-hover:rotate-12 transition-transform duration-300">
+                            <span className="material-icons-round">{noteIcon}</span>
+                            </div>
+                            <span className={`border-2 border-ink px-2 py-0.5 rounded text-xs font-bold ${!note.published ? 'bg-red-100 text-red-800 border-red-800 animate-pulse' : 'bg-white/50 dark:bg-black/20 dark:border-white/20'}`}>
+                                {noteTag}
+                            </span>
                         </div>
-                        <span className={`border-2 border-ink px-2 py-0.5 rounded text-xs font-bold ${note.tag === 'Inbox' ? 'bg-red-100 text-red-800 border-red-800 animate-pulse' : 'bg-white/50 dark:bg-black/20 dark:border-white/20'}`}>
-                            {note.tag}
-                        </span>
-                    </div>
-                    <h3 className="font-bold text-xl mb-2 group-hover:underline relative z-10">{note.title}</h3>
-                    <p className="text-sm font-medium opacity-70 mb-4 line-clamp-2 relative z-10">
-                        {note.content}
-                    </p>
-                    <div className="mt-auto flex justify-between items-center border-t-2 border-ink/10 dark:border-white/10 pt-3 relative z-10">
-                        <span className="text-xs font-bold opacity-60">{note.date}</span>
-                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                            <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><span className="material-icons-round text-sm">edit</span></button>
-                            <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><span className="material-icons-round text-sm">share</span></button>
+                        <h3 className="font-bold text-xl mb-2 group-hover:underline relative z-10">{note.title}</h3>
+                        <p className="text-sm font-medium opacity-70 mb-4 line-clamp-2 relative z-10">
+                            {note.content || note.snippet}
+                        </p>
+                        <div className="mt-auto flex justify-between items-center border-t-2 border-ink/10 dark:border-white/10 pt-3 relative z-10">
+                            <span className="text-xs font-bold opacity-60">{displayDate}</span>
+                            <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                                <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><span className="material-icons-round text-sm">edit</span></button>
+                                <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><span className="material-icons-round text-sm">share</span></button>
+                            </div>
                         </div>
-                    </div>
-                </NeoCard>
-            </div>
-            ))
+                    </NeoCard>
+                </div>
+                );
+            })
         )}
-        
-        {/* Add New Card - Visible if not searching */}
-        {!searchQuery && (
-            <div 
+
+        {/* Add New Card - Visible if not searching and no error */}
+        {!searchQuery && !loading && !error && (
+            <div
                 onClick={() => onOpenNote('new')}
                 className="border-3 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl flex flex-col items-center justify-center p-6 text-gray-400 dark:text-gray-500 hover:text-ink dark:hover:text-white hover:border-ink dark:hover:border-white hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer min-h-[200px] group animate-pop"
                 style={{ animationDelay: `${processedNotes.length * 0.05}s` }}

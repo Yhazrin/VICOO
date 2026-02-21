@@ -5,8 +5,10 @@ import { Mascot } from '../components/Mascot';
 import { SuccessAnim } from '../components/SuccessAnim';
 import { View } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
+import type { FeedItem, Note } from '@vicoo/types';
 
-interface FeedItem {
+interface DashboardFeedItem {
     id: string;
     type: 'resume' | 'maintenance' | 'memory' | 'insight';
     title: string;
@@ -14,40 +16,145 @@ interface FeedItem {
     icon: string;
     color: 'primary' | 'secondary' | 'accent' | 'info' | 'white';
     actionLabel: string;
+    noteId?: string;
 }
 
 interface DashboardProps {
     onNavigate: (view: View) => void;
+    onOpenNote?: (noteId: string) => void;
 }
 
-export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
+export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) => {
   const { t } = useLanguage();
+  const { feedItems, notes, createNote } = useApi();
   
-  // Mock Data needs to be inside or updated via effect if we want full translation, 
-  // but for "User Content" simulation we often keep it static. 
-  // Here we translate the static structure labels.
-  const INITIAL_FEED: FeedItem[] = [
+  // Convert API feed items to dashboard format
+  const convertFeedItem = (item: any): DashboardFeedItem => {
+    switch (item.type) {
+      case 'draft':
+        return {
+          id: item.id,
+          type: 'resume',
+          title: item.title || 'Untitled Draft',
+          subtitle: item.description || 'Unpublished note',
+          icon: 'edit_note',
+          color: 'info',
+          actionLabel: 'Resume Writing',
+          noteId: item.metadata?.noteId
+        };
+      case 'suggestion':
+        return {
+          id: item.id,
+          type: 'maintenance',
+          title: item.title,
+          subtitle: item.description || 'System suggestion',
+          icon: 'account_tree',
+          color: 'secondary',
+          actionLabel: 'Review'
+        };
+      case 'memory':
+        return {
+          id: item.id,
+          type: 'memory',
+          title: item.title,
+          subtitle: item.description || 'Resurfaced memory',
+          icon: 'history',
+          color: 'white',
+          actionLabel: 'View Note'
+        };
+      default:
+        return {
+          id: item.id,
+          type: 'insight',
+          title: item.title,
+          subtitle: item.description || 'AI Insight',
+          icon: 'auto_awesome',
+          color: 'primary',
+          actionLabel: 'View Details'
+        };
+    }
+  };
+
+  // Get feed items from API or use notes as fallback
+  const [dashboardFeed, setDashboardFeed] = useState<DashboardFeedItem[]>([]);
+
+  useEffect(() => {
+    if (feedItems && feedItems.length > 0) {
+      setDashboardFeed(feedItems.map(convertFeedItem));
+    } else if (notes && notes.length > 0) {
+      // Fallback: use recent notes as feed items
+      const noteFeed: DashboardFeedItem[] = notes.slice(0, 6).map((note: Note) => ({
+        id: `note-${note.id}`,
+        type: note.published ? 'insight' : 'resume',
+        title: note.title,
+        subtitle: note.snippet || `Last edited: ${new Date(note.timestamp).toLocaleDateString()}`,
+        icon: note.published ? 'auto_awesome' : 'edit_note',
+        color: note.published ? 'primary' as const : 'info' as const,
+        actionLabel: note.published ? 'View' : 'Resume',
+        noteId: note.id
+      }));
+      setDashboardFeed(noteFeed);
+    }
+  }, [feedItems, notes]);
+
+  const INITIAL_FEED: DashboardFeedItem[] = [
     { 
         id: 'f1', type: 'resume', title: 'React Performance Tips', subtitle: 'You were writing this 2 hours ago.', 
-        icon: 'edit_note', color: 'info', actionLabel: 'Resume Writing' 
+        icon: 'edit_note', color: 'info', actionLabel: 'Resume Writing', noteId: 'new'
     },
     { 
         id: 'f2', type: 'maintenance', title: 'Garden Maintenance', subtitle: '3 new clusters detected by Neural Gardener.', 
-        icon: 'account_tree', color: 'secondary', actionLabel: 'Review Clusters' 
+        icon: 'account_tree', color: 'secondary', actionLabel: 'Review Clusters'
     },
     { 
         id: 'f3', type: 'memory', title: 'Startup Idea: Cat Feeder', subtitle: 'Resurfaced from 2 weeks ago. Still relevant?', 
-        icon: 'history', color: 'white', actionLabel: 'View Note' 
+        icon: 'history', color: 'white', actionLabel: 'View Note'
     }
   ];
 
   const [inputValue, setInputValue] = useState('');
   const [processingState, setProcessingState] = useState<'idle' | 'researching' | 'summarizing' | 'done'>('idle');
   const [researchStatus, setResearchStatus] = useState('');
-  const [feed, setFeed] = useState<FeedItem[]>(INITIAL_FEED);
+  const [feed, setFeed] = useState<DashboardFeedItem[]>(INITIAL_FEED);
   const [createdNote, setCreatedNote] = useState<{title: string, tag: string} | null>(null);
 
-  const handleAnalyze = () => {
+  // Update feed when API data is available
+  useEffect(() => {
+    if (dashboardFeed.length > 0) {
+      setFeed(dashboardFeed);
+    }
+  }, [dashboardFeed]);
+
+  const handleCardClick = (item: DashboardFeedItem) => {
+    // Navigate based on item type
+    switch (item.type) {
+      case 'resume':
+        // Open editor with the note ID
+        if (item.noteId && onOpenNote) {
+          onOpenNote(item.noteId);
+        } else if (onOpenNote) {
+          onOpenNote('new');
+        }
+        break;
+      case 'maintenance':
+        // Open taxonomy to review clusters
+        onNavigate(View.TAXONOMY);
+        break;
+      case 'memory':
+      case 'insight':
+        // Open library or editor with note
+        if (item.noteId && onOpenNote) {
+          onOpenNote(item.noteId);
+        } else {
+          onNavigate(View.LIBRARY);
+        }
+        break;
+      default:
+        onNavigate(View.LIBRARY);
+    }
+  };
+
+  const handleAnalyze = async () => {
     if (!inputValue.trim()) return;
     setProcessingState('researching');
     setResearchStatus('Scanning Dev.to & Medium...');
@@ -63,23 +170,38 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
         setResearchStatus('Extracting Key Patterns...');
     }, 2500);
 
-    setTimeout(() => {
+    setTimeout(async () => {
       setProcessingState('done');
-      setCreatedNote({
+      
+      // Create a new note with the research topic
+      try {
+        const newNote = await createNote({
           title: inputValue,
-          tag: 'Research'
-      });
+          content: `# Research: ${inputValue}\n\nAuto-generated research note.`,
+          category: 'idea',
+          published: false,
+          snippet: `Research on ${inputValue}`
+        });
+        
+        setCreatedNote({
+            title: newNote.title,
+            tag: 'Research'
+        });
+      } catch (err) {
+        console.error('Failed to create note:', err);
+      }
+      
       setInputValue('');
 
       // Reset success state after a delay
       setTimeout(() => {
           setProcessingState('idle');
-          // Add the new item to the top of the feed as a "Just Now" item
-          const newItem: FeedItem = {
+          // Add the new item to the top of the feed
+          const newItem: DashboardFeedItem = {
               id: Date.now().toString(),
               type: 'insight',
               title: inputValue,
-              subtitle: 'Auto-Research Complete. 5 sources summarized.',
+              subtitle: 'Auto-Research Complete. Note created.',
               icon: 'auto_awesome',
               color: 'primary',
               actionLabel: t('dash.action.view_brief')
@@ -223,6 +345,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate }) => {
                       <NeoCard 
                         color={item.color as any} 
                         className="h-full flex flex-col p-5 relative overflow-hidden group cursor-pointer hover:-translate-y-1"
+                        onClick={() => handleCardClick(item)}
                       >
                           {/* Type Indicator */}
                           <div className="flex justify-between items-start mb-3 relative z-10">

@@ -1,56 +1,105 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { Mascot } from '../components/Mascot';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
+import { eventBus, Events } from '@vicoo/events';
 
 interface SearchResult {
-  id: number;
+  id: string;
   title: string;
   type: string;
   relevance: number;
   snippet: string;
   date: string;
   color: 'info' | 'accent' | 'primary' | 'secondary';
+  noteId?: string;
 }
 
-export const Search: React.FC = () => {
+interface SearchProps {
+  onOpenNote?: (noteId: string) => void;
+}
+
+export const Search: React.FC<SearchProps> = ({ onOpenNote }) => {
   const { t } = useLanguage();
+  const { searchNotes, notes, aiChat } = useApi();
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [aiMode, setAiMode] = useState<'auto' | 'knowledge' | 'search'>('auto');
+  const [aiProvider, setAiProvider] = useState<'auto' | 'coze' | 'claude'>('auto');
   
-  // Mock results
+  // Real results from API
   const [results, setResults] = useState<SearchResult[]>([]);
   const [aiAnswer, setAiAnswer] = useState<string>('');
   const [activeCitation, setActiveCitation] = useState<number | null>(null);
 
-  // Simulated Database
-  const MOCK_DB: SearchResult[] = [
-    { id: 1, title: 'Optimizing React.memo', type: 'Code', relevance: 98, snippet: 'Use <b>React.memo</b> to prevent unnecessary re-renders in list components...', date: '2 days ago', color: 'info' },
-    { id: 2, title: 'Memoization Strategy', type: 'Design', relevance: 85, snippet: 'Discussed <b>memoization</b> patterns for the new design system tokens...', date: '1 week ago', color: 'accent' },
-    { id: 3, title: 'Q3 Performance Review', type: 'Meeting', relevance: 60, snippet: 'Action item: Audit app for <b>performance</b> bottlenecks...', date: '1 month ago', color: 'primary' },
-    { id: 4, title: 'Neubrutalism Guide', type: 'Design', relevance: 45, snippet: 'High contrast borders and flat colors are key...', date: '3 weeks ago', color: 'accent' },
-  ];
-
-  const handleSearch = () => {
+  const handleSearch = useCallback(async () => {
     if (!query.trim()) return;
     setIsSearching(true);
     setHasSearched(false);
     setAiAnswer('');
     setActiveCitation(null);
 
-    setTimeout(() => {
-       // Filter mock results
-       const hits = MOCK_DB.filter(r => r.title.toLowerCase().includes('memo') || r.snippet.toLowerCase().includes('memo') || query.toLowerCase().includes('react'));
-       setResults(hits.length > 0 ? hits : MOCK_DB.slice(0, 2)); // Fallback mock
-       setIsSearching(false);
-       setHasSearched(true);
-       
-       // Simulate streaming AI response
-       typeWriterEffect("Based on your notes, React.memo [1] is the primary method for optimizing list components. It was also a key topic in your recent Design System meeting [2], where memoization of tokens was discussed.");
-    }, 1500);
-  };
+    // Emit mascot event - searching
+    eventBus.emit(Events.MASCOT_STATE, { state: 'searching', message: 'AI Thinking...', duration: 0 });
+
+    try {
+      // 使用 AI 助手
+      const aiResult = await aiChat(query, aiMode, aiProvider);
+
+      if (aiResult.success) {
+        // 设置 AI 回答
+        setAiAnswer(aiResult.response);
+
+        // 转换 sources 为搜索结果格式
+        const mappedResults: SearchResult[] = (aiResult.sources || []).map((source, index) => ({
+          id: source.id || `source-${index}`,
+          title: source.title,
+          type: source.type || 'Note',
+          relevance: 90 - (index * 10),
+          snippet: source.content?.substring(0, 150) || '',
+          date: 'Recent',
+          color: ['info', 'accent', 'primary', 'secondary'][index % 4] as SearchResult['color'],
+          noteId: source.id
+        }));
+
+        setResults(mappedResults);
+
+        // Emit mascot event based on results
+        if (mappedResults.length > 0) {
+          eventBus.emit(Events.MASCOT_STATE, {
+            state: 'search_found',
+            message: `Found ${mappedResults.length} sources!`,
+            duration: 3000
+          });
+          typeWriterEffect(`${aiResult.response.substring(0, 100)}... Found ${mappedResults.length} related sources.`);
+        } else {
+          eventBus.emit(Events.MASCOT_STATE, {
+            state: 'search_empty',
+            message: 'No matches found...',
+            duration: 3000
+          });
+          typeWriterEffect(aiResult.response);
+        }
+      } else {
+        throw new Error(aiResult.error || 'AI request failed');
+      }
+    } catch (err) {
+      console.error('Search failed:', err);
+      setResults([]);
+      eventBus.emit(Events.MASCOT_STATE, {
+        state: 'error',
+        message: 'Search failed!',
+        duration: 3000
+      });
+      typeWriterEffect(`抱歉，处理您的请求时出现错误。请稍后重试。`);
+    } finally {
+      setIsSearching(false);
+      setHasSearched(true);
+    }
+  }, [query, aiChat, aiMode, aiProvider]);
 
   const typeWriterEffect = (text: string) => {
       let i = 0;
@@ -94,10 +143,10 @@ export const Search: React.FC = () => {
       </div>
 
       {/* Search Bar (Sticky-ish feel) */}
-      <div className="relative mb-12 max-w-3xl mx-auto w-full z-20">
+      <div className="relative mb-6 max-w-3xl mx-auto w-full z-20">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
           <span className={`material-icons-round text-3xl transition-colors ${isSearching ? 'text-primary animate-spin' : 'text-gray-400'}`}>
-            {isSearching ? 'sync' : 'search'}
+            {isSearching ? 'sync' : 'psychology'}
           </span>
         </div>
         <input 
@@ -105,10 +154,89 @@ export const Search: React.FC = () => {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          placeholder={t('search.placeholder')} 
-          className="w-full pl-16 pr-20 py-5 rounded-2xl border-3 border-ink dark:border-gray-500 text-xl font-bold placeholder-gray-300 shadow-neo dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] focus:ring-0 focus:outline-none transition-shadow focus:shadow-neo-lg dark:focus:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] bg-white dark:bg-gray-800 text-ink dark:text-white"
+          placeholder={t('search.placeholder')}
+          disabled={isSearching}
+          className="w-full pl-16 pr-32 py-5 rounded-2xl border-3 border-ink dark:border-gray-500 text-xl font-bold placeholder-gray-300 shadow-neo dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] focus:ring-0 focus:outline-none transition-shadow focus:shadow-neo-lg dark:focus:shadow-[6px_6px_0px_0px_rgba(255,255,255,0.3)] bg-white dark:bg-gray-800 text-ink dark:text-white disabled:opacity-50"
         />
-        <div className="absolute inset-y-0 right-3 flex items-center">
+        <div className="absolute inset-y-0 right-3 flex items-center gap-2">
+          {/* 模式选择 */}
+          <div className="hidden md:flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => setAiMode('knowledge')}
+              disabled={isSearching}
+              className={`px-2 py-1 text-xs font-bold rounded transition-colors ${
+                aiMode === 'knowledge' 
+                  ? 'bg-primary text-white' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="知识库问答"
+            >
+              笔记
+            </button>
+            <button
+              onClick={() => setAiMode('search')}
+              disabled={isSearching}
+              className={`px-2 py-1 text-xs font-bold rounded transition-colors ${
+                aiMode === 'search' 
+                  ? 'bg-primary text-white' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="全网搜索"
+            >
+              全网
+            </button>
+            <button
+              onClick={() => setAiMode('auto')}
+              disabled={isSearching}
+              className={`px-2 py-1 text-xs font-bold rounded transition-colors ${
+                aiMode === 'auto' 
+                  ? 'bg-primary text-white' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="AI 自动判断"
+            >
+              AI
+            </button>
+          </div>
+          {/* AI 提供者选择 */}
+          <div className="hidden lg:flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => setAiProvider('auto')}
+              disabled={isSearching}
+              className={`px-2 py-1 text-xs font-bold rounded transition-colors ${
+                aiProvider === 'auto' 
+                  ? 'bg-accent text-white' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="自动选择"
+            >
+              Auto
+            </button>
+            <button
+              onClick={() => setAiProvider('coze')}
+              disabled={isSearching}
+              className={`px-2 py-1 text-xs font-bold rounded transition-colors ${
+                aiProvider === 'coze' 
+                  ? 'bg-accent text-white' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="Coze 智能体"
+            >
+              Coze
+            </button>
+            <button
+              onClick={() => setAiProvider('claude')}
+              disabled={isSearching}
+              className={`px-2 py-1 text-xs font-bold rounded transition-colors ${
+                aiProvider === 'claude' 
+                  ? 'bg-accent text-white' 
+                  : 'text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+              }`}
+              title="Claude Code"
+            >
+              Claude
+            </button>
+          </div>
            <NeoButton size="sm" onClick={handleSearch} disabled={isSearching} className="!px-4">
               {isSearching ? t('search.thinking') : t('search.ask')}
            </NeoButton>
@@ -185,7 +313,12 @@ export const Search: React.FC = () => {
                                 p-5 flex flex-col gap-2 cursor-pointer
                                 ${activeCitation === (index + 1) ? 'ring-4 ring-offset-2 ring-primary border-ink' : 'hover:border-gray-400 dark:hover:border-gray-500'}
                             `}
-                            onClick={() => setActiveCitation(index + 1)}
+                            onClick={() => {
+                              setActiveCitation(index + 1);
+                              if (res.noteId && onOpenNote) {
+                                onOpenNote(res.noteId);
+                              }
+                            }}
                         >
                             <div className="flex justify-between items-start">
                                 <div className="flex items-center gap-2">

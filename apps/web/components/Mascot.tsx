@@ -1,8 +1,26 @@
 import React from 'react';
 import { useTheme, MascotSkin } from '../contexts/ThemeContext';
 
+// Extended mascot states for deep event integration
+type ExtendedState =
+  // Legacy states
+  | 'idle' | 'thinking' | 'happy' | 'working'
+  // Editor states
+  | 'typing' | 'saving' | 'saved'
+  // Search states
+  | 'searching' | 'search_found' | 'search_empty'
+  // Vibe Coding states
+  | 'connecting' | 'connected' | 'disconnected'
+  | 'file_reading' | 'file_writing' | 'command_running'
+  // Navigation states
+  | 'navigating' | 'focus_enter' | 'focus_exit'
+  // Sync states
+  | 'syncing' | 'synced' | 'sync_error'
+  // Interaction states
+  | 'dragging' | 'dropped' | 'celebrating' | 'surprised' | 'sad';
+
 interface MascotProps {
-  state: 'idle' | 'thinking' | 'happy' | 'working';
+  state: ExtendedState;
   className?: string;
   skin?: MascotSkin; // Allow overriding the context (e.g. for previews)
 }
@@ -11,12 +29,50 @@ export const Mascot: React.FC<MascotProps> = ({ state, className = '', skin: pro
   const { mascotSkin } = useTheme();
   const activeSkin = propSkin || mascotSkin;
 
-  // Common Animation Classes
-  const bodyAnim = 
-    state === 'happy' ? 'animate-squash origin-bottom' : 
-    state === 'thinking' ? 'animate-shiver' : 
-    state === 'working' ? 'animate-none translate-y-2' :
-    'animate-float';
+  // Map extended states to animation classes
+  const bodyAnim = (() => {
+    switch (state) {
+      // Legacy states
+      case 'happy':
+      case 'celebrating':
+      case 'search_found':
+      case 'synced':
+      case 'completed':
+      case 'saved':
+      case 'connected':
+        return 'animate-squash origin-bottom';
+      case 'thinking':
+      case 'search_empty':
+      case 'navigating':
+        return 'animate-shiver';
+      case 'working':
+      case 'typing':
+      case 'saving':
+      case 'tool_using':
+      case 'file_reading':
+      case 'file_writing':
+      case 'command_running':
+      case 'syncing':
+      case 'dragging':
+        return 'animate-none translate-y-2';
+      case 'surprised':
+      case 'focus_enter':
+        return 'animate-[wiggle_0.5s_ease-in-out_infinite]';
+      case 'sad':
+      case 'sync_error':
+      case 'error':
+      case 'disconnected':
+        return 'animate-[shiver_1s_ease-in-out_infinite] origin-top';
+      case 'dropped':
+        return 'animate-[bounce_0.5s_ease-out]';
+      case 'searching':
+      case 'connecting':
+      case 'focus_exit':
+        return 'animate-[pulse_1s_ease-in-out_infinite]';
+      default:
+        return 'animate-float';
+    }
+  })();
 
   // --- SKIN: CLASSIC BOT ---
   if (activeSkin === 'bot') {
@@ -54,43 +110,68 @@ export const Mascot: React.FC<MascotProps> = ({ state, className = '', skin: pro
                   className="transition-colors duration-300 dark:stroke-white dark:fill-gray-900"
               />
               
-              {/* Antenna */}
+              {/* Antenna - Extended states */}
               <g transform="translate(100, 50)">
-                  <line x1="0" y1="0" x2="0" y2={state === 'thinking' ? '-35' : '-25'} stroke="#1a1a1a" strokeWidth="6" className="transition-all duration-300 dark:stroke-white" />
-                  <circle 
-                      cx="0" cy={state === 'thinking' ? '-35' : '-25'} r={state === 'thinking' ? '12' : '10'} 
-                      fill={state === 'thinking' ? '#EF476F' : state === 'working' ? '#118AB2' : '#0df259'} 
+                  <line x1="0" y1="0" x2="0" y2={
+                    ['thinking', 'searching', 'navigating', 'search_empty'].includes(state) ? '-35' :
+                    ['surprised', 'focus_enter'].includes(state) ? '-45' :
+                    '-25'
+                  } stroke="#1a1a1a" strokeWidth="6" className="transition-all duration-300 dark:stroke-white" />
+                  <circle
+                      cx="0" cy={
+                        ['thinking', 'searching', 'navigating', 'search_empty'].includes(state) ? '-35' :
+                        ['surprised', 'focus_enter'].includes(state) ? '-45' :
+                        '-25'
+                      } r={
+                        ['thinking', 'searching', 'navigating', 'search_empty'].includes(state) ? '12' :
+                        ['surprised', 'focus_enter'].includes(state) ? '14' :
+                        '10'
+                      }
+                      fill={
+                        ['thinking', 'searching', 'navigating', 'search_empty'].includes(state) ? '#EF476F' :
+                        ['happy', 'celebrating', 'search_found', 'synced', 'completed', 'saved', 'connected'].includes(state) ? '#0df259' :
+                        ['sad', 'error', 'sync_error', 'disconnected'].includes(state) ? '#EF476F' :
+                        ['surprised', 'focus_enter'].includes(state) ? '#FFD166' :
+                        ['working', 'typing', 'saving', 'tool_using', 'file_reading', 'file_writing', 'command_running', 'syncing', 'dragging'].includes(state) ? '#118AB2' :
+                        '#0df259'
+                      }
                       stroke="#1a1a1a" strokeWidth="4"
                       className="transition-all duration-300 dark:stroke-white"
                   >
-                      {state === 'thinking' && <animate attributeName="fill" values="#EF476F;#FFD166;#EF476F" dur="0.5s" repeatCount="indefinite" />}
+                      {['thinking', 'searching', 'navigating', 'search_empty'].includes(state) && <animate attributeName="fill" values="#EF476F;#FFD166;#EF476F" dur="0.5s" repeatCount="indefinite" />}
+                      {['happy', 'celebrating', 'search_found', 'synced', 'completed', 'saved'].includes(state) && <animate attributeName="fill" values="#0df259;#118AB2;#0df259" dur="0.8s" repeatCount="indefinite" />}
+                      {['sad', 'error', 'sync_error'].includes(state) && <animate attributeName="fill" values="#EF476F;#FF6B6B;#EF476F" dur="1s" repeatCount="indefinite" />}
                   </circle>
               </g>
 
-              {/* Face Expressions */}
+              {/* Face Expressions - Extended states */}
               <g className="dark:[&_path]:stroke-white dark:[&_circle]:fill-white">
-                {state === 'idle' && (
+                {/* IDLE - Default blinking */}
+                {(state === 'idle' || state === 'dragging' || state === 'dropped') && (
                   <g className="animate-blink" style={{ transformOrigin: '100px 100px' }}>
                       <circle cx="80" cy="100" r="8" fill="#1a1a1a" />
                       <circle cx="120" cy="100" r="8" fill="#1a1a1a" />
                       <path d="M90 120 Q100 125 110 120" fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
                   </g>
                 )}
-                {state === 'thinking' && (
+                {/* THINKING - Processing/Analysis */}
+                {(state === 'thinking' || state === 'searching' || state === 'navigating' || state === 'search_empty') && (
                   <g>
                       <path d="M75 100 L95 100" stroke="#0df259" strokeWidth="4" strokeLinecap="round" />
                       <path d="M115 100 L135 100" stroke="#0df259" strokeWidth="4" strokeLinecap="round" />
                       <path d="M95 120 Q105 125 115 120" fill="none" stroke="#0df259" strokeWidth="3" strokeLinecap="round" />
                   </g>
                 )}
-                {state === 'happy' && (
+                {/* HAPPY/CELEBRATING - Success states */}
+                {(state === 'happy' || state === 'celebrating' || state === 'search_found' || state === 'synced' || state === 'completed' || state === 'saved' || state === 'connected') && (
                   <g>
                       <path d="M75 105 L85 95 L95 105" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M105 105 L115 95 L125 105" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
                       <path d="M85 120 Q100 135 115 120" fill="none" stroke="#1a1a1a" strokeWidth="4" strokeLinecap="round" />
                   </g>
                 )}
-                {state === 'working' && (
+                {/* WORKING/TYPING - Active work states */}
+                {(state === 'working' || state === 'typing' || state === 'saving' || state === 'tool_using' || state === 'file_reading' || state === 'file_writing' || state === 'command_running' || state === 'syncing') && (
                   <g transform="translate(0, 5)">
                       <circle cx="80" cy="100" r="14" fill="#ffffff" stroke="#1a1a1a" strokeWidth="3" className="dark:fill-gray-800" />
                       <circle cx="120" cy="100" r="14" fill="#ffffff" stroke="#1a1a1a" strokeWidth="3" className="dark:fill-gray-800" />
@@ -99,33 +180,94 @@ export const Mascot: React.FC<MascotProps> = ({ state, className = '', skin: pro
                       <circle cx="120" cy="100" r="4" fill="#1a1a1a"><animate attributeName="cx" values="116;124;116" dur="2s" repeatCount="indefinite" /></circle>
                   </g>
                 )}
+                {/* SURPRISED - Focus mode enter */}
+                {(state === 'surprised' || state === 'focus_enter') && (
+                  <g>
+                      <circle cx="80" cy="100" r="12" fill="#1a1a1a" />
+                      <circle cx="120" cy="100" r="12" fill="#1a1a1a" />
+                      <circle cx="80" cy="100" r="5" fill="#ffffff" />
+                      <circle cx="120" cy="100" r="5" fill="#ffffff" />
+                      <ellipse cx="100" cy="125" rx="15" ry="8" fill="#1a1a1a" />
+                  </g>
+                )}
+                {/* SAD/ERROR - Error states */}
+                {(state === 'sad' || state === 'error' || state === 'sync_error' || state === 'disconnected') && (
+                  <g>
+                      <circle cx="80" cy="105" r="8" fill="#1a1a1a" />
+                      <circle cx="120" cy="105" r="8" fill="#1a1a1a" />
+                      <path d="M85 125 Q100 115 115 125" fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+                      <path d="M70 90 L90 100" stroke="#EF476F" strokeWidth="2" strokeLinecap="round" />
+                      <path d="M130 90 L110 100" stroke="#EF476F" strokeWidth="2" strokeLinecap="round" />
+                  </g>
+                )}
+                {/* CONNECTING - Pulsing */}
+                {(state === 'connecting' || state === 'focus_exit') && (
+                  <g className="animate-pulse">
+                      <circle cx="80" cy="100" r="8" fill="#1a1a1a" />
+                      <circle cx="120" cy="100" r="8" fill="#1a1a1a" />
+                      <path d="M90 120 Q100 122 110 120" fill="none" stroke="#1a1a1a" strokeWidth="3" strokeLinecap="round" />
+                  </g>
+                )}
               </g>
 
-              {/* Arms */}
+              {/* Arms - Extended states */}
               <g className="dark:[&_path]:stroke-white dark:[&_circle]:stroke-white">
-                {state === 'idle' && (
+                {/* IDLE/DRAGGING/DROPPED */}
+                {(state === 'idle' || state === 'dragging' || state === 'dropped') && (
                   <>
                     <path d="M40 120 Q20 140 40 160" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
                     <path d="M160 120 Q180 140 160 160" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
                   </>
                 )}
-                {state === 'happy' && (
+                {/* HAPPY/CELEBRATING */}
+                {(state === 'happy' || state === 'celebrating' || state === 'search_found' || state === 'synced' || state === 'completed' || state === 'saved' || state === 'connected') && (
                    <>
                     <path d="M40 110 Q20 80 30 60" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round"><animate attributeName="d" values="M40 110 Q20 80 30 60; M40 110 Q10 90 20 70; M40 110 Q20 80 30 60" dur="0.6s" repeatCount="indefinite" /></path>
                     <path d="M160 110 Q180 80 170 60" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round"><animate attributeName="d" values="M160 110 Q180 80 170 60; M160 110 Q190 90 180 70; M160 110 Q180 80 170 60" dur="0.6s" repeatCount="indefinite" /></path>
                    </>
                 )}
-                {state === 'thinking' && (
+                {/* THINKING/SEARCHING */}
+                {(state === 'thinking' || state === 'searching' || state === 'navigating' || state === 'search_empty') && (
                    <>
                     <path d="M40 130 Q20 150 40 170" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
                     <path d="M160 140 L130 150 L110 135" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round" />
                    </>
                 )}
-                {state === 'working' && (
+                {/* WORKING/TYPING/SYNCING - All active work states */}
+                {(state === 'working' || state === 'typing' || state === 'saving' || state === 'tool_using' || state === 'file_reading' || state === 'file_writing' || state === 'command_running' || state === 'syncing') && (
                    <>
                     <circle cx="60" cy="150" r="12" fill="#0df259" stroke="#1a1a1a" strokeWidth="3" className="animate-type dark:fill-primary" style={{ animationDelay: '0s' }} />
                     <circle cx="140" cy="150" r="12" fill="#0df259" stroke="#1a1a1a" strokeWidth="3" className="animate-type dark:fill-primary" style={{ animationDelay: '0.05s' }} />
                     <path d="M30 170 L170 170" stroke="#118AB2" strokeWidth="2" strokeDasharray="4 4" opacity="0.6" />
+                   </>
+                )}
+                {/* SURPRISED */}
+                {(state === 'surprised' || state === 'focus_enter') && (
+                   <>
+                    <path d="M40 100 Q10 90 20 70" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round">
+                        <animate attributeName="d" values="M40 100 Q10 90 20 70; M40 100 Q5 80 15 60; M40 100 Q10 90 20 70" dur="0.3s" repeatCount="indefinite" />
+                    </path>
+                    <path d="M160 100 Q190 90 180 70" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round">
+                        <animate attributeName="d" values="M160 100 Q190 90 180 70; M160 100 Q195 80 185 60; M160 100 Q190 90 180 70" dur="0.3s" repeatCount="indefinite" />
+                    </path>
+                   </>
+                )}
+                {/* SAD/ERROR */}
+                {(state === 'sad' || state === 'error' || state === 'sync_error' || state === 'disconnected') && (
+                   <>
+                    <path d="M40 140 Q30 160 50 170" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+                    <path d="M160 140 Q170 160 150 170" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round" />
+                   </>
+                )}
+                {/* CONNECTING */}
+                {(state === 'connecting' || state === 'focus_exit') && (
+                   <>
+                    <path d="M40 120 Q10 120 20 100" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round">
+                        <animate attributeName="d" values="M40 120 Q10 120 20 100; M40 120 Q5 110 15 90; M40 120 Q10 120 20 100" dur="1s" repeatCount="indefinite" />
+                    </path>
+                    <path d="M160 120 Q190 120 180 100" fill="none" stroke="#1a1a1a" strokeWidth="6" strokeLinecap="round">
+                        <animate attributeName="d" values="M160 120 Q190 120 180 100; M160 120 Q195 110 185 90; M160 120 Q190 120 180 100" dur="1s" repeatCount="indefinite" />
+                    </path>
                    </>
                 )}
               </g>

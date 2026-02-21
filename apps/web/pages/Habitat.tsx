@@ -1,32 +1,61 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { Mascot } from '../components/Mascot';
 import { NeoButton } from '../components/NeoButton';
 import { NeoModal } from '../components/NeoModal';
+import { useApi } from '../contexts/ApiContext';
 
 export const Habitat: React.FC = () => {
   const [isOrphanModalOpen, setIsOrphanModalOpen] = useState(false);
   const [currentOrphanIndex, setCurrentOrphanIndex] = useState(0);
+  const { nodes, notes, analytics, refreshGraph, refreshAnalytics } = useApi();
+  
+  // Get orphan nodes (nodes without links)
+  const [orphans, setOrphans] = useState<any[]>([]);
+  
+  useEffect(() => {
+    refreshGraph();
+    refreshAnalytics();
+  }, [refreshGraph, refreshAnalytics]);
+  
+  // Calculate orphan nodes from API data
+  useEffect(() => {
+    if (nodes.length > 0) {
+      // Find nodes without links - simplified logic
+      const orphanNodes = nodes.filter(n => !n.linkedNoteId).slice(0, 10);
+      setOrphans(orphanNodes.map(n => ({
+        id: n.id,
+        title: n.label,
+        preview: n.description || 'No description',
+        date: 'Recently'
+      })));
+    } else {
+      // Fallback mock data
+      setOrphans([
+          { id: '1', title: 'Grocery List: Avocados', preview: 'Need to buy avocados for the toast...', date: '3 days ago' },
+          { id: '2', title: 'Shower thought about Aliens', preview: 'If they exist, why haven\'t they called?', date: '1 week ago' },
+          { id: '3', title: 'CSS Grid vs Flexbox', preview: 'Grid is for layout, Flex is for alignment...', date: '2 weeks ago' }
+      ]);
+    }
+  }, [nodes]);
 
-  // Mock Orphans
-  const orphans = [
-      { id: 1, title: 'Grocery List: Avocados', preview: 'Need to buy avocados for the toast...', date: '3 days ago' },
-      { id: 2, title: 'Shower thought about Aliens', preview: 'If they exist, why haven\'t they called?', date: '1 week ago' },
-      { id: 3, title: 'CSS Grid vs Flexbox', preview: 'Grid is for layout, Flex is for alignment...', date: '2 weeks ago' }
-  ];
+  const currentOrphan = orphans[currentOrphanIndex] || { title: '', preview: '', date: '' };
+  
+  const stats = {
+    totalNotes: notes.length || 1248,
+    connections: nodes.length || 3402,
+    orphanCount: orphans.length
+  };
 
   const handleLinkOrphan = () => {
-      // Simulate linking logic
+      // Move to next orphan
       if (currentOrphanIndex < orphans.length - 1) {
           setCurrentOrphanIndex(prev => prev + 1);
       } else {
           setIsOrphanModalOpen(false);
           setCurrentOrphanIndex(0);
-          // Show success toast in real app
       }
   };
-
-  const currentOrphan = orphans[currentOrphanIndex];
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 h-full flex flex-col">

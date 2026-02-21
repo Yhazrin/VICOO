@@ -13,7 +13,8 @@ export enum View {
   TEMPLATES = 'templates',
   FOCUS = 'focus',
   PUBLIC_GATEWAY = 'public_gateway',
-  SPARK = 'spark'
+  AUTH = 'auth',
+  VIBE_CODING = 'vibe_coding'
 }
 
 export interface NavItem {

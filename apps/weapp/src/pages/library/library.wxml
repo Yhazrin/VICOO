@@ -1,0 +1,73 @@
+<!--pages/library/library.wxml-->
+<view class="container">
+  <!-- Header -->
+  <view class="header">
+    <view class="title-large">Library</view>
+  </view>
+
+  <!-- Search -->
+  <view class="search-box">
+    <input
+      class="neo-input"
+      placeholder="Search notes..."
+      value="{{searchQuery}}"
+      bindinput="onSearch"
+    />
+  </view>
+
+  <!-- Category Filter -->
+  <view class="filter-bar">
+    <scroll-view scroll-x class="filter-scroll">
+      <view class="filter-list">
+        <view
+          wx:for="{{categories}}"
+          wx:key="*this"
+          class="filter-item {{filter === item ? 'active' : ''}}"
+          data-filter="{{item}}"
+          bindtap="setFilter"
+        >
+          {{item}}
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- Notes Grid -->
+  <view wx:if="{{loading}}" class="loading">
+    <text>Loading...</text>
+  </view>
+
+  <view wx:else>
+    <view wx:if="{{filteredNotes.length === 0}}" class="empty-state">
+      <text>No notes found</text>
+    </view>
+
+    <view class="notes-grid">
+      <view
+        wx:for="{{filteredNotes}}"
+        wx:key="id"
+        class="neo-card note-card"
+        data-id="{{item.id}}"
+        bindtap="goToEditor"
+      >
+        <view class="note-header">
+          <view class="neo-tag neo-tag-{{item.category}}">{{item.category}}</view>
+          <view wx:if="{{!item.published}}" class="draft-badge">Draft</view>
+        </view>
+        <view class="note-title title-small">{{item.title}}</view>
+        <view class="note-snippet text-body">{{item.snippet}}</view>
+        <view class="note-footer">
+          <text class="note-date">{{item.timestamp}}</text>
+          <view class="note-actions">
+            <text class="action-btn" catchtap="deleteNote" data-id="{{item.id}}">🗑️</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- FAB -->
+  <view class="fab" bindtap="createNote">
+    <text class="fab-icon">+</text>
+  </view>
+</view>

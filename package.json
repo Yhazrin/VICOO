@@ -1,0 +1,22 @@
+{
+  "name": "vicoo",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm --parallel -r dev",
+    "build": "pnpm -r build",
+    "dev:web": "pnpm --filter vicoo-web dev",
+    "dev:api": "pnpm --filter vicoo-api dev",
+    "dev:mobile": "pnpm --filter vicoo-mobile start",
+    "dev:weapp": "echo 'Use WeChat DevTools to open apps/weapp'",
+    "dev:desktop": "pnpm --filter vicoo-desktop dev",
+    "tauri:dev": "pnpm --filter vicoo-desktop tauri:dev",
+    "tauri:build": "pnpm --filter vicoo-desktop tauri:build"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["node-pty"]
+  }
+}

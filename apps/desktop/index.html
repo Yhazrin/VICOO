@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>vicoo - Your Visual Coordinator</title>
+    <style>
+      /* 预加载样式防止白屏 */
+      html, body {
+        background-color: #FFD166;
+        margin: 0;
+        padding: 0;
+        height: 100%;
+        overflow: hidden;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      /* 加载画面 */
+      #root:empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        background-color: #FFD166;
+      }
+
+      #root:empty::before {
+        content: 'vicoo';
+        font-family: 'Space Grotesk', sans-serif;
+        font-size: 64px;
+        font-weight: 900;
+        color: #1a1a1a;
+        margin-bottom: 24px;
+        animation: float 3s ease-in-out infinite;
+      }
+
+      #root:empty::after {
+        content: '';
+        width: 200px;
+        height: 8px;
+        background-color: #e5e7eb;
+        border-radius: 4px;
+        overflow: hidden;
+        border: 2px solid #1a1a1a;
+      }
+
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

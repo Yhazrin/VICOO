@@ -1,0 +1,79 @@
+<!--pages/editor/editor.wxml-->
+<view class="container">
+  <!-- Header -->
+  <view class="editor-header">
+    <view class="back-btn" bindtap="wx.navigateBack">
+      <text>← Back</text>
+    </view>
+    <button class="neo-button neo-button-primary" bindtap="saveNote" disabled="{{saving}}">
+      {{saving ? 'Saving...' : 'Save'}}
+    </button>
+  </view>
+
+  <!-- Title -->
+  <view class="form-group">
+    <input
+      class="title-input"
+      placeholder="Note title..."
+      value="{{title}}"
+      bindinput="onTitleChange"
+    />
+  </view>
+
+  <!-- Category -->
+  <view class="form-group">
+    <view class="label">Category</view>
+    <view class="category-list">
+      <view
+        wx:for="{{categories}}"
+        wx:key="value"
+        class="category-item {{category === item.value ? 'active' : ''}}"
+        data-value="{{item.value}}"
+        bindtap="setCategory"
+      >
+        {{item.label}}
+      </view>
+    </view>
+  </view>
+
+  <!-- Content -->
+  <view class="form-group">
+    <view class="label">Content</view>
+    <textarea
+      class="content-input"
+      placeholder="Write your note here..."
+      value="{{content}}"
+      bindinput="onContentChange"
+      auto-height
+    />
+  </view>
+
+  <!-- Tags -->
+  <view class="form-group">
+    <view class="label">Tags</view>
+    <view class="tags-container">
+      <view wx:for="{{tags}}" wx:key="*this" class="tag-item">
+        <text>#{{item}}</text>
+        <text class="tag-remove" data-index="{{index}}" bindtap="removeTag">×</text>
+      </view>
+      <view class="tag-add" bindtap="addTag">+ Add Tag</view>
+    </view>
+  </view>
+
+  <!-- Published Toggle -->
+  <view class="form-group">
+    <view class="publish-toggle" bindtap="togglePublished">
+      <text>Published</text>
+      <view class="toggle {{published ? 'active' : ''}}">
+        <view class="toggle-thumb"></view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Delete Button -->
+  <view wx:if="{{noteId}}" class="delete-section mt-lg">
+    <button class="neo-button" style="background: #ff6b6b; color: white;" bindtap="deleteNote">
+      Delete Note
+    </button>
+  </view>
+</view>

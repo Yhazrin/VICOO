@@ -1,0 +1,69 @@
+<!--pages/search/search.wxml-->
+<view class="container">
+  <!-- Search Input -->
+  <view class="search-section">
+    <view class="search-box">
+      <input
+        class="neo-input"
+        placeholder="Search notes..."
+        value="{{query}}"
+        bindinput="onSearch"
+        bindconfirm="onSearchConfirm"
+        focus
+      />
+      <view wx:if="{{query}}" class="clear-btn" bindtap="clearSearch">×</view>
+    </view>
+  </view>
+
+  <!-- Loading -->
+  <view wx:if="{{searching}}" class="loading">
+    <text>Searching...</text>
+  </view>
+
+  <!-- Results -->
+  <view wx:elif="{{searched}}">
+    <view wx:if="{{results.length === 0}}" class="empty-state">
+      <text>No results found for "{{query}}"</text>
+    </view>
+
+    <view wx:else>
+      <view class="results-count">{{results.length}} results</view>
+      <view class="results-list">
+        <view
+          wx:for="{{results}}"
+          wx:key="id"
+          class="neo-card result-card"
+          data-id="{{item.id}}"
+          bindtap="goToNote"
+        >
+          <view class="neo-tag neo-tag-{{item.category}}">{{item.category}}</view>
+          <view class="result-title title-small">{{item.title}}</view>
+          <view class="result-snippet text-body">{{item.snippet}}</view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Recent Searches -->
+  <view wx:else>
+    <view wx:if="{{recentSearches.length > 0}}" class="recent-section">
+      <view class="section-title title-medium mb-md">Recent Searches</view>
+      <view class="recent-list">
+        <view
+          wx:for="{{recentSearches}}"
+          wx:key="*this"
+          class="recent-item"
+          data-query="{{item}}"
+          bindtap="useRecent"
+        >
+          <text class="recent-icon">🕐</text>
+          <text>{{item}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view wx:else class="empty-state">
+      <text>Search for notes by title, content, or tags</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,428 @@
+{
+    "home": {
+        "title": "Select a Service",
+        "description": "Choose which service you want to download from.",
+        "bilibiliButton": "Bilibili Downloader",
+        "douyinButton": "Douyin Downloader"
+    },
+    "unified": {
+        "pageTitle": "Social Media Downloader",
+        "pageDescription": "Paste video links and automatically detect platform. Supports Bilibili, Douyin, and Xiaohongshu.",
+        "placeholder": "Paste video link here..."
+    },
+    "page": {
+        "feedback": "For feedback or suggestions, please ",
+        "feedbackLinkText": "submit an issue on GitHub",
+        "faqLinkText": "FAQ",
+        "copyrightVideo": "Copyright Notice: Video copyrights belong to relevant websites and authors",
+        "copyrightStorage": "This site does not provide or store any videos or images",
+        "copyrightYear": "Copyright © 2025",
+        "copyrightBilibiliRestriction": "⚠️ Downloading copyright-restricted videos (such as member-exclusive or paid content) is not supported."
+    },
+    "form": {
+        "pasteButton": "Paste",
+        "downloadButton": "Parse",
+        "downloading": "Parsing..."
+    },
+    "errors": {
+        "emptyUrl": "URL cannot be empty.",
+        "downloadError": "An unknown error occurred during processing.",
+        "downloadFailed": "Processing failed",
+        "getVideoInfoFailed": "Failed to get video information, please try again later.",
+        "clipboardFailed": "Failed to read clipboard.",
+        "clipboardPermission": "Please check if clipboard permission is granted.",
+        "allImagesLoadFailed": "All images failed to load, unable to package download",
+        "packageFailed": "Packaging failed, please try again",
+        "confirmPartialDownload": "{failCount} images failed to load. Download remaining {successCount} images?",
+        "continue": "Continue",
+        "cancel": "Cancel"
+    },
+    "history": {
+        "title": "History",
+        "description": "History feature description",
+        "clear": "Clear",
+        "cleared": "History cleared",
+        "viewSource": "View Original",
+        "redownload": "Re-parse",
+        "linkFilled": "Link filled",
+        "clickToRedownload": "Click parse button to start re-parsing",
+        "platforms": {
+            "bilibili": "Bilibili",
+            "douyin": "Douyin",
+            "xiaohongshu": "Xiaohongshu",
+            "unknown": "Unknown"
+        }
+    },
+    "toast": {
+        "linkFilled": "Link pasted.",
+        "douyinParseSuccess": "Successfully parsed",
+        "linkFilledForRedownload": "Link filled",
+        "clickToRedownloadDesc": "Click parse button to start re-parsing"
+    },
+    "metadata": {
+        "title": "Universal Media Downloader - Download Videos & Audio from Bilibili, Douyin, Xiaohongshu",
+        "description": "Free online universal media download tool. Supports video and audio downloads from Bilibili, Douyin, Xiaohongshu and more platforms. Extract Bilibili audio to MP3, download Bilibili videos, Douyin no-watermark videos, Xiaohongshu image notes. Paste link, auto-detect platform, high-quality downloads.",
+        "keywords": "universal downloader,media downloader,Bilibili audio download,Bilibili video download,Douyin video downloader,Xiaohongshu downloader,Bilibili audio extractor,Bilibili to MP3,Douyin no watermark,video downloader,audio extractor,free video download,online video downloader",
+        "ogTitle": "Universal Media Downloader - Free Online Tool",
+        "ogDescription": "Professional universal media download tool. Supports video and audio downloads from Bilibili, Douyin, Xiaohongshu and more platforms, auto-detect platform, one-click high-quality download.",
+        "siteName": "Universal Media Downloader"
+    },
+    "faqPage": {
+        "metaTitle": "Video Download FAQ | Bilibili, Douyin, Xiaohongshu Supported",
+        "metaDescription": "FAQ for video downloads on Bilibili, Douyin, and Xiaohongshu, including no-watermark downloads, link formats, audio extraction, quality options, and parsing issues.",
+        "metaOgTitle": "Video Download FAQ | Bilibili, Douyin, Xiaohongshu Supported",
+        "metaOgDescription": "FAQ for video downloads on Bilibili, Douyin, and Xiaohongshu, including no-watermark downloads, link formats, audio extraction, quality options, and parsing issues.",
+        "title": "Video Download FAQ (Bilibili / Douyin / Xiaohongshu)",
+        "intro": "This tool supports video downloads and audio extraction for Bilibili, Douyin, and Xiaohongshu. Paste a link to auto-detect the platform and show download options.",
+        "questions": [
+            {
+                "question": "How to download Bilibili videos?",
+                "answer": "Paste the Bilibili video link, click parse, then choose video download."
+            },
+            {
+                "question": "How to download Douyin videos without watermark?",
+                "answer": "Paste the Douyin share link and the tool will provide a no-watermark download."
+            },
+            {
+                "question": "What Xiaohongshu links are supported?",
+                "answer": "Share links and short links are supported; paste to parse automatically."
+            },
+            {
+                "question": "Can I extract MP3 from Bilibili videos?",
+                "answer": "Yes. After parsing, you can choose audio download or MP3 extraction."
+            },
+            {
+                "question": "What video quality can I download?",
+                "answer": "Available quality depends on the source video and platform limits."
+            },
+            {
+                "question": "Why does parsing sometimes fail?",
+                "answer": "The link may be invalid, restricted, or blocked by platform controls."
+            },
+            {
+                "question": "Can I download paid or restricted content?",
+                "answer": "No. Copyright-restricted or paid content is not supported."
+            },
+            {
+                "question": "Do I need to register or log in?",
+                "answer": "No. Just paste the link to use the tool."
+            },
+            {
+                "question": "Does it work on mobile?",
+                "answer": "Yes. Open the site in a mobile browser and paste the link."
+            },
+            {
+                "question": "Which browsers are supported?",
+                "answer": "We recommend the latest Chrome, Edge, or Safari."
+            },
+            {
+                "question": "Do you store my download history?",
+                "answer": "No. History is stored only in your browser locally."
+            },
+            {
+                "question": "What if parsing is slow?",
+                "answer": "Check your network or try again later; some platforms throttle speed."
+            }
+        ]
+    },
+    "languages": {
+        "zh": "简体中文",
+        "zh-tw": "繁體中文",
+        "en": "English"
+    },
+    "douyin": {
+        "apiLimitDownload": "If automatic download fails, please click open link to download manually (download feature is in the bottom right corner of the video)"
+    },
+    "extractAudio": {
+        "button": "Extract Audio",
+        "loading": "Loading...",
+        "downloading": "Downloading {progress}%",
+        "downloadingWithSize": "Downloading {progress}% ({loaded} / {total})",
+        "converting": "Converting {progress}%",
+        "completed": "Extraction Complete",
+        "retry": "Retry",
+        "errorLoad": "Failed to load audio processor, please refresh and try again",
+        "errorDownload": "Failed to download video, please use backup link and extract with other tools",
+        "errorConvert": "Audio conversion failed, video format may not be supported",
+        "errorMemory": "Video file too large, browser memory insufficient, please use desktop tools"
+    },
+    "guide": {
+        "quickStart": {
+            "title": "Easy 3-Step Download",
+            "steps": [
+                {
+                    "title": "Copy Video Link",
+                    "description": "Copy video link from Bilibili/Douyin platforms"
+                },
+                {
+                    "title": "Paste and Parse",
+                    "description": "Paste link in input box, click parse button"
+                },
+                {
+                    "title": "Select Download",
+                    "description": "Choose audio or video format to start download"
+                }
+            ]
+        },
+        "platformSupport": {
+            "title": "Platform Support Guide",
+            "bilibili": {
+                "name": "Bilibili (bilibili.com)",
+                "features": [
+                    "✅ Video download supported",
+                    "✅ Audio download supported"
+                ],
+                "limitations": []
+            },
+            "douyin": {
+                "name": "Douyin (douyin.com)",
+                "features": [
+                    "✅ Video download supported",
+                    "✅ Audio extraction supported (browser-side conversion)",
+                    "✅ Command parsing supported, paste share commands directly"
+                ],
+                "limitations": []
+            },
+            "xiaohongshu": {
+                "name": "Xiaohongshu (xiaohongshu.com)",
+                "features": [
+                    "✅ Video note download supported",
+                    "✅ Image note supported (displays image list)",
+                    "✅ Command parsing supported, paste share commands directly",
+                    "✅ Audio extraction supported (browser-side conversion)"
+                ],
+                "limitations": [
+                    "💡 Image notes will display all images, supporting individual or batch downloads"
+                ]
+            },
+            "audioTip": {
+                "title": "Audio Extraction Guide",
+                "steps": "💡 Audio extraction process: Load processor (~30MB first time) → Download video → Convert to audio",
+                "warning": "⏱️ Larger videos require longer audio extraction time, please be patient"
+            },
+            "urlExamples": {
+                "title": "🔗 Link formats:",
+                "bilibili": [
+                    "https://www.bilibili.com/video/BV1xx411c7mD",
+                    "https://b23.tv/BV1xx411c7mD"
+                ],
+                "douyin": [
+                    "https://www.douyin.com/jingxuan?modal_id=7573004270581140751",
+                    "https://www.douyin.com/video/7491698414288260387",
+                    "https://v.douyin.com/fiU6t9rA3QU"
+                ],
+                "xiaohongshu": [
+                    "https://www.xiaohongshu.com/explore/xxxxx",
+                    "https://xhslink.com/xxxxx"
+                ]
+            },
+            "comingSoon": "🔄 More platforms coming soon..."
+        },
+        "linkFormats": {
+            "title": "Supported Link Formats",
+            "bilibili": {
+                "title": "🔗 Bilibili link examples:",
+                "examples": [
+                    "https://www.bilibili.com/video/BV1xx411c7mD",
+                    "https://b23.tv/BV1xx411c7mD"
+                ]
+            },
+            "douyin": {
+                "title": "🔗 Douyin link examples:",
+                "examples": [
+                    "https://www.douyin.com/jingxuan?modal_id=7573004270581140751",
+                    "https://www.douyin.com/video/7491698414288260387",
+                    "https://v.douyin.com/fiU6t9rA3QU"
+                ]
+            },
+            "tip": "Tip: Just copy the share link, no manual modification needed"
+        }
+    },
+    "freeSupport": {
+        "title": "Permanently Free Service",
+        "features": {
+            "freeToUse": "Completely free to use",
+            "noRegistration": "No registration required",
+            "unlimitedDownloads": "Unlimited downloads"
+        },
+        "privacy": {
+            "title": "Privacy Protection Commitment",
+            "noUserRecords": "Server does not store user records",
+            "localStorage": "History stored in browser"
+        },
+        "revenue": {
+            "adsSupport": "This service is monetized through ads",
+            "serverCosts": "To support server and traffic costs"
+        }
+    },
+    "seo": {
+        "features": {
+            "en": [
+                "Extract MP3 audio from Bilibili videos",
+                "Download Douyin videos without watermark",
+                "Download Xiaohongshu Image Notes",
+                "Download Xiaohongshu Videos",
+                "Extract audio from Xiaohongshu videos",
+                "Auto-detect video platform",
+                "High-quality audio and video downloads",
+                "Free online tool",
+                "No registration required",
+                "Support multiple video formats",
+                "Browser-based processing"
+            ],
+            "zh": [
+                "提取哔哩哔哩视频MP3音频",
+                "下载抖音无水印视频",
+                "下载小红书图文笔记",
+                "下载小红书无水印视频",
+                "自动识别视频平台",
+                "高清音频视频下载",
+                "免费在线工具",
+                "无需注册",
+                "支持多种视频格式",
+                "浏览器处理"
+            ]
+        },
+        "faq": {
+            "en": [
+                {
+                    "question": "How to download Bilibili audio?",
+                    "answer": "Paste the Bilibili video link into the input field, click download, and the MP3 audio will be extracted and downloaded automatically."
+                },
+                {
+                    "question": "How to download Douyin videos without watermark?",
+                    "answer": "Paste the Douyin video link, the tool will automatically detect the platform and provide a watermark-free download link."
+                },
+                {
+                    "question": "How to download Xiaohongshu images and videos?",
+                    "answer": "Copy the Xiaohongshu note link, paste it into the input box, and the tool will automatically parse and provide watermark-free images or video downloads."
+                },
+                {
+                    "question": "Is this tool free to use?",
+                    "answer": "Yes, this is a completely free online tool with no registration required. You can download unlimited videos and audio files."
+                }
+            ],
+            "zh": [
+                {
+                    "question": "如何下载哔哩哔哩音频？",
+                    "answer": "将哔哩哔哩视频链接粘贴到输入框中，点击下载，系统会自动提取并下载MP3音频文件。"
+                },
+                {
+                    "question": "如何下载抖音无水印视频？",
+                    "answer": "粘贴抖音视频链接，工具会自动识别平台并提供无水印下载链接。"
+                },
+                {
+                    "question": "如何下载小红书图片和视频？",
+                    "answer": "复制小红书笔记链接，粘贴到输入框中，工具会自动解析并提供无水印图片或视频下载。"
+                },
+                {
+                    "question": "这个工具免费吗？",
+                    "answer": "是的，这是一个完全免费的在线工具，无需注册。您可以无限制下载视频和音频文件。"
+                }
+            ]
+        },
+        "howTo": {
+            "title": {
+                "en": "How to download Bilibili, Douyin and Xiaohongshu content",
+                "zh": "如何下载哔哩哔哩、抖音及小红书内容"
+            },
+            "steps": {
+                "en": [
+                    {
+                        "name": "Copy link",
+                        "text": "Copy the video or note link from Bilibili, Douyin or Xiaohongshu"
+                    },
+                    {
+                        "name": "Paste link",
+                        "text": "Paste the link into the input field on our website"
+                    },
+                    {
+                        "name": "Auto-detect",
+                        "text": "The tool will automatically detect the platform (Bilibili/Douyin/Xiaohongshu)"
+                    },
+                    {
+                        "name": "Download",
+                        "text": "Click the download button to get your media content"
+                    }
+                ],
+                "zh": [
+                    {
+                        "name": "复制链接",
+                        "text": "从浏览器复制哔哩哔哩、抖音或小红书的视频/笔记链接"
+                    },
+                    {
+                        "name": "粘贴链接",
+                        "text": "将链接粘贴到网站的输入框中"
+                    },
+                    {
+                        "name": "自动识别",
+                        "text": "工具会自动识别平台（哔哩哔哩/抖音/小红书）"
+                    },
+                    {
+                        "name": "下载",
+                        "text": "点击下载按钮获取对应的音视频或图片内容"
+                    }
+                ]
+            }
+        }
+    },
+    "result": {
+        "title": "Parse Result",
+        "downloadVideo": "Download Video",
+        "downloadAudio": "Download Audio",
+        "originDownloadVideo": "Backup Direct Link",
+        "totalParts": "Total {count} parts",
+        "downloadImage": "Download Image",
+        "imageNote": "Image Note",
+        "imageCount": "Total {count} images",
+        "packaging": "Packaging",
+        "packageDownload": "Package Download",
+        "loading": "Loading",
+        "loadFailed": "Load Failed",
+        "viewLargeImage": "View Large Image",
+        "imageLoadingProgress": "Loading {loaded}/{total}",
+        "imageAutoLoadedTip": "💡 Images auto-loaded, click to download",
+        "packagingProgress": "Packaging image {current}/{total}"
+    },
+    "changelog": {
+        "title": "Changelog"
+    },
+    "feedback": {
+        "title": "Feedback & Suggestions",
+        "triggerButton": "Feedback",
+        "typeLabel": "Feedback Type",
+        "typeRequired": "Please select a feedback type",
+        "types": {
+            "bug": "🐛 Bug Report",
+            "feature": "💡 Feature Request",
+            "other": "💬 Other Feedback"
+        },
+        "contentLabel": "Details",
+        "contentRequired": "Please provide details (at least 10 characters)",
+        "contentPlaceholder": {
+            "bug": "Please describe the issue, steps to reproduce, expected result...",
+            "feature": "Please describe the feature you'd like to see...",
+            "other": "Please share your thoughts..."
+        },
+        "contentCounter": "{current} / {max} characters",
+        "emailLabel": "Contact Email (Optional)",
+        "emailPlaceholder": "your@email.com",
+        "emailInvalid": "Invalid email format",
+        "emailHint": "Leave your email if you'd like us to follow up",
+        "cancelButton": "Cancel",
+        "submitButton": "Submit Feedback",
+        "submittingButton": "Submitting...",
+        "closeButton": "Close",
+        "successTitle": "Submitted Successfully!",
+        "successMessage": "Thank you for your feedback! We'll review every suggestion carefully.",
+        "successNote": "If you provided an email, we may contact you for more details.",
+        "errorTitle": "Submission Failed",
+        "errorMessage": "Failed to submit. Please check your connection and try again.",
+        "errorFallback": "You can also reach us through:",
+        "retryButton": "Retry",
+        "toastSuccess": "Feedback submitted successfully!",
+        "toastError": "Failed to submit, please try again"
+    }
+}
+
+

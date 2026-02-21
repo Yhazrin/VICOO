@@ -1,0 +1,22 @@
+{
+  "schema_version": "v1",
+  "name_for_model": "VICOO_Knowledge_Assistant",
+  "name_for_human": "VICOO 知识管理助手",
+  "description_for_model": "你是 VICOO 知识管理助手的 AI 插件。提供笔记管理、知识图谱、AI问答、标签系统等功能。",
+  "description_for_human": "VICOO 知识管理助手插件",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "http://localhost:8000/openapi.yaml"
+  },
+  "common_params": {
+    "header": [
+      {
+        "name": "Content-Type",
+        "value": "application/json"
+      }
+    ]
+  }
+}

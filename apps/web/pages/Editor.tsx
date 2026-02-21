@@ -1,9 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NeoButton } from '../components/NeoButton';
 import { NeoCard } from '../components/NeoCard';
 import { Mascot } from '../components/Mascot';
+import { SlashCommandPalette, builtInCommands, type SlashCommand } from '../components/SlashCommandPalette';
 import { View } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
+import { eventBus, Events } from '@vicoo/events';
+import type { Note, NoteUpdate, NoteCategory } from '@vicoo/types';
 
 // Mock Knowledge Graph for "Cognitive Context"
 const KNOWLEDGE_GRAPH = [
@@ -31,34 +35,229 @@ interface EditorProps {
 
 export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
   const { t } = useLanguage();
-  const [content, setContent] = useState(initialNoteId && MOCK_NOTES[initialNoteId as keyof typeof MOCK_NOTES] ? MOCK_NOTES[initialNoteId as keyof typeof MOCK_NOTES].content : "Start typing to see the magic happen. Type '/' for commands.");
-  const [title, setTitle] = useState(initialNoteId && MOCK_NOTES[initialNoteId as keyof typeof MOCK_NOTES] ? MOCK_NOTES[initialNoteId as keyof typeof MOCK_NOTES].title : t('editor.untitled'));
+  const { getNote, createNote, updateNote } = useApi();
+
+  const [noteId, setNoteId] = useState<string | null>(initialNoteId === 'new' ? null : initialNoteId || null);
+  const [content, setContent] = useState('');
+  const [title, setTitle] = useState('');
+  const [category, setCategory] = useState<NoteCategory>('idea');
+  const [isPublished, setIsPublished] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [isPublished, setIsPublished] = useState(false);
-  
-  // Cognitive Context State
   const [detectedConcepts, setDetectedConcepts] = useState<typeof KNOWLEDGE_GRAPH>([]);
   const [isScanning, setIsScanning] = useState(false);
+
+  // Load note data if editing existing note
+  useEffect(() => {
+    const loadNote = async () => {
+      if (initialNoteId && initialNoteId !== 'new') {
+        try {
+          const note = await getNote(initialNoteId);
+          setNoteId(note.id);
+          setTitle(note.title);
+          setContent(note.content || '');
+          setCategory(note.category);
+          setIsPublished(note.published);
+        } catch (err) {
+          console.error('Failed to load note:', err);
+        }
+      } else {
+        // New note
+        setNoteId(null);
+        setTitle(t('editor.untitled'));
+        setContent("Start typing to see the magic happen. Type '/' for commands.");
+        setCategory('idea');
+        setIsPublished(false);
+      }
+    };
+    loadNote();
+  }, [initialNoteId, getNote, t]);
+
+  // Auto-save functionality
+  const handleSave = useCallback(async () => {
+    if (!title.trim()) return;
+
+    setIsSaving(true);
+    eventBus.emit(Events.MASCOT_STATE, { state: 'saving', message: 'Saving...', duration: 0 });
+
+    try {
+      const noteData = {
+        title,
+        content,
+        category,
+        published: isPublished,
+        snippet: content.substring(0, 100)
+      };
+
+      if (noteId) {
+        // Update existing note
+        await updateNote(noteId, noteData);
+      } else {
+        // Create new note
+        const newNote = await createNote(noteData as any);
+        setNoteId(newNote.id);
+      }
+      setLastSaved(new Date());
+
+      // Emit saved event
+      eventBus.emit(Events.MASCOT_STATE, {
+        state: 'saved',
+        message: 'Saved!',
+        duration: 2000
+      });
+    } catch (err) {
+      console.error('Failed to save note:', err);
+      eventBus.emit(Events.MASCOT_STATE, {
+        state: 'error',
+        message: 'Save failed!',
+        duration: 3000
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [title, content, category, isPublished, noteId, createNote, updateNote]);
+
+  // Auto-save on changes (debounced)
+  useEffect(() => {
+    if (!title.trim()) return;
+
+    const timer = setTimeout(() => {
+      handleSave();
+    }, 2000); // Auto-save after 2 seconds of inactivity
+
+    return () => clearTimeout(timer);
+  }, [title, content, category, isPublished, handleSave]);
+
+  const handlePublishToggle = async () => {
+    setIsPublished(!isPublished);
+    if (title.trim()) {
+      setIsSaving(true);
+      try {
+        const noteData = {
+          title,
+          content,
+          category,
+          published: !isPublished,
+          snippet: content.substring(0, 100)
+        };
+
+        if (noteId) {
+          await updateNote(noteId, noteData);
+        } else {
+          const newNote = await createNote(noteData as any);
+          setNoteId(newNote.id);
+        }
+        setLastSaved(new Date());
+      } catch (err) {
+        console.error('Failed to publish/unpublish note:', err);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
 
   // Slash Command State
   const [showSlashMenu, setShowSlashMenu] = useState(false);
   const [slashMenuIndex, setSlashMenuIndex] = useState(0);
+  const [slashQuery, setSlashQuery] = useState('');
+  const [slashPosition, setSlashPosition] = useState({ top: 0, left: 0 });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  const slashCommands = [
-      { id: 'link', label: 'Link to Note', icon: 'link', desc: 'Connect to existing knowledge' },
-      { id: 'expand', label: 'AI Expand', icon: 'auto_awesome', desc: 'Let Gemini finish your thought' },
-      { id: 'task', label: 'Create Task', icon: 'check_box', desc: 'Add a todo item' },
-      { id: 'code', label: 'Code Block', icon: 'code', desc: 'Insert formatted code snippet' },
-  ];
+  // 处理斜杠命令选择
+  const handleSlashCommandSelect = useCallback((command: SlashCommand, query: string) => {
+    const result = command.action(query);
+    
+    // 在光标位置插入文本
+    if (textareaRef.current) {
+      const textarea = textareaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const text = content;
+      
+      // 找到命令开始位置
+      const textBefore = text.substring(0, start);
+      const lastSlashIndex = textBefore.lastIndexOf('/');
+      
+      if (lastSlashIndex !== -1) {
+        const newText = text.substring(0, lastSlashIndex) + result.insertText + text.substring(end);
+        setContent(newText);
+        
+        // 设置光标位置
+        setTimeout(() => {
+          const newCursorPos = lastSlashIndex + result.insertText.length;
+          textarea.setSelectionRange(newCursorPos, newCursorPos);
+          textarea.focus();
+        }, 0);
+      }
+    }
+    
+    if (result.shouldClose) {
+      setShowSlashMenu(false);
+    }
+  }, [content]);
+
+  // 处理键盘事件以检测斜杠命令
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === '/' && !showSlashMenu) {
+      // 延迟以获取光标位置
+      setTimeout(() => {
+        if (textareaRef.current) {
+          const rect = textareaRef.current.getBoundingClientRect();
+          const cursorPos = textareaRef.current.selectionStart;
+          
+          // 简单估算光标位置
+          setSlashPosition({
+            top: rect.top + 40,
+            left: rect.left + 20
+          });
+        }
+        setShowSlashMenu(true);
+        setSlashQuery('');
+      }, 0);
+    } else if (showSlashMenu) {
+      const commands = builtInCommands;
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setSlashMenuIndex(prev => (prev + 1) % commands.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setSlashMenuIndex(prev => (prev - 1 + commands.length) % commands.length);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        handleSlashCommandSelect(commands[slashMenuIndex], slashQuery);
+      } else if (e.key === 'Escape') {
+        setShowSlashMenu(false);
+      } else if (e.key === 'Backspace' && slashQuery.length > 0) {
+        setSlashQuery(slashQuery.slice(-1));
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+        // 收集查询字符
+        setSlashQuery(prev => prev + e.key);
+      }
+    }
+  }, [showSlashMenu, slashMenuIndex, slashQuery, handleSlashCommandSelect]);
 
   const handleSummarize = () => {
     setIsSummarizing(true);
+    eventBus.emit(Events.MASCOT_STATE, { state: 'thinking', message: 'Analyzing...', duration: 0 });
     setTimeout(() => {
       setIsSummarizing(false);
       setShowSummary(true);
+      eventBus.emit(Events.MASCOT_STATE, {
+        state: 'celebrating',
+        message: 'Analysis complete!',
+        duration: 2000
+      });
     }, 1500);
+  };
+
+  // Typing detection - emit typing event
+  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setContent(e.target.value);
+    // Emit typing event (debounced)
+    eventBus.emit(Events.MASCOT_STATE, { state: 'typing', message: 'Writing...', duration: 500 });
   };
 
   // The "Cognitive Engine": Scans text for concepts
@@ -73,42 +272,6 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
     }, 500); // Debounce
     return () => clearTimeout(timer);
   }, [content]);
-
-  // Handle Slash Command Trigger
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-      if (e.key === '/') {
-          setShowSlashMenu(true);
-      } else if (showSlashMenu) {
-          if (e.key === 'ArrowDown') {
-              e.preventDefault();
-              setSlashMenuIndex(prev => (prev + 1) % slashCommands.length);
-          } else if (e.key === 'ArrowUp') {
-              e.preventDefault();
-              setSlashMenuIndex(prev => (prev - 1 + slashCommands.length) % slashCommands.length);
-          } else if (e.key === 'Enter') {
-              e.preventDefault();
-              executeCommand(slashCommands[slashMenuIndex].id);
-          } else if (e.key === 'Escape') {
-              setShowSlashMenu(false);
-          }
-      }
-  };
-
-  const executeCommand = (cmdId: string) => {
-      // In a real app, this would insert at caret position.
-      // For this prototype, we'll append or mock the action.
-      setShowSlashMenu(false);
-      
-      if (cmdId === 'expand') {
-          setContent(prev => prev.replace('/', '') + " [AI Generating...] \n\nHere is a detailed breakdown based on your previous notes...");
-      } else if (cmdId === 'link') {
-          setContent(prev => prev.replace('/', '') + " [[Select Note]] ");
-      } else if (cmdId === 'task') {
-        setContent(prev => prev.replace('/', '') + "\n- [ ] ");
-      } else {
-        setContent(prev => prev.replace('/', ''));
-      }
-  };
 
   return (
     <div className="h-full flex overflow-hidden">
@@ -139,10 +302,24 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
              
              {/* Publish Toggle */}
              <div className="flex items-center gap-3 pl-4 border-l-2 border-gray-200 dark:border-gray-600">
+                {/* Save Status */}
+                {isSaving && (
+                  <span className="text-xs font-bold text-gray-500 animate-pulse">
+                    <span className="material-icons-round text-xs align-middle mr-1">sync</span>
+                    {t('editor.saving')}
+                  </span>
+                )}
+                {!isSaving && lastSaved && (
+                  <span className="text-xs font-bold text-green-600 dark:text-green-400">
+                    <span className="material-icons-round text-xs align-middle mr-1">check_circle</span>
+                    {t('editor.saved')}
+                  </span>
+                )}
                 <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">{isPublished ? t('editor.public') : t('editor.private')}</span>
                 <button 
-                    onClick={() => setIsPublished(!isPublished)}
-                    className={`w-12 h-6 rounded-full border-2 border-ink dark:border-gray-400 p-0.5 transition-colors relative ${isPublished ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'}`}
+                    onClick={handlePublishToggle}
+                    disabled={isSaving}
+                    className={`w-12 h-6 rounded-full border-2 border-ink dark:border-gray-400 p-0.5 transition-colors relative ${isPublished ? 'bg-primary' : 'bg-gray-200 dark:bg-gray-600'} ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                     <div className={`w-4 h-4 rounded-full border-2 border-ink bg-white shadow-sm transition-transform ${isPublished ? 'translate-x-6' : 'translate-x-0'}`}></div>
                 </button>
@@ -202,41 +379,22 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
              )}
 
              <div className="relative flex-1">
-                <textarea 
+                <textarea
                     ref={textareaRef}
                     value={content}
-                    onChange={(e) => setContent(e.target.value)}
+                    onChange={handleContentChange}
                     onKeyDown={handleKeyDown}
                     className="w-full h-full min-h-[500px] resize-none border-none focus:ring-0 p-0 text-lg leading-relaxed font-display text-ink dark:text-gray-100 bg-transparent placeholder-gray-300"
                 />
 
-                {/* Slash Command Menu (Simulated Position) */}
-                {showSlashMenu && (
-                    <div className="absolute left-0 bottom-20 z-50 animate-pop">
-                        <div className="bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-xl shadow-neo-lg w-64 overflow-hidden">
-                            <div className="bg-gray-100 dark:bg-gray-700 px-3 py-2 border-b-2 border-ink dark:border-gray-500 text-xs font-bold text-gray-500 dark:text-gray-300 uppercase">
-                                Quick Actions
-                            </div>
-                            {slashCommands.map((cmd, idx) => (
-                                <button
-                                    key={cmd.id}
-                                    onClick={() => executeCommand(cmd.id)}
-                                    className={`
-                                        w-full flex items-center gap-3 px-4 py-3 text-left transition-colors
-                                        ${idx === slashMenuIndex ? 'bg-primary text-ink' : 'hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200'}
-                                    `}
-                                >
-                                    <span className="material-icons-round text-lg">{cmd.icon}</span>
-                                    <div>
-                                        <p className="font-bold text-sm leading-none">{cmd.label}</p>
-                                        <p className="text-xs opacity-70 mt-1 font-medium">{cmd.desc}</p>
-                                    </div>
-                                    {idx === slashMenuIndex && <span className="material-icons-round text-sm ml-auto">keyboard_return</span>}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
+                {/* Slash Command Palette */}
+                <SlashCommandPalette
+                  isOpen={showSlashMenu}
+                  position={slashPosition}
+                  query={slashQuery}
+                  onSelect={handleSlashCommandSelect}
+                  onClose={() => setShowSlashMenu(false)}
+                />
              </div>
           </div>
 
