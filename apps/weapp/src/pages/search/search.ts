@@ -1,6 +1,6 @@
 // pages/search/search.ts - Search Page
 import api from '../../services/api';
-import type { Note } from '../../../../packages/types/src/index';
+import type { Note } from '@vicoo/types';
 
 Page({
   data: {

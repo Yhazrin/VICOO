@@ -1,5 +1,5 @@
 // api.ts - Vicoo API Service for WeChat Mini Program
-import type { Note, NoteCreate, NoteUpdate, ListResponse, ApiError } from '../../../../packages/types/src/index';
+import type { Note, NoteCreate, NoteUpdate, ListResponse, ApiError } from '@vicoo/types';
 
 const API_BASE = 'http://localhost:8000';
 

@@ -1,6 +1,6 @@
 // pages/editor/editor.ts - Note Editor
 import api from '../../services/api';
-import type { Note, NoteCreate, NoteUpdate } from '../../../../packages/types/src/index';
+import type { Note, NoteCreate, NoteUpdate } from '@vicoo/types';
 
 Page({
   data: {
