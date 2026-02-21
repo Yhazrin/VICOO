@@ -5,7 +5,10 @@
   "main": "src/app.ts",
   "scripts": {
     "dev": "echo 'Use WeChat DevTools to develop'",
-    "build": "echo 'Use WeChat CLI to build'"
+    "build": "echo 'Use WeChat CLI to build'",
+    "typecheck": "tsc --noEmit",
+    "lint": "pnpm run typecheck",
+    "test": "node -e \"console.log('No smoke tests yet')\""
   },
   "dependencies": {},
   "devDependencies": {

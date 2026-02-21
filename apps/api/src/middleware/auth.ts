@@ -24,10 +24,13 @@ export function getUserFromToken(token: string): string | null {
 // Auth middleware
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization;
+  const strictAuth = process.env.STRICT_AUTH === 'true';
 
-  // For development, allow requests without auth (dev mode)
-  // In production, uncomment the block below
-  /*
+  if (!strictAuth) {
+    (req as any).userId = 'dev_user_1';
+    return next();
+  }
+
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       error: {
@@ -50,11 +53,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 
   (req as any).userId = userId;
-  */
-
-  // Dev mode: just set a default user
-  (req as any).userId = 'dev_user_1';
-
   next();
 }
 
