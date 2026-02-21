@@ -1,6 +1,6 @@
 // pages/index/index.ts - Vicoo Dashboard (Home)
 import api from '../../services/api';
-import type { Note } from '../../../../packages/types/src/index';
+import type { Note } from '@vicoo/types';
 
 Page({
   data: {
