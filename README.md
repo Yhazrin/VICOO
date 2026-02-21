@@ -36,6 +36,22 @@ cd apps/web && pnpm dev
 
 ---
 
+### 移动端环境变量（Expo）
+
+在 `apps/mobile` 中复制环境变量模板：
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env
+```
+
+`EXPO_PUBLIC_API_BASE` 调试建议：
+
+- **本地模拟器（iOS Simulator / Android Emulator）**：可用 `http://localhost:8000`
+- **真机调试（同一局域网）**：必须改为你电脑的局域网地址，例如 `http://192.168.1.100:8000`
+
+> 真机无法访问 `localhost`，因为 `localhost` 会指向手机本机。
+
+
 ## 📁 项目结构
 
 ```
