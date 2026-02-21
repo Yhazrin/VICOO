@@ -128,24 +128,24 @@ async function start() {
     // Routes
     app.use('/health', healthRouter);
     app.use('/auth', authRouter);
-    app.use('/api/notes', notesRouter);
-    app.use('/api/tags', tagsRouter);
-    app.use('/api/nodes', graphRouter);
-    app.use('/api/links', graphRouter);
-    app.use('/api/graph', graphRouter);
-    app.use('/api/search', searchRouter);
-    app.use('/api/categories', taxonomyRouter);
-    app.use('/api/clusters', taxonomyRouter);
-    app.use('/api/analytics', analyticsRouter);
-    app.use('/api/timeline', timelineRouter);
-    app.use('/api/settings', settingsRouter);
-    app.use('/api/feed', feedRouter);
-    app.use('/api/focus', focusRouter);
-    app.use('/api/music', musicRouter);
-    app.use('/api/download', downloaderRouter);
-    app.use('/api/workflow', workflowRouter);
-    app.use('/api/claude', claudeRouter);
-    app.use('/api/ai', aiRouter);
+    app.use('/api/notes', authMiddleware, notesRouter);
+    app.use('/api/tags', authMiddleware, tagsRouter);
+    app.use('/api/nodes', authMiddleware, graphRouter);
+    app.use('/api/links', authMiddleware, graphRouter);
+    app.use('/api/graph', authMiddleware, graphRouter);
+    app.use('/api/search', authMiddleware, searchRouter);
+    app.use('/api/categories', authMiddleware, taxonomyRouter);
+    app.use('/api/clusters', authMiddleware, taxonomyRouter);
+    app.use('/api/analytics', authMiddleware, analyticsRouter);
+    app.use('/api/timeline', authMiddleware, timelineRouter);
+    app.use('/api/settings', authMiddleware, settingsRouter);
+    app.use('/api/feed', authMiddleware, feedRouter);
+    app.use('/api/focus', authMiddleware, focusRouter);
+    app.use('/api/music', authMiddleware, musicRouter);
+    app.use('/api/download', authMiddleware, downloaderRouter);
+    app.use('/api/workflow', authMiddleware, workflowRouter);
+    app.use('/api/claude', authMiddleware, claudeRouter);
+    app.use('/api/ai', authMiddleware, aiRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({

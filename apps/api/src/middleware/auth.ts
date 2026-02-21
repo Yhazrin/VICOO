@@ -5,6 +5,20 @@ import { v4 as uuidv4 } from 'uuid';
 // In production, use Redis or database
 const tokens: Map<string, { userId: string; createdAt: Date }> = new Map();
 
+function isStrictAuthEnabled(): boolean {
+  const authMode = process.env.AUTH_MODE;
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (authMode === 'strict') return true;
+  if (authMode === 'relaxed') return false;
+
+  return isProduction;
+}
+
+function isDevelopmentEnvironment(): boolean {
+  return process.env.NODE_ENV !== 'production';
+}
+
 // Generate a simple dev token
 export function generateDevToken(): string {
   const token = `dev_${uuidv4().replace(/-/g, '')}`;
@@ -23,11 +37,15 @@ export function getUserFromToken(token: string): string | null {
 
 // Auth middleware
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+  if (!isStrictAuthEnabled()) {
+    // Dev/relaxed mode: set a default user
+    (req as any).userId = 'dev_user_1';
+    next();
+    return;
+  }
+
   const authHeader = req.headers.authorization;
 
-  // For development, allow requests without auth (dev mode)
-  // In production, uncomment the block below
-  /*
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({
       error: {
@@ -50,11 +68,6 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
   }
 
   (req as any).userId = userId;
-  */
-
-  // Dev mode: just set a default user
-  (req as any).userId = 'dev_user_1';
-
   next();
 }
 
@@ -65,6 +78,15 @@ const authRouter = Router();
 
 // POST /auth/dev-token - Generate a dev token (for development only)
 authRouter.post('/dev-token', (req, res) => {
+  if (!isDevelopmentEnvironment()) {
+    return res.status(404).json({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Route not found'
+      }
+    });
+  }
+
   const token = generateDevToken();
   res.json({
     data: {
