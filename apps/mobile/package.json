@@ -6,7 +6,10 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "lint": "pnpm run typecheck",
+    "test": "node -e \"console.log('No smoke tests yet')\""
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
