@@ -51,8 +51,34 @@ export interface MiniMaxChatRequest {
 export interface MiniMaxChatResponse {
   id: string;
   model: string;
-  // Anthropic 兼容模式响应格式
-  content: Array<{
+  // OpenAI 兼容模式响应格式
+  choices: Array<{
+    index: number;
+    message: {
+      role: string;
+      content: string;
+      tool_calls?: Array<{
+        id: string;
+        type: string;
+        function: {
+          name: string;
+          arguments: string;
+        };
+      }>;
+      reasoning_details?: Array<{
+        type: string;
+        text: string;
+      }>;
+    };
+    finish_reason: string;
+  }>;
+  usage?: {
+    prompt_tokens: number;
+    completion_tokens: number;
+    total_tokens: number;
+  };
+  // 兼容 Anthropic 格式
+  content?: Array<{
     type: 'text' | 'tool_use' | 'thinking';
     text?: string;
     id?: string;
@@ -60,11 +86,7 @@ export interface MiniMaxChatResponse {
     input?: any;
     thinking?: string;
   }>;
-  stop_reason: string;
-  usage?: {
-    input_tokens: number;
-    output_tokens: number;
-  };
+  stop_reason?: string;
 }
 
 export interface MiniMaxEmbeddingRequest {
@@ -98,13 +120,13 @@ export class MiniMaxProvider {
   constructor(config?: MiniMaxConfig) {
     // 优先使用传入的 config，然后检查环境变量
     this.apiKey = config?.apiKey || process.env.MINIMAX_API_KEY || '';
-    // Anthropic 兼容接口：国内 https://api.minimaxi.com/anthropic，国际 https://api.minimax.io/anthropic（工具调用需用 MiniMax-M2.5）
-    const rawBaseUrl = config?.baseUrl || process.env.MINIMAX_BASE_URL || 'https://api.minimaxi.com/anthropic';
-    this.baseUrl = rawBaseUrl.replace(/\/+$/, '').replace(/\/v1$/, '') || 'https://api.minimaxi.com/anthropic';
-    this.model = config?.model || process.env.MINIMAX_MODEL || 'MiniMax-M2.5';
-    // 旧版 API 用于工具调用
+    // OpenAI 兼容接口：https://api.minimaxi.com/v1（支持工具调用和思考过程）
+    const rawBaseUrl = config?.baseUrl || process.env.MINIMAX_BASE_URL || 'https://api.minimaxi.com/v1';
+    this.baseUrl = rawBaseUrl.replace(/\/+$/, '').replace(/\/v1$/, '') || 'https://api.minimaxi.com/v1';
+    this.model = config?.model || process.env.MINIMAX_MODEL || 'M2-her';
+    // 旧版 API 用于兼容（工具调用用 MiniMax-M2.5）
     this.legacyBaseUrl = 'https://api.minimaxi.com';
-    this.legacyModel = 'abab6.5s-chat';
+    this.legacyModel = 'MiniMax-M2.5';
   }
 
   /**
@@ -136,9 +158,9 @@ export class MiniMaxProvider {
     }
 
     try {
-      // Anthropic 兼容模式端点
+      // OpenAI 兼容模式端点：https://api.minimaxi.com/v1/text/chatcompletion_v2
       const normalizedBaseUrl = this.baseUrl.replace(/\/+$/, '');
-      const url = `${normalizedBaseUrl}/v1/messages`;
+      const url = `${normalizedBaseUrl}/v1/text/chatcompletion_v2`;
 
       console.log('[MiniMax] POST', url);
       console.log('[MiniMax] model:', this.model);
@@ -166,24 +188,29 @@ export class MiniMaxProvider {
 
         console.log('[MiniMax] Non-system messages:', JSON.stringify(nonSystemMsgs).slice(0, 500));
 
-        // Anthropic 兼容接口：带 tools 时需用 MiniMax-M2.5，且工具格式为 name/description/input_schema
-        const effectiveModel = request.tools?.length ? 'MiniMax-M2.5' : this.model;
+        // OpenAI 兼容接口：工具格式为 name/description/parameters
+        // 工具调用使用 abab6.5s-chat（Anthropic 兼容格式），对话使用配置的模型（M2-her 或 MiniMax-M2.5）
+        // abab6.5s-chat 是 /v1/chat/completions 端点支持的模型
+        const effectiveModel = request.tools?.length ? 'abab6.5s-chat' : this.model;
         const toolsPayload = request.tools?.length
           ? request.tools.map((t) => ({
               type: 'function' as const,
               function: {
                 name: t.function.name,
                 description: t.function.description,
-                input_schema: t.function.input_schema,
+                parameters: t.function.parameters || t.function.input_schema,
               },
             }))
           : undefined;
+
+        // M2-her 最大支持 2048 tokens，MiniMax-M2.5 支持 4096
+        const maxTokensForModel = effectiveModel.toLowerCase().includes('m2-her') ? 2048 : 4096;
 
         const requestBody: Record<string, unknown> = {
           model: effectiveModel,
           messages: nonSystemMsgs,
           temperature: request.temperature ?? 1.0,
-          max_tokens: request.max_tokens ?? 4096,
+          max_tokens: request.max_tokens ?? maxTokensForModel,
           stream: request.stream ?? false,
           system: systemMsg?.content ?? undefined,
         };
@@ -277,12 +304,20 @@ export class MiniMaxProvider {
     const result = await this.chat({ messages });
 
     if (result.success && result.data) {
-      // Anthropic 兼容模式响应格式
-      const content = result.data.content || [];
-      const textBlock = content.find((c: any) => c.type === 'text');
+      // OpenAI 兼容模式响应格式：data.choices[0].message.content
+      const choices = result.data.choices || [];
+      const message = choices[0]?.message;
+      const content = message?.content || '';
+      
+      // 解析思考过程（如果有）
+      const thinking = message?.reasoning_details?.[0]?.text;
+      if (thinking) {
+        console.log('[MiniMax] Thinking:', thinking.slice(0, 200) + '...');
+      }
+      
       return {
         success: true,
-        content: textBlock?.text || ''
+        content: content
       };
     }
 
@@ -481,7 +516,7 @@ ${toolsDescription}
     }
 
     try {
-      const response = await fetch(`${this.baseUrl}/text/embedding`, {
+      const response = await fetch(`${this.baseUrl}/v1/text/embedding`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -518,14 +553,28 @@ let miniMaxProvider: MiniMaxProvider | null = null;
 
 /**
  * 获取 MiniMax Provider 实例
- * 无参数时优先从数据库读取最新配置，保证保存配置后立即生效
+ * 优先使用环境变量，其次数据库配置，最后使用默认配置
  */
 export function getMiniMaxProvider(config?: MiniMaxConfig): MiniMaxProvider {
   if (config?.apiKey) {
     miniMaxProvider = new MiniMaxProvider(config);
     return miniMaxProvider;
   }
-  // 无传入配置时，从数据库读取最新配置（保证 POST /config/minimax 后下次请求用新 Key）
+
+  // 优先使用环境变量
+  if (process.env.MINIMAX_API_KEY) {
+    if (!miniMaxProvider) {
+      miniMaxProvider = new MiniMaxProvider({
+        apiKey: process.env.MINIMAX_API_KEY,
+        baseUrl: process.env.MINIMAX_BASE_URL,
+        model: process.env.MINIMAX_MODEL
+      });
+      console.log('[MiniMax] Using environment variable configuration');
+    }
+    return miniMaxProvider;
+  }
+
+  // 其次从数据库读取
   try {
     const row = getOne<{ value: string }>(
       "SELECT value FROM settings WHERE key = 'minimax_config'"
@@ -538,8 +587,10 @@ export function getMiniMaxProvider(config?: MiniMaxConfig): MiniMaxProvider {
       }
     }
   } catch (_) {
-    // 忽略解析错误，使用已有实例或环境变量
+    // 忽略解析错误，使用默认配置
   }
+
+  // 使用默认配置
   if (!miniMaxProvider) {
     miniMaxProvider = new MiniMaxProvider();
   }

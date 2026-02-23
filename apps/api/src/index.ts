@@ -1,3 +1,6 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import { errorHandler } from './middleware/error.js';
@@ -29,6 +32,7 @@ import ragRouter from './routes/rag.js';
 import writerRouter from './routes/writer.js';
 import agentRouter from './routes/agent.js';
 import publishRouter from './routes/publish.js';
+import mcpRouter from './routes/mcp.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -132,8 +136,27 @@ async function start() {
     const { initializeMiniMax } = await import('./services/minimax.js');
     await initializeMiniMax();
 
+    // 初始化 LangChain Memory 表
+    const { initializeMemoryTables } = await import('./services/langchain/memory/index.js');
+    initializeMemoryTables();
+    console.log('✅ LangChain Memory tables initialized');
+
+    // 初始化 LangSmith 观测性（如果配置了 API Key）
+    const { initializeLangSmith } = await import('./services/langchain/observability/index.js');
+    await initializeLangSmith();
+
+    // 初始化 RAG 相关表
+    const { initializeRAGTables } = await import('./services/rag-enhanced.js');
+    initializeRAGTables();
+    console.log('✅ RAG tables initialized');
+
     // Seed if empty
     await seedIfEmpty();
+
+    // 初始化 MCP 内置服务器
+    const { initializeBuiltinMCPServers } = await import('./services/mcp.js');
+    initializeBuiltinMCPServers();
+    console.log('✅ MCP servers initialized');
 
     // Routes
     app.use('/health', healthRouter);
@@ -162,6 +185,7 @@ async function start() {
     app.use('/api/writer', writerRouter);
     app.use('/api/agent', agentRouter);
     app.use('/api/publish', publishRouter);
+    app.use('/api/agent/mcp', mcpRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({

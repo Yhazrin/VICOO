@@ -218,14 +218,16 @@ export function createMiniMaxModel(config?: {
 }
 
 /**
- * 创建 MiniMax ChatAnthropic 模型（官方 Anthropic 格式，原生支持 tools）
- * 用于 LangChain Agent 工具调用
+ * 创建 MiniMax ChatOpenAI 模型
+ * 对话使用 M2-her，LangChain 工具调用使用 MiniMax-M2.5
  */
-export function createMiniMaxChatAnthropic(config?: {
+export function createMiniMaxChatOpenAI(config?: {
   model?: string;
   temperature?: number;
   maxTokens?: number;
-}): ChatAnthropic {
+  /** 是否需要工具调用 */
+  withTools?: boolean;
+}): ChatOpenAI {
   const provider = getMiniMaxProvider();
   const { apiKey, baseUrl, model } = provider.getConfig();
 
@@ -233,22 +235,48 @@ export function createMiniMaxChatAnthropic(config?: {
     throw new Error('MiniMax API Key 未配置，请在设置中配置');
   }
 
-  // 确保 Anthropic SDK 走 MiniMax 的兼容端点
-  // 优先尊重已有环境变量，未配置时用 MiniMax 的 baseUrl 兜底
-  if (baseUrl && !process.env.ANTHROPIC_BASE_URL) {
-    process.env.ANTHROPIC_BASE_URL = baseUrl.replace(/\/+$/, '');
-  }
-  if (!process.env.ANTHROPIC_API_KEY) {
-    process.env.ANTHROPIC_API_KEY = apiKey;
+  // 对话使用 M2-her，工具调用使用 MiniMax-M2.5
+  const useTools = config?.withTools ?? false;
+  const effectiveModel = useTools ? 'MiniMax-M2.5' : (config?.model || model || 'M2-her');
+  const maxTokens = useTools ? 4096 : 2048;
+
+  // 统一使用 /v1/text/chatcompletion_v2 端点（M2-her 和 MiniMax-M2.5 都支持）
+  // 工具调用需要 extra_body.reasoning_split
+  // baseURL 只设置到 /v1，LangChain 会自动添加 /chat/completions
+  const normalizedBaseUrl = baseUrl?.replace(/\/+$/, '') || 'https://api.minimaxi.com';
+  const fullEndpoint = normalizedBaseUrl + '/v1';
+
+  console.log('[MiniMax] Creating ChatOpenAI with model:', effectiveModel, 'baseURL:', fullEndpoint, 'withTools:', useTools);
+
+  // 设置环境变量
+  process.env.OPENAI_API_KEY = apiKey;
+  process.env.OPENAI_BASE_URL = fullEndpoint;
+
+  // 工具调用时设置 reasoning_split: false，让思考内容在 content 中
+  const modelParams: Record<string, any> = {
+    model: effectiveModel,
+    temperature: config?.temperature ?? 0.7,
+    maxTokens: config?.maxTokens ?? maxTokens,
+    apiKey: apiKey,
+    baseURL: fullEndpoint,
+  };
+
+  // MiniMax 工具调用需要设置 reasoning_split: false
+  if (useTools) {
+    modelParams.extraBody = {
+      reasoning_split: false
+    };
   }
 
-  // 使用 ChatAnthropic（官方 Anthropic 协议），由 ANTHROPIC_BASE_URL 控制实际请求地址
-  return new ChatAnthropic({
-    model: config?.model || model || 'MiniMax-M2.5',
-    temperature: config?.temperature ?? 0.7,
-    maxTokens: config?.maxTokens ?? 4096,
-    anthropicApiKey: process.env.ANTHROPIC_API_KEY,
-  } as any);
+  console.log('[MiniMax] modelParams:', JSON.stringify(modelParams, (key, value) => {
+    if (key === 'apiKey') return '***';
+    return value;
+  }));
+
+  const chatModel = new ChatOpenAI(modelParams);
+  console.log('[MiniMax] ChatOpenAI model:', (chatModel as any).modelName);
+
+  return chatModel;
 }
 
 /**
@@ -261,11 +289,15 @@ export function getThinkingModel(): any {
 // 为了兼容性，也导出 ChatOpenAI 类型的 MiniMax
 export type MiniMaxChatModel = ReturnType<typeof createMiniMaxModel>;
 
+// 保持向后兼容性，createMiniMaxChatAnthropic 现在指向 ChatOpenAI 版本
+export { createMiniMaxChatOpenAI as createMiniMaxChatAnthropic };
+
 export default {
   createChatModel,
   createOpenAIModel,
   createAnthropicModel,
   createMiniMaxModel,
+  createMiniMaxChatOpenAI,
   getThinkingModel,
   getEmbeddingModel,
 };

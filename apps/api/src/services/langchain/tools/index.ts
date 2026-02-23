@@ -15,6 +15,9 @@ import {
   parseSearchResults,
 } from '../../agent/agent.web-parser.js';
 
+// 导入自定义工具
+import { customTools } from './custom.js';
+
 // ==================== 笔记工具 ====================
 
 /**
@@ -516,6 +519,7 @@ export const AllTools = [
   ...KnowledgeGraphTools,
   ...InfoTools,
   ...WebTools,
+  ...customTools,
 ];
 
 export default {
@@ -524,5 +528,6 @@ export default {
   TagTools,
   KnowledgeGraphTools,
   InfoTools,
+  customTools,
   AllTools,
 };

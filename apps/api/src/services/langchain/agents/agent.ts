@@ -162,9 +162,11 @@ export async function chatWithAgent(
   const session = getOrCreateSession(sessionId);
 
   try {
+    // 工具调用使用 MiniMax-M2.5（支持 tools 参数）
     const llm = createMiniMaxChatAnthropic({
       temperature: config?.temperature ?? 0.7,
       maxTokens: config?.maxTokens ?? 4096,
+      withTools: true,  // 使用 MiniMax-M2.5 进行工具调用
     });
 
     const modelWithTools = llm.bindTools(AllTools);

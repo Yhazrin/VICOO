@@ -323,6 +323,54 @@ function initializeTables() {
   } catch (e) {
     // Column may already exist
   }
+
+  // MCP Servers table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS mcp_servers (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL DEFAULT 'dev_user_1',
+      name TEXT NOT NULL,
+      type TEXT NOT NULL DEFAULT 'mcp' CHECK(type IN ('builtin', 'mcp', 'custom')),
+      description TEXT,
+      icon TEXT DEFAULT '🔌',
+
+      -- MCP 专用字段
+      command TEXT,
+      args TEXT DEFAULT '[]',
+      env TEXT DEFAULT '{}',
+      url TEXT,
+
+      -- 通用字段
+      enabled INTEGER DEFAULT 1,
+      config TEXT DEFAULT '{}',
+
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // MCP Tools table (tools provided by MCP servers)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS mcp_tools (
+      id TEXT PRIMARY KEY,
+      server_id TEXT NOT NULL,
+      mcp_tool_name TEXT NOT NULL,
+      vicoo_tool_name TEXT,
+      description TEXT,
+      input_schema TEXT DEFAULT '{}',
+      enabled INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (server_id) REFERENCES mcp_servers(id) ON DELETE CASCADE
+    )
+  `);
+
+  // Create indexes for MCP tables
+  try {
+    db.run('CREATE INDEX IF NOT EXISTS idx_mcp_servers_user ON mcp_servers(user_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_mcp_tools_server ON mcp_tools(server_id)');
+  } catch (e) {
+    // Indexes may already exist
+  }
 }
 
 export function saveDatabase() {

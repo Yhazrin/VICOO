@@ -231,6 +231,30 @@ router.post('/config/minimax', async (req: Request, res: Response) => {
   }
 });
 
+// POST /api/agent/test-minimax - 测试 MiniMax 对话（不使用 LangChain）
+router.post('/test-minimax', async (req: Request, res: Response) => {
+  const { message } = req.body;
+
+  if (!message) {
+    return res.json({ success: false, error: '请提供消息内容' });
+  }
+
+  try {
+    const miniMax = getMiniMaxProvider();
+    const result = await miniMax.simpleChat([
+      { role: 'user', content: message }
+    ]);
+
+    res.json({
+      success: result.success,
+      content: result.content,
+      error: result.error
+    });
+  } catch (error: any) {
+    res.json({ success: false, error: error.message });
+  }
+});
+
 // GET /api/agent/status - 检查智能体状态
 router.get('/status', async (req: Request, res: Response) => {
   try {

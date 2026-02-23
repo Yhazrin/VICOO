@@ -61,7 +61,9 @@
       "WebSearch",
       "WebFetch(domain:platform.minimaxi.com)",
       "Bash(pnpm exec tsc:*)",
-      "WebFetch(domain:docs.langchain.com)"
+      "WebFetch(domain:docs.langchain.com)",
+      "Bash(npx tsx:*)",
+      "Bash(python3 -c:*)"
     ]
   }
 }

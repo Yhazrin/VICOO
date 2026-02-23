@@ -7,7 +7,7 @@ import { useApi } from '../contexts/ApiContext';
 import { Mascot } from '../components/Mascot';
 import { cozeService, type CozeConfig } from '../utils/coze';
 
-type Tab = 'general' | 'integration' | 'ai' | 'music' | 'coze' | 'minimax';
+type Tab = 'general' | 'integration' | 'ai' | 'music' | 'coze' | 'skills';
 
 interface CozeMessage {
   role: 'user' | 'assistant';
@@ -102,72 +102,6 @@ export const Settings: React.FC = () => {
     setCozeError(null);
   };
 
-  // ==================== MiniMax 状态 ====================
-  const [miniMaxApiKey, setMiniMaxApiKey] = useState('');
-  const [miniMaxModel, setMiniMaxModel] = useState('M2-her');
-  const [miniMaxConfigured, setMiniMaxConfigured] = useState(false);
-  const [miniMaxError, setMiniMaxError] = useState<string | null>(null);
-  const [miniMaxStatus, setMiniMaxStatus] = useState<'unknown' | 'checking' | 'configured' | 'error'>('unknown');
-
-  // 加载 MiniMax 配置
-  useEffect(() => {
-    const checkMiniMaxStatus = async () => {
-      setMiniMaxStatus('checking');
-      try {
-        const response = await fetch('http://localhost:8000/api/agent/status');
-        const data = await response.json();
-        if (data.success && data.data?.minimax?.configured) {
-          setMiniMaxConfigured(true);
-          setMiniMaxStatus('configured');
-        } else {
-          setMiniMaxStatus('unknown');
-        }
-      } catch {
-        setMiniMaxStatus('unknown');
-      }
-    };
-    checkMiniMaxStatus();
-  }, []);
-
-  // 保存 MiniMax 配置
-  const saveMiniMaxConfig = async () => {
-    if (!miniMaxApiKey) {
-      setMiniMaxError('请填写 API Key');
-      return;
-    }
-    setMiniMaxError(null);
-    try {
-      const response = await fetch('http://localhost:8000/api/agent/config/minimax', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          apiKey: miniMaxApiKey,
-          model: miniMaxModel
-        })
-      });
-      const data = await response.json();
-      if (data.success) {
-        setMiniMaxConfigured(true);
-        setMiniMaxStatus('configured');
-        setMiniMaxError(null);
-      } else {
-        setMiniMaxError(data.error || '配置保存失败');
-        setMiniMaxStatus('error');
-      }
-    } catch (error: any) {
-      setMiniMaxError(error.message || '配置保存失败');
-      setMiniMaxStatus('error');
-    }
-  };
-
-  // 清除 MiniMax 配置
-  const clearMiniMaxConfig = async () => {
-    setMiniMaxApiKey('');
-    setMiniMaxConfigured(false);
-    setMiniMaxStatus('unknown');
-    setMiniMaxError(null);
-  };
-  
   // Claude Code connection state
   const [claudeEndpoint, setClaudeEndpoint] = useState('http://localhost:3000');
   const [claudeWorkingDir, setClaudeWorkingDir] = useState('D:\\PROJECT\\vicoo');
@@ -242,7 +176,7 @@ export const Settings: React.FC = () => {
             { id: 'integration', label: t('settings.tab.integration'), icon: 'terminal' },
             { id: 'ai', label: t('settings.tab.ai'), icon: 'psychology' },
             { id: 'coze', label: 'Coze AI', icon: 'smart_toy' },
-            { id: 'minimax', label: 'MiniMax', icon: 'hub' },
+            { id: 'skills', label: 'Skills', icon: 'construction' },
           ].map((tab) => (
              <button
                key={tab.id}
@@ -496,83 +430,6 @@ export const Settings: React.FC = () => {
              </div>
           )}
 
-          {activeTab === 'minimax' && (
-            <div className="space-y-6">
-              <NeoCard className="p-6">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="bg-gradient-to-br from-blue-400 to-blue-600 border-3 border-ink rounded-xl p-3 shadow-neo-sm">
-                    <span className="material-icons-round text-3xl text-white">hub</span>
-                  </div>
-                  <div>
-                    <h2 className="text-2xl font-bold">MiniMax AI</h2>
-                    <p className="text-gray-500 font-bold text-sm">LLM 智能体核心驱动</p>
-                  </div>
-                  <div className="ml-auto">
-                    <span className={`inline-flex items-center px-3 py-1 rounded-full border-2 border-ink text-xs font-bold shadow-neo-sm ${
-                      miniMaxStatus === 'configured' ? 'bg-green-100 text-green-800' :
-                      miniMaxStatus === 'error' ? 'bg-red-100 text-red-800' :
-                      miniMaxStatus === 'checking' ? 'bg-yellow-100 text-yellow-800' :
-                      'bg-gray-100 text-gray-800'
-                    }`}>
-                      {miniMaxStatus === 'configured' ? '✅ 已配置' :
-                       miniMaxStatus === 'error' ? '❌ 错误' :
-                       miniMaxStatus === 'checking' ? '⏳ 检查中...' :
-                       '⚪ 未配置'}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-bold mb-2">API Key</label>
-                    <input
-                      type="password"
-                      value={miniMaxApiKey}
-                      onChange={(e) => setMiniMaxApiKey(e.target.value)}
-                      placeholder="输入你的 MiniMax API Key"
-                      className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-3 font-bold shadow-neo-sm text-ink dark:text-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-bold mb-2">Model</label>
-                    <select
-                      value={miniMaxModel}
-                      onChange={(e) => setMiniMaxModel(e.target.value)}
-                      className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-3 font-bold shadow-neo-sm text-ink dark:text-white"
-                    >
-                      <option value="M2-her">M2-her (推荐)</option>
-                      <option value="abab6.5s-chat">abab6.5s-chat</option>
-                      <option value="abab6.5g-chat">abab6.5g-chat</option>
-                      <option value="abab4-chat">abab4-chat</option>
-                    </select>
-                  </div>
-                  {miniMaxError && (
-                    <p className="text-red-500 text-sm font-bold">{miniMaxError}</p>
-                  )}
-                  <div className="flex gap-3">
-                    <NeoButton onClick={saveMiniMaxConfig}>
-                      {miniMaxConfigured ? '更新配置' : '保存配置'}
-                    </NeoButton>
-                    {miniMaxConfigured && (
-                      <NeoButton variant="secondary" onClick={clearMiniMaxConfig}>
-                        清除配置
-                      </NeoButton>
-                    )}
-                  </div>
-                </div>
-              </NeoCard>
-
-              <NeoCard className="p-6">
-                <h3 className="text-lg font-bold mb-4">如何获取 API Key？</h3>
-                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                  <li>访问 <a href="https://platform.minimax.io" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">MiniMax 开放平台</a></li>
-                  <li>注册/登录账号</li>
-                  <li>在「应用管理」中创建应用获取 API Key</li>
-                  <li>复制 API Key 并粘贴到上方输入框</li>
-                </ol>
-              </NeoCard>
-            </div>
-          )}
           
           {activeTab === 'music' && (
              <div className="space-y-6 animate-pop">
@@ -808,6 +665,10 @@ export const Settings: React.FC = () => {
              </div>
           )}
 
+          {activeTab === 'skills' && (
+            <SkillsTab />
+          )}
+
           {activeTab === 'coze' && (
              <div className="space-y-6">
                 {/* Coze 配置 */}
@@ -913,6 +774,336 @@ export const Settings: React.FC = () => {
           )}
         </div>
 
+      </div>
+    </div>
+  );
+};
+
+// Skills/MCP Tab Component
+const SkillsTab: React.FC = () => {
+  const [servers, setServers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [editingServer, setEditingServer] = useState<any>(null);
+
+  // 加载 MCP 服务器列表
+  useEffect(() => {
+    loadServers();
+  }, []);
+
+  const loadServers = async () => {
+    try {
+      const response = await fetch('/api/agent/mcp');
+      const result = await response.json();
+      if (result.success) {
+        setServers(result.data);
+      }
+    } catch (error) {
+      console.error('Failed to load MCP servers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 切换服务器启用状态
+  const toggleServer = async (id: string, enabled: boolean) => {
+    try {
+      await fetch(`/api/agent/mcp/${id}/toggle`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled })
+      });
+      loadServers();
+    } catch (error) {
+      console.error('Failed to toggle server:', error);
+    }
+  };
+
+  // 删除服务器
+  const deleteServer = async (id: string) => {
+    if (!confirm('确定要删除这个服务器吗？')) return;
+    try {
+      await fetch(`/api/agent/mcp/${id}`, { method: 'DELETE' });
+      loadServers();
+    } catch (error) {
+      console.error('Failed to delete server:', error);
+    }
+  };
+
+  const getTypeLabel = (type: string) => {
+    switch (type) {
+      case 'builtin': return '内置';
+      case 'mcp': return 'MCP';
+      case 'custom': return '自定义';
+      default: return type;
+    }
+  };
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'builtin': return 'bg-blue-100 text-blue-800';
+      case 'mcp': return 'bg-purple-100 text-purple-800';
+      case 'custom': return 'bg-green-100 text-green-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">技能 & MCP</h2>
+          <p className="text-gray-500">管理 AI 助手可以使用的技能和 MCP 服务器</p>
+        </div>
+        <NeoButton onClick={() => setShowAddModal(true)}>
+          <span className="material-icons-round mr-2">add</span>
+          添加服务器
+        </NeoButton>
+      </div>
+
+      {/* Server List */}
+      {servers.length === 0 ? (
+        <NeoCard className="p-8 text-center">
+          <span className="material-icons-round text-6xl text-gray-300 mb-4">construction</span>
+          <h3 className="text-xl font-bold mb-2">暂无技能服务器</h3>
+          <p className="text-gray-500 mb-4">添加 MCP 服务器或自定义技能来扩展 AI 能力</p>
+          <NeoButton onClick={() => setShowAddModal(true)}>添加第一个服务器</NeoButton>
+        </NeoCard>
+      ) : (
+        <div className="grid gap-4">
+          {servers.map((server) => (
+            <NeoCard key={server.id} className="p-4">
+              <div className="flex items-center gap-4">
+                {/* Icon */}
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-2xl">
+                  {server.icon || '🔌'}
+                </div>
+
+                {/* Info */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-lg">{server.name}</h3>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${getTypeColor(server.type)}`}>
+                      {getTypeLabel(server.type)}
+                    </span>
+                    {!server.enabled && (
+                      <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-gray-100 text-gray-500">
+                        已禁用
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-gray-500 text-sm">{server.description || '暂无描述'}</p>
+                  {server.command && (
+                    <p className="text-gray-400 text-xs font-mono mt-1">{server.command}</p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2">
+                  {/* Toggle Switch */}
+                  <button
+                    onClick={() => toggleServer(server.id, !server.enabled)}
+                    disabled={server.type === 'builtin'}
+                    className={`w-12 h-6 rounded-full border-2 border-ink relative transition-colors ${
+                      server.enabled ? 'bg-green-500' : 'bg-gray-300'
+                    } ${server.type === 'builtin' ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <div className={`w-4 h-4 bg-white border-2 border-ink rounded-full absolute top-0.5 transition-all ${
+                      server.enabled ? 'left-6' : 'left-1'
+                    }`}></div>
+                  </button>
+
+                  {/* Delete Button */}
+                  {server.type !== 'builtin' && (
+                    <button
+                      onClick={() => deleteServer(server.id)}
+                      className="p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
+                    >
+                      <span className="material-icons-round">delete</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </NeoCard>
+          ))}
+        </div>
+      )}
+
+      {/* Add Modal */}
+      {showAddModal && (
+        <AddServerModal
+          onClose={() => setShowAddModal(false)}
+          onSuccess={() => {
+            setShowAddModal(false);
+            loadServers();
+          }}
+        />
+      )}
+    </div>
+  );
+};
+
+// Add Server Modal Component
+const AddServerModal: React.FC<{
+  onClose: () => void;
+  onSuccess: () => void;
+}> = ({ onClose, onSuccess }) => {
+  const [name, setName] = useState('');
+  const [type, setType] = useState<'mcp' | 'custom'>('mcp');
+  const [description, setDescription] = useState('');
+  const [command, setCommand] = useState('');
+  const [args, setArgs] = useState('');
+  const [url, setUrl] = useState('');
+  const [saving, setSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!name) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/agent/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name,
+          type,
+          description,
+          command,
+          args: args ? args.split(' ').filter(Boolean) : [],
+          url: url || undefined
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        onSuccess();
+      } else {
+        alert(result.error || '添加失败');
+      }
+    } catch (error) {
+      console.error('Failed to add server:', error);
+      alert('添加失败');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-900 rounded-2xl border-3 border-ink w-full max-w-md mx-4 shadow-neo-lg">
+        <div className="p-6 border-b-2 border-gray-200 dark:border-gray-700">
+          <h2 className="text-xl font-bold">添加 MCP 服务器</h2>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Name */}
+          <div>
+            <label className="block text-sm font-bold mb-2">名称</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="My MCP Server"
+              required
+              className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-2 font-bold"
+            />
+          </div>
+
+          {/* Type */}
+          <div>
+            <label className="block text-sm font-bold mb-2">类型</label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="type"
+                  checked={type === 'mcp'}
+                  onChange={() => setType('mcp')}
+                  className="w-4 h-4"
+                />
+                <span className="font-bold">MCP 服务器</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="type"
+                  checked={type === 'custom'}
+                  onChange={() => setType('custom')}
+                  className="w-4 h-4"
+                />
+                <span className="font-bold">自定义技能</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label className="block text-sm font-bold mb-2">描述</label>
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="这个服务器提供什么功能？"
+              className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-2 font-bold"
+            />
+          </div>
+
+          {/* Command */}
+          <div>
+            <label className="block text-sm font-bold mb-2">命令</label>
+            <input
+              type="text"
+              value={command}
+              onChange={(e) => setCommand(e.target.value)}
+              placeholder="npx 或 uvx"
+              className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-2 font-mono text-sm"
+            />
+          </div>
+
+          {/* Args */}
+          <div>
+            <label className="block text-sm font-bold mb-2">参数 (用空格分隔)</label>
+            <input
+              type="text"
+              value={args}
+              onChange={(e) => setArgs(e.target.value)}
+              placeholder="-y @modelcontextprotocol/server-filesystem /path"
+              className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-2 font-mono text-sm"
+            />
+          </div>
+
+          {/* URL (optional) */}
+          <div>
+            <label className="block text-sm font-bold mb-2">服务器地址 (可选)</label>
+            <input
+              type="text"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              placeholder="http://localhost:3000"
+              className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-2 font-mono text-sm"
+            />
+          </div>
+
+          {/* Buttons */}
+          <div className="flex justify-end gap-2 pt-4">
+            <NeoButton type="button" variant="secondary" onClick={onClose}>
+              取消
+            </NeoButton>
+            <NeoButton type="submit" disabled={saving || !name}>
+              {saving ? '保存中...' : '添加'}
+            </NeoButton>
+          </div>
+        </form>
       </div>
     </div>
   );
