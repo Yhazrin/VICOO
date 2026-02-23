@@ -9,7 +9,10 @@
     "preview": "vite preview",
     "tauri": "tauri",
     "tauri:dev": "tauri dev",
-    "tauri:build": "tauri build"
+    "tauri:build": "tauri build",
+    "typecheck": "tsc --noEmit",
+    "lint": "pnpm run typecheck",
+    "test": "node -e \"console.log('No smoke tests yet')\""
   },
   "dependencies": {
     "react": "^19.2.4",

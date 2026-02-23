@@ -1,9 +1,11 @@
 {
   "name": "@vicoo/types",
-  "version": "1.0.0",
-  "description": "Vicoo Type Definitions",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "scripts": { "build": "tsc" },
-  "devDependencies": { "typescript": "^5.0.0" }
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }

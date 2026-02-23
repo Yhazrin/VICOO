@@ -1,9 +1,11 @@
 {
   "name": "@vicoo/sdk",
-  "version": "1.0.0",
-  "description": "Vicoo SDK",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
   "main": "src/index.ts",
   "types": "src/index.ts",
-  "scripts": { "build": "tsc" },
-  "devDependencies": { "typescript": "^5.0.0" }
+  "exports": {
+    ".": "./src/index.ts"
+  }
 }

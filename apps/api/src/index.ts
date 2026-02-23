@@ -1,6 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 import express from 'express';
 import cors from 'cors';
 import { errorHandler } from './middleware/error.js';
@@ -20,19 +17,12 @@ import downloaderRouter from './routes/downloader.js';
 import workflowRouter from './routes/workflow.js';
 import claudeRouter from './routes/claude.js';
 import authRouter, { authMiddleware } from './middleware/auth.js';
-import { initDatabase, saveDatabase, getOne } from './db/index.js';
-import { v4 as uuidv4 } from 'uuid';
+import { initDatabase, saveDatabase } from './db/index.js';
+import { seedDatabase } from './db/seed.js';
 import { graphqlHTTP } from 'express-graphql';
 import { schema } from './graphql/schema.js';
 import { startAutoGraphService } from './services/auto-graph.js';
 import aiRouter from './routes/ai.js';
-import tasksRouter from './routes/tasks.js';
-import noteLinksRouter from './routes/note-links.js';
-import ragRouter from './routes/rag.js';
-import writerRouter from './routes/writer.js';
-import agentRouter from './routes/agent.js';
-import publishRouter from './routes/publish.js';
-import mcpRouter from './routes/mcp.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -49,143 +39,39 @@ app.use(express.urlencoded({ extended: true }));
 import path from 'path';
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Seed data if empty
-async function seedIfEmpty() {
-  const count = getOne<{ count: number }>('SELECT COUNT(*) as count FROM notes');
-  if ((count?.count || 0) > 0) return;
-
-  console.log('Seeding database...');
-
-  // Create default user
-  saveDatabase(); // Make sure db is saved first
-
-  const notes = [
-    {
-      id: uuidv4(),
-      title: 'Welcome to Vicoo',
-      category: 'idea',
-      snippet: 'Your visual coordinator for knowledge management',
-      content: '# Welcome to Vicoo\n\nThis is your new knowledge workspace. Start creating notes and exploring the galaxy view!',
-      published: 1,
-      color: '#FFD166',
-      tags: ['welcome', 'intro']
-    },
-    {
-      id: uuidv4(),
-      title: 'React Best Practices',
-      category: 'code',
-      snippet: 'Key patterns for React development',
-      content: '# React Best Practices\n\n- Use functional components with hooks\n- Keep state local when possible\n- Memoize expensive computations',
-      published: 1,
-      color: '#118AB2',
-      tags: ['react', 'javascript', 'frontend']
-    },
-    {
-      id: uuidv4(),
-      title: 'Design System Ideas',
-      category: 'design',
-      snippet: 'Neubrutalism-lite design concepts',
-      content: '# Design System\n\n## Colors\n- Primary: #FFD166\n- Secondary: #0df259\n- Accent: #EF476F',
-      published: 0,
-      color: '#EF476F',
-      tags: ['design', 'ui', 'ideas']
-    },
-    {
-      id: uuidv4(),
-      title: 'Project Planning Meeting',
-      category: 'meeting',
-      snippet: 'Q1 planning discussion notes',
-      content: '# Q1 Planning\n\n- Define MVP scope\n- Set milestone dates\n- Assign team responsibilities',
-      published: 1,
-      color: '#0df259',
-      tags: ['meeting', 'planning']
-    }
-  ];
-
-  // Import the runQuery function
-  const { runQuery } = await import('./db/index.js');
-
-  for (const note of notes) {
-    runQuery(
-      `INSERT INTO notes (id, user_id, title, category, snippet, content, published, color, timestamp)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-      [note.id, 'dev_user_1', note.title, note.category, note.snippet, note.content, note.published, note.color]
-    );
-
-    for (const tagName of note.tags) {
-      const tagId = uuidv4();
-      runQuery('INSERT OR IGNORE INTO tags (id, name) VALUES (?, ?)', [tagId, tagName]);
-      const tag = getOne<{ id: string }>('SELECT id FROM tags WHERE name = ?', [tagName]);
-      if (tag) {
-        runQuery('INSERT INTO note_tags (note_id, tag_id) VALUES (?, ?)', [note.id, tag.id]);
-      }
-    }
-  }
-
-  saveDatabase();
-  console.log('✅ Database seeded with sample data');
-}
-
 // Initialize database and start server
 async function start() {
   try {
     // Initialize database
     await initDatabase();
 
-    // 初始化 MiniMax
-    const { initializeMiniMax } = await import('./services/minimax.js');
-    await initializeMiniMax();
-
-    // 初始化 LangChain Memory 表
-    const { initializeMemoryTables } = await import('./services/langchain/memory/index.js');
-    initializeMemoryTables();
-    console.log('✅ LangChain Memory tables initialized');
-
-    // 初始化 LangSmith 观测性（如果配置了 API Key）
-    const { initializeLangSmith } = await import('./services/langchain/observability/index.js');
-    await initializeLangSmith();
-
-    // 初始化 RAG 相关表
-    const { initializeRAGTables } = await import('./services/rag-enhanced.js');
-    initializeRAGTables();
-    console.log('✅ RAG tables initialized');
-
-    // Seed if empty
-    await seedIfEmpty();
-
-    // 初始化 MCP 内置服务器
-    const { initializeBuiltinMCPServers } = await import('./services/mcp.js');
-    initializeBuiltinMCPServers();
-    console.log('✅ MCP servers initialized');
+    // Optional development seed only.
+    // For production, use explicit migration scripts instead of runtime seed data.
+    if (process.env.AUTO_SEED_ON_START === 'true') {
+      await seedDatabase();
+    }
 
     // Routes
     app.use('/health', healthRouter);
     app.use('/auth', authRouter);
-    app.use('/api/notes', notesRouter);
-    app.use('/api/tags', tagsRouter);
-    app.use('/api/nodes', graphRouter);
-    app.use('/api/links', graphRouter);
-    app.use('/api/graph', graphRouter);
-    app.use('/api/search', searchRouter);
-    app.use('/api/categories', taxonomyRouter);
-    app.use('/api/clusters', taxonomyRouter);
-    app.use('/api/analytics', analyticsRouter);
-    app.use('/api/timeline', timelineRouter);
-    app.use('/api/settings', settingsRouter);
-    app.use('/api/feed', feedRouter);
-    app.use('/api/focus', focusRouter);
-    app.use('/api/music', musicRouter);
-    app.use('/api/download', downloaderRouter);
-    app.use('/api/workflow', workflowRouter);
-    app.use('/api/claude', claudeRouter);
-    app.use('/api/ai', aiRouter);
-    app.use('/api/tasks', tasksRouter);
-    app.use('/api/note-links', noteLinksRouter);
-    app.use('/api/rag', ragRouter);
-    app.use('/api/writer', writerRouter);
-    app.use('/api/agent', agentRouter);
-    app.use('/api/publish', publishRouter);
-    app.use('/api/agent/mcp', mcpRouter);
+    app.use('/api/notes', authMiddleware, notesRouter);
+    app.use('/api/tags', authMiddleware, tagsRouter);
+    app.use('/api/nodes', authMiddleware, graphRouter);
+    app.use('/api/links', authMiddleware, graphRouter);
+    app.use('/api/graph', authMiddleware, graphRouter);
+    app.use('/api/search', authMiddleware, searchRouter);
+    app.use('/api/categories', authMiddleware, taxonomyRouter);
+    app.use('/api/clusters', authMiddleware, taxonomyRouter);
+    app.use('/api/analytics', authMiddleware, analyticsRouter);
+    app.use('/api/timeline', authMiddleware, timelineRouter);
+    app.use('/api/settings', authMiddleware, settingsRouter);
+    app.use('/api/feed', authMiddleware, feedRouter);
+    app.use('/api/focus', authMiddleware, focusRouter);
+    app.use('/api/music', authMiddleware, musicRouter);
+    app.use('/api/download', authMiddleware, downloaderRouter);
+    app.use('/api/workflow', authMiddleware, workflowRouter);
+    app.use('/api/claude', authMiddleware, claudeRouter);
+    app.use('/api/ai', authMiddleware, aiRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({

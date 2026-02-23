@@ -1,16 +1,6 @@
 // pages/library/library.ts - Notes Library
 import api from '../../services/api';
-
-interface Note {
-  id: string;
-  title: string;
-  content?: string;
-  snippet?: string;
-  category?: string;
-  tags?: string[];
-  published?: boolean;
-  timestamp?: string;
-}
+import type { Note } from '@vicoo/types';
 
 Page({
   data: {
@@ -19,8 +9,7 @@ Page({
     filter: 'All',
     categories: ['All', 'idea', 'code', 'design', 'meeting'],
     loading: true,
-    searchQuery: '',
-    viewMode: 'grid' as 'grid' | 'list'
+    searchQuery: ''
   },
 
   onLoad() {
@@ -35,18 +24,15 @@ Page({
     this.setData({ loading: true });
 
     try {
-      const res = await api.listNotes({ limit: 100 });
-      const notes = res.data || [];
-      
+      const res = await api.listNotes({ limit: 50 });
       this.setData({
-        notes,
+        notes: res.data,
+        filteredNotes: res.data,
         loading: false
       });
-      
-      this.applyFilter();
     } catch (error: any) {
       wx.showToast({
-        title: error?.message || 'Failed to load',
+        title: error.message || 'Failed to load',
         icon: 'none'
       });
       this.setData({ loading: false });
@@ -64,12 +50,6 @@ Page({
     this.applyFilter();
   },
 
-  toggleViewMode() {
-    this.setData({
-      viewMode: this.data.viewMode === 'grid' ? 'list' : 'grid'
-    });
-  },
-
   applyFilter() {
     let notes = this.data.notes;
 
@@ -84,17 +64,9 @@ Page({
       notes = notes.filter(n =>
         n.title.toLowerCase().includes(query) ||
         (n.content && n.content.toLowerCase().includes(query)) ||
-        (n.snippet && n.snippet.toLowerCase().includes(query)) ||
-        (n.tags && n.tags.some((t: string) => t.toLowerCase().includes(query)))
+        n.tags.some(t => t.toLowerCase().includes(query))
       );
     }
-
-    // Sort by timestamp (newest first)
-    notes.sort((a, b) => {
-      const dateA = new Date(a.timestamp || 0).getTime();
-      const dateB = new Date(b.timestamp || 0).getTime();
-      return dateB - dateA;
-    });
 
     this.setData({ filteredNotes: notes });
   },
@@ -125,7 +97,7 @@ Page({
             wx.showToast({ title: 'Deleted' });
             this.loadNotes();
           } catch (error: any) {
-            wx.showToast({ title: error?.message || 'Delete failed', icon: 'none' });
+            wx.showToast({ title: error.message, icon: 'none' });
           }
         }
       }

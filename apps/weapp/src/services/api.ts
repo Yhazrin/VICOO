@@ -1,47 +1,7 @@
 // api.ts - Vicoo API Service for WeChat Mini Program
+import type { Note, NoteCreate, NoteUpdate, ListResponse, ApiError } from '@vicoo/types';
 
-// Local type definitions
-interface Note {
-  id: string;
-  title: string;
-  content?: string;
-  snippet?: string;
-  category?: string;
-  tags?: string[];
-  published?: boolean;
-  timestamp?: string;
-  status?: 'inbox' | 'clarified' | 'archived';
-}
-
-interface NoteCreate {
-  title: string;
-  content?: string;
-  category?: string;
-  snippet?: string;
-  published?: boolean;
-}
-
-interface NoteUpdate {
-  title?: string;
-  content?: string;
-  category?: string;
-  snippet?: string;
-  published?: boolean;
-  status?: string;
-}
-
-interface ListResponse<T> {
-  data: T[];
-  total?: number;
-}
-
-interface ApiError {
-  code: string;
-  message: string;
-}
-
-// 使用电脑的局域网IP
-const API_BASE = 'http://192.168.31.184:8000';
+const API_BASE = 'http://localhost:8000';
 
 class ApiService {
   private token: string = '';
@@ -51,7 +11,7 @@ class ApiService {
     wx.setStorageSync('vicoo_token', token);
   }
 
-  private async request<T>(endpoint: string, options: any = {}): Promise<T> {
+  private async request<T>(endpoint: string, options: wx.RequestOptions = {}): Promise<T> {
     const url = `${API_BASE}${endpoint}`;
 
     const header: Record<string, string> = {
@@ -69,19 +29,18 @@ class ApiService {
         method: options.method || 'GET',
         data: options.data,
         header,
-        success: (res: any) => {
+        success: (res) => {
           if (res.statusCode >= 200 && res.statusCode < 300) {
             resolve(res.data as T);
           } else {
-            const errorData = res.data as any;
-            const error = errorData.error || {
+            const error = (res.data as ApiError).error || {
               code: 'UNKNOWN',
               message: 'Request failed'
             };
             reject(error);
           }
         },
-        fail: (err: any) => {
+        fail: (err) => {
           reject({ code: 'NETWORK_ERROR', message: err.errMsg });
         }
       });
@@ -105,17 +64,17 @@ class ApiService {
     category?: string;
     tag?: string;
     published?: boolean;
-  }): Promise<{ data: Note[] }> {
-    const queryParams: string[] = [];
+  }): Promise<ListResponse<Note>> {
+    const queryParams = new URLSearchParams();
     if (params) {
       Object.entries(params).forEach(([key, value]) => {
         if (value !== undefined) {
-          queryParams.push(`${key}=${encodeURIComponent(String(value))}`);
+          queryParams.append(key, String(value));
         }
       });
     }
-    const query = queryParams.length > 0 ? '?' + queryParams.join('&') : '';
-    return this.request(`/api/notes${query}`);
+    const query = queryParams.toString();
+    return this.request(`/api/notes${query ? '?' + query : ''}`);
   }
 
   async getNote(id: string): Promise<{ data: Note }> {
@@ -139,35 +98,6 @@ class ApiService {
   async deleteNote(id: string): Promise<void> {
     return this.request(`/api/notes/${id}`, {
       method: 'DELETE'
-    });
-  }
-
-  // AI Chat
-  async sendChatMessage(message: string, mode?: string): Promise<{ success: boolean; response?: string; error?: string }> {
-    return this.request('/api/ai/chat', {
-      method: 'POST',
-      data: { message, mode }
-    });
-  }
-
-  // AI Status
-  async getAIStatus(): Promise<{ success: boolean; data?: any; error?: string }> {
-    return this.request('/api/ai/status');
-  }
-
-  // AI Summary
-  async generateSummary(noteId?: string, text?: string): Promise<{ success: boolean; summary?: string; keywords?: string[]; error?: string }> {
-    return this.request('/api/ai/summary', {
-      method: 'POST',
-      data: { noteId, text }
-    });
-  }
-
-  // AI Suggest Tags
-  async suggestTags(noteId?: string, text?: string): Promise<{ success: boolean; suggestions?: any[]; error?: string }> {
-    return this.request('/api/ai/suggest-tags', {
-      method: 'POST',
-      data: { noteId, text }
     });
   }
 }

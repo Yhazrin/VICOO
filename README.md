@@ -170,6 +170,19 @@ vicoo 采用 **Neubrutalism-lite（轻量新粗犷主义）** 设计风格：
 
 ---
 
+## ✅ 本地提交前检查
+
+```bash
+pnpm install
+pnpm typecheck
+pnpm lint
+pnpm test
+# 或只跑关键 smoke
+pnpm test:smoke
+```
+
+---
+
 ## 🤝 贡献
 
 欢迎贡献！请先阅读 [多端开发策略文档](./docs/architecture/multi-platform-strategy.md) 了解架构设计。
