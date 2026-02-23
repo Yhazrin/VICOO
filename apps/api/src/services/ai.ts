@@ -4,6 +4,7 @@
  */
 
 import { getCozeConfig, isCozeConfigured } from './coze-config.js';
+import { MiniMaxProvider, getMiniMaxProvider } from './minimax.js';
 
 // ==================== 类型定义 ====================
 
@@ -366,13 +367,15 @@ class CozeProvider implements AIProvider {
 
 // ==================== AI Service Factory ====================
 
-export type AIProviderType = 'gemini' | 'openai' | 'coze' | 'auto';
+export type AIProviderType = 'gemini' | 'openai' | 'coze' | 'minimax' | 'auto';
 
 let currentProvider: AIProvider | null = null;
 
 export function initializeAI(provider: AIProviderType = 'auto'): AIProvider {
   if (provider === 'auto') {
-    if (process.env.GEMINI_API_KEY) {
+    if (process.env.MINIMAX_API_KEY) {
+      currentProvider = new MiniMaxProvider() as unknown as AIProvider;
+    } else if (process.env.GEMINI_API_KEY) {
       currentProvider = new GeminiProvider();
     } else if (process.env.OPENAI_API_KEY) {
       currentProvider = new OpenAIProvider();
@@ -381,6 +384,8 @@ export function initializeAI(provider: AIProviderType = 'auto'): AIProvider {
     } else {
       currentProvider = new CozeProvider();
     }
+  } else if (provider === 'minimax') {
+    currentProvider = new MiniMaxProvider() as unknown as AIProvider;
   } else if (provider === 'gemini') {
     currentProvider = new GeminiProvider();
   } else if (provider === 'openai') {

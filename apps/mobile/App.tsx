@@ -11,6 +11,8 @@ import HomeScreen from './src/screens/HomeScreen';
 import LibraryScreen from './src/screens/LibraryScreen';
 import SearchScreen from './src/screens/SearchScreen';
 import EditorScreen from './src/screens/EditorScreen';
+import InboxScreen from './src/screens/InboxScreen';
+import ProjectsScreen from './src/screens/ProjectsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -24,6 +26,10 @@ function TabNavigator() {
 
           if (route.name === 'Home') {
             iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Inbox') {
+            iconName = focused ? 'archive' : 'archive-outline';
+          } else if (route.name === 'Projects') {
+            iconName = focused ? 'grid' : 'grid-outline';
           } else if (route.name === 'Library') {
             iconName = focused ? 'library' : 'library-outline';
           } else if (route.name === 'Search') {
@@ -34,7 +40,7 @@ function TabNavigator() {
 
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#1a1a1a',
+        tabBarActiveTintColor: '#FFB800',
         tabBarInactiveTintColor: '#999999',
         tabBarStyle: {
           borderTopWidth: 3,
@@ -51,6 +57,8 @@ function TabNavigator() {
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Inbox" component={InboxScreen} />
+      <Tab.Screen name="Projects" component={ProjectsScreen} />
       <Tab.Screen name="Library" component={LibraryScreen} />
       <Tab.Screen name="Search" component={SearchScreen} />
     </Tab.Navigator>

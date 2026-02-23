@@ -1,8 +1,8 @@
 {
-  "miniprogramRoot": "./src",
+  "miniprogramRoot": "src/",
   "projectname": "vicoo-weapp",
   "description": "Vicoo - Your Visual Coordinator",
-  "appid": "",
+  "appid": "wx92f2c8dc57b7aa9c",
   "compileType": "miniprogram",
   "setting": {
     "urlCheck": false,
@@ -22,12 +22,30 @@
       "ignore": [],
       "disablePlugins": [],
       "outputPath": ""
-    }
+    },
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "swc": false,
+    "disableSWC": true
   },
   "condition": {},
-  "srcMiniprogramRoot": "./src",
+  "srcMiniprogramRoot": "src/",
   "editorSetting": {
     "tabIndent": "insertSpaces",
     "tabSize": 2
+  },
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
   }
 }

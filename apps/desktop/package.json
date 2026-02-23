@@ -17,6 +17,10 @@
     "@vicoo/sdk": "workspace:*",
     "@vicoo/types": "workspace:*",
     "@vicoo/ui": "workspace:*",
+    "@vicoo/events": "workspace:*",
+    "@vicoo/auth": "workspace:*",
+    "@vicoo/crypto": "workspace:*",
+    "@vicoo/storage": "workspace:*",
     "@tauri-apps/api": "^2.0.0"
   },
   "devDependencies": {

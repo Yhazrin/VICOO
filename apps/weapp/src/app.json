@@ -1,42 +1,44 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/inbox/inbox",
     "pages/library/library",
     "pages/editor/editor",
-    "pages/search/search"
+    "pages/search/search",
+    "pages/projects/projects",
+    "pages/ai/ai"
   ],
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#FFD166",
     "navigationBarTitleText": "Vicoo",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f5f5f5"
+    "backgroundColor": "#f9fafb"
   },
   "tabBar": {
-    "color": "#666666",
-    "selectedColor": "#1a1a1a",
-    "backgroundColor": "#ffffff",
+    "color": "#9CA3AF",
+    "selectedColor": "#1A1A1A",
+    "backgroundColor": "#FFFFFF",
     "borderStyle": "black",
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "Home",
-        "iconPath": "assets/home.png",
-        "selectedIconPath": "assets/home-active.png"
+        "text": "Home"
+      },
+      {
+        "pagePath": "pages/inbox/inbox",
+        "text": "Inbox"
       },
       {
         "pagePath": "pages/library/library",
-        "text": "Library",
-        "iconPath": "assets/library.png",
-        "selectedIconPath": "assets/library-active.png"
+        "text": "Library"
       },
       {
         "pagePath": "pages/search/search",
-        "text": "Search",
-        "iconPath": "assets/search.png",
-        "selectedIconPath": "assets/search-active.png"
+        "text": "Search"
       }
     ]
   },
+  "usingComponents": {},
   "sitemapLocation": "sitemap.json"
 }

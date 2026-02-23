@@ -1,0 +1,10 @@
+{
+  "name": "@vicoo/ui",
+  "version": "1.0.0",
+  "description": "Vicoo UI Components",
+  "main": "src/index.tsx",
+  "types": "src/index.tsx",
+  "scripts": { "build": "tsc" },
+  "devDependencies": { "typescript": "^5.0.0" },
+  "dependencies": { "react": "^19.0.0" }
+}

@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import api from '../services/api';
+import QuickCaptureFAB from '../components/QuickCaptureFAB';
 import { colors, spacing, typography, shadows, borderRadius, getCategoryColor } from '../styles/theme';
 
 interface Note {
@@ -131,6 +132,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {/* Quick Capture FAB */}
+      <QuickCaptureFAB onCapture={(content) => {
+        // Handle quick capture - create new note
+        console.log('Quick capture:', content);
+      }} />
     </SafeAreaView>
   );
 }

@@ -41,7 +41,27 @@
       "Bash(git stash:*)",
       "Bash(dir:*)",
       "Bash(pnpm add:*)",
-      "Bash(pnpm add -D:*)"
+      "Bash(pnpm add -D:*)",
+      "Bash(pnpm run dev)",
+      "Bash(pnpm --filter vicoo-desktop tauri:dev:*)",
+      "Bash(timeout 20)",
+      "Bash(pnpm --filter vicoo-web dev)",
+      "Bash(pnpm run build:*)",
+      "Bash(pnpm build)",
+      "Bash(git clone:*)",
+      "Bash(pip install:*)",
+      "Bash(playwright install:*)",
+      "Bash(python:*)",
+      "Bash($env:PYTHONIOENCODING=\"utf-8\")",
+      "Bash(sqlite3:*)",
+      "Bash(node -e:*)",
+      "Bash(npm run dev)",
+      "Bash(timeout:*)",
+      "Bash(ping -n 4 127.0.0.)",
+      "WebSearch",
+      "WebFetch(domain:platform.minimaxi.com)",
+      "Bash(pnpm exec tsc:*)",
+      "WebFetch(domain:docs.langchain.com)"
     ]
   }
 }

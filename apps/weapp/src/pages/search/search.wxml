@@ -1,69 +1,130 @@
-<!--pages/search/search.wxml-->
+<!--pages/search/search.wxml - Unified Search Page -->
 <view class="container">
-  <!-- Search Input -->
+  <!-- Header -->
+  <view class="header">
+    <view class="title-large">Search</view>
+  </view>
+
+  <!-- Search Bar -->
   <view class="search-section">
-    <view class="search-box">
-      <input
-        class="neo-input"
-        placeholder="Search notes..."
-        value="{{query}}"
-        bindinput="onSearch"
-        bindconfirm="onSearchConfirm"
-        focus
+    <view class="search-bar">
+      <text class="icon search-icon">🔍</text>
+      <input 
+        class="search-input" 
+        placeholder="Search notes or ask AI..."
+        placeholder-class="search-placeholder"
+        value="{{searchQuery}}"
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+        confirm-type="search"
+        focus="{{true}}"
       />
-      <view wx:if="{{query}}" class="clear-btn" bindtap="clearSearch">×</view>
+      <text wx:if="{{searchQuery}}" class="icon clear-icon" bindtap="clearRecentSearches">✕</text>
+    </view>
+    
+    <!-- AI Button -->
+    <button 
+      class="ai-button {{searchQuery ? 'active' : ''}}"
+      bindtap="askAI"
+      disabled="{{!searchQuery || isAIThinking}}"
+    >
+      <text class="icon">{{isAIThinking ? '⏳' : '🤖'}}</text>
+      <text>{{isAIThinking ? 'Thinking...' : 'Ask AI'}}</text>
+    </button>
+  </view>
+
+  <!-- Quick AI Actions -->
+  <view class="quick-actions">
+    <view class="quick-action" bindtap="quickAI" data-action="summarize">
+      <text class="icon">📝</text>
+      <text>Summarize</text>
+    </view>
+    <view class="quick-action" bindtap="quickAI" data-action="brainstorm">
+      <text class="icon">💡</text>
+      <text>Brainstorm</text>
+    </view>
+    <view class="quick-action" bindtap="quickAI" data-action="improve">
+      <text class="icon">✏️</text>
+      <text>Improve</text>
     </view>
   </view>
 
-  <!-- Loading -->
-  <view wx:if="{{searching}}" class="loading">
-    <text>Searching...</text>
+  <!-- Tabs -->
+  <view class="tabs">
+    <view class="tab {{activeTab === 'all' ? 'active' : ''}}" data-tab="all" bindtap="onTabChange">All</view>
+    <view class="tab {{activeTab === 'notes' ? 'active' : ''}}" data-tab="notes" bindtap="onTabChange">Notes</view>
+    <view class="tab {{activeTab === 'ai' ? 'active' : ''}}" data-tab="ai" bindtap="onTabChange">AI</view>
   </view>
 
-  <!-- Results -->
-  <view wx:elif="{{searched}}">
-    <view wx:if="{{results.length === 0}}" class="empty-state">
-      <text>No results found for "{{query}}"</text>
-    </view>
-
-    <view wx:else>
-      <view class="results-count">{{results.length}} results</view>
-      <view class="results-list">
-        <view
-          wx:for="{{results}}"
-          wx:key="id"
-          class="neo-card result-card"
-          data-id="{{item.id}}"
-          bindtap="goToNote"
-        >
-          <view class="neo-tag neo-tag-{{item.category}}">{{item.category}}</view>
-          <view class="result-title title-small">{{item.title}}</view>
-          <view class="result-snippet text-body">{{item.snippet}}</view>
+  <!-- Content -->
+  <view class="content">
+    <!-- AI Response -->
+    <view wx:if="{{showAI}}" class="ai-response animate-pop">
+      <view class="ai-header">
+        <view class="ai-avatar">
+          <text class="icon">🤖</text>
+        </view>
+        <view class="ai-info">
+          <text class="ai-name">AI Assistant</text>
+          <text class="ai-status">{{isAIThinking ? 'Thinking...' : 'Ready'}}</text>
         </view>
       </view>
+      <view class="ai-content">
+        <text wx:if="{{isAIThinking}}" class="ai-thinking">
+          <text class="typing-dot">.</text>
+          <text class="typing-dot">.</text>
+          <text class="typing-dot">.</text>
+        </text>
+        <text wx:else>{{aiResponse}}</text>
+      </view>
     </view>
-  </view>
 
-  <!-- Recent Searches -->
-  <view wx:else>
-    <view wx:if="{{recentSearches.length > 0}}" class="recent-section">
-      <view class="section-title title-medium mb-md">Recent Searches</view>
+    <!-- Search Results -->
+    <view wx:if="{{activeTab === 'notes' || activeTab === 'all'}}">
+      <view wx:if="{{loading}}" class="loading-container">
+        <view class="loading-spinner"></view>
+        <text class="text-caption mt-md">Searching...</text>
+      </view>
+
+      <view wx:elif="{{results.length > 0}}" class="results-list">
+        <view wx:for="{{results}}" wx:key="id" class="result-card" data-id="{{item.id}}" bindtap="goToNote">
+          <view class="result-header">
+            <text class="icon result-icon">📄</text>
+            <text class="result-type">Note</text>
+          </view>
+          <view class="result-title">{{item.title}}</view>
+          <view class="result-snippet">{{item.snippet}}</view>
+        </view>
+      </view>
+
+      <view wx:elif="{{searchQuery && !loading}}" class="empty-state">
+        <view class="empty-state-icon">🔍</view>
+        <text class="empty-state-text">No results found</text>
+        <text class="text-caption mt-sm">Try a different search term</text>
+      </view>
+    </view>
+
+    <!-- Recent Searches -->
+    <view wx:if="{{!searchQuery && recentSearches.length > 0}}" class="recent-section">
+      <view class="recent-header">
+        <text class="recent-title">Recent Searches</text>
+        <text class="recent-clear" bindtap="clearRecentSearches">Clear</text>
+      </view>
       <view class="recent-list">
-        <view
-          wx:for="{{recentSearches}}"
-          wx:key="*this"
-          class="recent-item"
-          data-query="{{item}}"
-          bindtap="useRecent"
-        >
-          <text class="recent-icon">🕐</text>
+        <view wx:for="{{recentSearches}}" wx:key="*this" class="recent-item" data-query="{{item}}" bindtap="onRecentSearchTap">
+          <text class="icon">🕐</text>
           <text>{{item}}</text>
         </view>
       </view>
     </view>
 
-    <view wx:else class="empty-state">
-      <text>Search for notes by title, content, or tags</text>
+    <!-- Empty State -->
+    <view wx:if="{{!searchQuery && recentSearches.length === 0}}" class="empty-state">
+      <view class="empty-state-icon">🔍</view>
+      <text class="empty-state-text">Search your notes or ask AI</text>
     </view>
   </view>
+
+  <!-- Safe Area -->
+  <view class="safe-area-bottom"></view>
 </view>

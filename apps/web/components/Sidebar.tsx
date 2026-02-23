@@ -26,27 +26,36 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
   // Move nav items definition inside component to access `t`
   const navItems: { group: string; items: NavItem[] }[] = [
     {
-      group: t('nav.workspace'),
+      group: 'Create 创作',
       items: [
-        { id: View.DASHBOARD, label: t('nav.dashboard'), icon: 'dashboard' },
-        { id: View.EDITOR, label: t('nav.write'), icon: 'edit_note' },
+        { id: View.FOCUS, label: 'Focus 专注', icon: 'adjust' },
+        { id: View.ASK_AI, label: 'Ask AI 智能助手', icon: 'psychology' },
+        { id: View.EDITOR, label: 'Write 写作', icon: 'edit_note' },
         { id: View.VIBE_CODING, label: 'Vibe Coding', icon: 'terminal' },
-        { id: View.SEARCH, label: t('nav.search'), icon: 'psychology' },
       ]
     },
     {
-      group: t('nav.knowledge_base'),
+      group: 'Organize 整理',
       items: [
-        { id: View.LIBRARY, label: t('nav.library'), icon: 'layers' }, 
-        { id: View.GALAXY, label: t('nav.galaxy'), icon: 'category' },
+        { id: View.INBOX, label: 'Inbox 收件箱', icon: 'all_inbox' },
+        { id: View.LIBRARY, label: 'Library 知识库', icon: 'layers' },
+        { id: View.PROJECTS, label: 'Projects 项目', icon: 'view_kanban' },
+        { id: View.GALAXY, label: 'Galaxy 知识图', icon: 'category' },
+        { id: View.TAXONOMY, label: 'Taxonomy 分类', icon: 'account_tree' },
       ]
     },
     {
-      group: t('nav.system'),
+      group: 'Publish 发布',
       items: [
-        { id: View.HABITAT, label: t('nav.habitat'), icon: 'monitor_heart' },
-        { id: View.TAXONOMY, label: t('nav.taxonomy'), icon: 'account_tree' },
-        { id: View.SETTINGS, label: t('nav.settings'), icon: 'settings' },
+        { id: View.PUBLISH, label: 'Publish Center 发布中心', icon: 'publish' },
+      ]
+    },
+    {
+      group: 'System 系统',
+      items: [
+        { id: View.TIMELINE, label: 'Timeline 时间线', icon: 'timeline' },
+        { id: View.ANALYTICS, label: 'Analytics 数据', icon: 'insights' },
+        { id: View.SETTINGS, label: 'Settings 设置', icon: 'settings' },
       ]
     }
   ];
@@ -93,10 +102,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
             onClick={handleFocusClick}
             className={`
                w-full bg-ink dark:bg-gray-100 text-white dark:text-ink border-2 border-transparent rounded-xl p-3 shadow-neo hover:shadow-neo-lg dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] hover:-translate-y-0.5 transition-all flex items-center gap-3 group
-               ${!isExpanded ? 'justify-center lg:w-12 lg:h-12 lg:p-0' : ''}
+               ${!isExpanded ? 'lg:w-12 lg:h-12 lg:p-0 lg:justify-center' : ''}
                ${currentView === View.FOCUS ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900' : ''}
             `}
-            title={t('nav.focus_tooltip')}
+            title={!isExpanded ? t('nav.focus') : t('nav.focus_tooltip')}
          >
             <span className="material-icons-round text-xl group-hover:animate-spin">adjust</span>
             {isExpanded && <span className="font-bold">{t('nav.focus')}</span>}
@@ -133,7 +142,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
                         ${isActive 
                           ? 'bg-primary border-ink dark:border-white shadow-neo dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] translate-x-1' 
                           : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600'}
-                        ${!isExpanded ? 'lg:justify-center' : ''}
+                        ${!isExpanded ? 'lg:w-12 lg:h-12 lg:p-0 lg:justify-center' : ''}
                       `}
                       title={!isExpanded ? item.label : ''}
                     >

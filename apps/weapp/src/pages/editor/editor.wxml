@@ -1,79 +1,127 @@
-<!--pages/editor/editor.wxml-->
+<!--pages/editor/editor.wxml - Editor Page -->
 <view class="container">
-  <!-- Header -->
-  <view class="editor-header">
-    <view class="back-btn" bindtap="wx.navigateBack">
-      <text>← Back</text>
-    </view>
-    <button class="neo-button neo-button-primary" bindtap="saveNote" disabled="{{saving}}">
-      {{saving ? 'Saving...' : 'Save'}}
-    </button>
+  <!-- Loading -->
+  <view wx:if="{{loading}}" class="loading-container">
+    <view class="loading-spinner"></view>
   </view>
 
-  <!-- Title -->
-  <view class="form-group">
-    <input
-      class="title-input"
-      placeholder="Note title..."
-      value="{{title}}"
-      bindinput="onTitleChange"
-    />
-  </view>
-
-  <!-- Category -->
-  <view class="form-group">
-    <view class="label">Category</view>
-    <view class="category-list">
-      <view
-        wx:for="{{categories}}"
-        wx:key="value"
-        class="category-item {{category === item.value ? 'active' : ''}}"
-        data-value="{{item.value}}"
-        bindtap="setCategory"
-      >
-        {{item.label}}
+  <view wx:else class="editor-wrapper">
+    <!-- Toolbar -->
+    <view class="toolbar">
+      <view class="toolbar-left">
+        <view class="toolbar-btn" bindtap="toggleToolbar">
+          <text class="icon">☰</text>
+        </view>
+        <view class="toolbar-btn">
+          <text class="icon">B</text>
+        </view>
+        <view class="toolbar-btn">
+          <text class="icon">I</text>
+        </view>
+        <view class="toolbar-divider"></view>
+        <view class="toolbar-btn" bindtap="handleSummarize">
+          <text class="icon {{isSummarizing ? 'animate-spin' : ''}}">{{showSummary ? '✓' : '✨'}}</text>
+          <text class="toolbar-label">{{isSummarizing ? 'Analyzing...' : showSummary ? 'Analyzed' : 'AI Summary'}}</text>
+        </view>
+      </view>
+      
+      <view class="toolbar-right">
+        <!-- Save Status -->
+        <view wx:if="{{isSaving}}" class="save-status">
+          <text class="icon animate-spin">↻</text>
+          <text>Saving...</text>
+        </view>
+        <view wx:elif="{{lastSaved}}" class="save-status saved">
+          <text class="icon">✓</text>
+          <text>Saved</text>
+        </view>
+        
+        <!-- Publish Toggle -->
+        <view class="publish-toggle">
+          <text class="publish-label {{isPublished ? 'public' : ''}}">{{isPublished ? 'Public' : 'Private'}}</text>
+          <view class="toggle-switch {{isPublished ? 'active' : ''}}" bindtap="togglePublish">
+            <view class="toggle-knob"></view>
+          </view>
+        </view>
       </view>
     </view>
-  </view>
 
-  <!-- Content -->
-  <view class="form-group">
-    <view class="label">Content</view>
-    <textarea
-      class="content-input"
-      placeholder="Write your note here..."
-      value="{{content}}"
-      bindinput="onContentChange"
-      auto-height
-    />
-  </view>
-
-  <!-- Tags -->
-  <view class="form-group">
-    <view class="label">Tags</view>
-    <view class="tags-container">
-      <view wx:for="{{tags}}" wx:key="*this" class="tag-item">
-        <text>#{{item}}</text>
-        <text class="tag-remove" data-index="{{index}}" bindtap="removeTag">×</text>
+    <!-- Editor Content -->
+    <view class="editor-content">
+      <!-- Category Selector -->
+      <view class="category-selector">
+        <view wx:for="{{categories}}" wx:key="id" class="category-btn {{category === item.id ? 'active' : ''}}" data-category="{{item.id}}" bindtap="onCategoryChange">
+          <text class="icon">{{item.id === 'idea' ? '💡' : item.id === 'code' ? '💻' : item.id === 'design' ? '🎨' : item.id === 'meeting' ? '👥' : '📝'}}</text>
+          <text>{{item.label}}</text>
+        </view>
       </view>
-      <view class="tag-add" bindtap="addTag">+ Add Tag</view>
+
+      <!-- Title Input -->
+      <view class="title-section">
+        <input class="title-input" placeholder="Untitled" placeholder-class="title-placeholder" value="{{title}}" bindinput="onTitleInput"/>
+      </view>
+
+      <!-- AI Summary Card -->
+      <view wx:if="{{showSummary}}" class="summary-card animate-pop">
+        <view class="summary-header">
+          <text class="icon">✨</text>
+          <text class="summary-title">AI Summary</text>
+        </view>
+        <view class="summary-content">
+          <text>{{summaryText}}</text>
+        </view>
+        <view class="summary-actions">
+          <text class="summary-action">Regenerate</text>
+          <text class="summary-action" bindtap="handleSummarize">Dismiss</text>
+        </view>
+      </view>
+
+      <!-- Content Input -->
+      <textarea class="content-input" placeholder="Start typing to see the magic happen. Use [[note name]] to link to other notes." placeholder-class="content-placeholder" value="{{content}}" bindinput="onContentInput" auto-height maxlength="-1"/>
+
+      <!-- Wiki Links Section -->
+      <view wx:if="{{wikiLinks.length > 0}}" class="links-section">
+        <view class="links-header">
+          <text class="icon">🔗</text>
+          <text class="links-title">Linked Notes</text>
+        </view>
+        <view class="links-list">
+          <view wx:for="{{wikiLinks}}" wx:key="*this" class="link-item" data-link="{{item}}" bindtap="addWikiLink">
+            <text class="link-icon">[[</text>
+            <text class="link-text">{{item}}</text>
+            <text class="link-icon">]]</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- Detected Concepts -->
+      <view wx:if="{{detectedConcepts.length > 0}}" class="concepts-section">
+        <view class="concepts-header">
+          <text class="icon">📡</text>
+          <text class="concepts-title">Detected Concepts</text>
+        </view>
+        <view class="concepts-list">
+          <view wx:for="{{detectedConcepts}}" wx:key="id" class="concept-item">
+            <text class="concept-term">{{item.term}}</text>
+            <text class="concept-type">{{item.type}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Bottom Actions -->
+    <view class="bottom-actions">
+      <button class="neo-button neo-button-secondary" bindtap="onSave">
+        <text class="icon">💾</text>
+        Save
+      </button>
+      <button wx:if="{{noteId}}" class="neo-button neo-button-ghost text-accent" bindtap="onDeleteNote">
+        <text class="icon">🗑️</text>
+        Delete
+      </button>
     </view>
   </view>
 
-  <!-- Published Toggle -->
-  <view class="form-group">
-    <view class="publish-toggle" bindtap="togglePublished">
-      <text>Published</text>
-      <view class="toggle {{published ? 'active' : ''}}">
-        <view class="toggle-thumb"></view>
-      </view>
-    </view>
-  </view>
-
-  <!-- Delete Button -->
-  <view wx:if="{{noteId}}" class="delete-section mt-lg">
-    <button class="neo-button" style="background: #ff6b6b; color: white;" bindtap="deleteNote">
-      Delete Note
-    </button>
-  </view>
+  <!-- Safe Area -->
+  <view class="safe-area-bottom"></view>
 </view>

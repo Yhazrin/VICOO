@@ -1,0 +1,16 @@
+{
+  "name": "@vicoo/plugin-system",
+  "version": "1.0.0",
+  "description": "Vicoo Plugin System",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "@vicoo/types": "workspace:*"
+  }
+}

@@ -1,0 +1,134 @@
+<!--pages/inbox/inbox.wxml - Inbox Page -->
+<view class="container">
+  <!-- Header -->
+  <view class="header">
+    <view class="title-large">Inbox</view>
+    <view class="text-caption">Review and organize your captured notes</view>
+  </view>
+
+  <!-- Tabs -->
+  <view class="tabs">
+    <view 
+      wx:for="{{tabs}}" 
+      wx:key="id" 
+      class="tab {{activeTab === item.id ? 'tab-active' : ''}}"
+      data-tab="{{item.id}}"
+      bindtap="setActiveTab"
+    >
+      <text class="tab-label">{{item.label}}</text>
+      <view wx:if="{{item.count > 0}}" class="tab-count">
+        <text>{{item.count}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Notes List -->
+  <view class="notes-list">
+    <view wx:if="{{loading}}" class="loading-container">
+      <view class="loading-spinner"></view>
+      <text class="text-caption mt-md">Loading...</text>
+    </view>
+
+    <view wx:elif="{{filteredNotes.length === 0}}" class="empty-state">
+      <view class="empty-state-icon">📥</view>
+      <text class="empty-state-text">
+        {{activeTab === 'inbox' ? 'No notes in inbox' : 
+          activeTab === 'clarified' ? 'No clarified notes' : 
+          'No archived notes'}}
+      </text>
+      <text class="text-caption mt-sm">
+        {{activeTab === 'inbox' ? 'Use quick capture to collect notes' : ''}}
+      </text>
+    </view>
+
+    <view wx:else>
+      <view 
+        wx:for="{{filteredNotes}}" 
+        wx:key="id" 
+        class="note-card animate-pop"
+        style="animation-delay: {{index * 0.05}}s"
+      >
+        <view class="note-content" data-id="{{item.id}}" bindtap="goToEditor">
+          <view class="note-header">
+            <view class="note-category neo-tag neo-tag-{{item.category || 'default'}}">
+              {{item.category || 'note'}}
+            </view>
+            <text class="note-date">{{item.timestamp}}</text>
+          </view>
+          
+          <view class="note-title title-small">{{item.title}}</view>
+          <view class="note-snippet text-body text-gray-500">{{item.snippet || item.content}}</view>
+          
+          <view class="note-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+            <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag">#{{tag}}</text>
+          </view>
+        </view>
+
+        <!-- Actions -->
+        <view class="note-actions" catchtap>
+          <!-- Inbox Actions -->
+          <block wx:if="{{activeTab === 'inbox'}}">
+            <button 
+              class="neo-button neo-button-sm neo-button-secondary" 
+              data-id="{{item.id}}"
+              data-status="clarified"
+              catchtap="handleStatusChange"
+            >
+              Clarify
+            </button>
+            <button 
+              class="neo-button neo-button-sm neo-button-ghost" 
+              data-id="{{item.id}}"
+              data-status="archived"
+              catchtap="handleStatusChange"
+            >
+              Archive
+            </button>
+          </block>
+
+          <!-- Clarified Actions -->
+          <block wx:elif="{{activeTab === 'clarified'}}">
+            <button 
+              class="neo-button neo-button-sm neo-button-ghost" 
+              data-id="{{item.id}}"
+              data-status="inbox"
+              catchtap="handleStatusChange"
+            >
+              Back to Inbox
+            </button>
+            <button 
+              class="neo-button neo-button-sm neo-button-ghost" 
+              data-id="{{item.id}}"
+              data-status="archived"
+              catchtap="handleStatusChange"
+            >
+              Archive
+            </button>
+          </block>
+
+          <!-- Archived Actions -->
+          <block wx:elif="{{activeTab === 'archived'}}">
+            <button 
+              class="neo-button neo-button-sm neo-button-ghost" 
+              data-id="{{item.id}}"
+              data-status="inbox"
+              catchtap="handleStatusChange"
+            >
+              Restore
+            </button>
+            <button 
+              class="neo-button neo-button-sm neo-button-ghost text-accent" 
+              data-id="{{item.id}}"
+              catchtap="handleDelete"
+            >
+              Delete
+            </button>
+          </block>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Safe Area -->
+  <view class="safe-area-bottom"></view>
+</view>

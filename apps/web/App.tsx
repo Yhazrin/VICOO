@@ -4,6 +4,7 @@ import { Sidebar } from './components/Sidebar';
 import { AnimatedLogo } from './components/AnimatedLogo';
 import { DraggableMascot } from './components/DraggableMascot';
 import { CommandPalette } from './components/CommandPalette';
+import { QuickCapturePanel } from './components/QuickCapturePanel';
 import { PageSkeleton } from './components/PageSkeleton';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
@@ -26,6 +27,11 @@ const FocusMode = lazy(() => import('./pages/FocusMode').then(m => ({ default: m
 const PublicGateway = lazy(() => import('./pages/PublicGateway').then(m => ({ default: m.PublicGateway })));
 const Auth = lazy(() => import('./pages/Auth').then(m => ({ default: m.Auth })));
 const VibeCodingSession = lazy(() => import('./pages/VibeCodingSession').then(m => ({ default: m.VibeCodingSession })));
+const InboxPage = lazy(() => import('./pages/InboxPage').then(m => ({ default: m.InboxPage })));
+const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ default: m.ProjectsPage })));
+const AskAI = lazy(() => import('./pages/AskAI').then(m => ({ default: m.AskAI })));
+const UnifiedAI = lazy(() => import('./pages/UnifiedAI').then(m => ({ default: m.UnifiedAI })));
+const Publish = lazy(() => import('./pages/Publish').then(m => ({ default: m.Publish })));
 
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
@@ -35,6 +41,7 @@ const AppContent: React.FC = () => {
   const [activeNoteId, setActiveNoteId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+  const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const { theme } = useTheme();
 
   // Focus Mode Transition States
@@ -48,12 +55,17 @@ const AppContent: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Keyboard shortcut for Command Palette
+  // Keyboard shortcut for Command Palette (Ctrl+K)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setIsPaletteOpen(prev => !prev);
+      }
+      // Quick Capture shortcut (Ctrl+Shift+N)
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key === 'N') {
+        e.preventDefault();
+        setIsQuickCaptureOpen(true);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -161,10 +173,18 @@ const AppContent: React.FC = () => {
 
       {/* Global Modals */}
       <DraggableMascot />
-      <CommandPalette 
-        isOpen={isPaletteOpen} 
-        onClose={() => setIsPaletteOpen(false)} 
-        onNavigate={setCurrentView} 
+      <CommandPalette
+        isOpen={isPaletteOpen}
+        onClose={() => setIsPaletteOpen(false)}
+        onNavigate={setCurrentView}
+      />
+      <QuickCapturePanel
+        isOpen={isQuickCaptureOpen}
+        onClose={() => setIsQuickCaptureOpen(false)}
+        onCaptureComplete={(noteId) => {
+          setActiveNoteId(noteId);
+          setCurrentView(View.EDITOR);
+        }}
       />
 
       {/* Sidebar Navigation */}
@@ -204,8 +224,9 @@ const AppContent: React.FC = () => {
 const renderContent = (view: View, setView: any, openNote: any, activeNoteId?: string | null) => {
     switch (view) {
       case View.DASHBOARD: return <Dashboard onNavigate={setView} onOpenNote={openNote} />;
-      case View.SEARCH: return <Search onOpenNote={openNote} />;
+      case View.SEARCH: return <UnifiedAI />;
       case View.LIBRARY: return <Library onOpenNote={openNote} />;
+      case View.INBOX: return <InboxPage onOpenNote={openNote} />;
       case View.GALAXY: return <GalaxyView onOpenNote={openNote} />;
       case View.TAXONOMY: return <Taxonomy />;
       case View.HABITAT: return <Habitat />;
@@ -218,6 +239,9 @@ const renderContent = (view: View, setView: any, openNote: any, activeNoteId?: s
       case View.PUBLIC_GATEWAY: return <PublicGateway onLogin={() => setView(View.AUTH)} />;
       case View.AUTH: return <Auth onLogin={() => setView(View.DASHBOARD)} />;
       case View.FOCUS: return null; // Rendered in Overlay
+      case View.PROJECTS: return <ProjectsPage onOpenNote={openNote} />;
+      case View.ASK_AI: return <UnifiedAI />;
+      case View.PUBLISH: return <Publish />;
       default: return <Dashboard onNavigate={setView} />;
     }
 }

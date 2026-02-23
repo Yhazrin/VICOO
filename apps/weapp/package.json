@@ -7,8 +7,8 @@
     "dev": "echo 'Use WeChat DevTools to develop'",
     "build": "echo 'Use WeChat CLI to build'"
   },
-  "dependencies": {},
   "devDependencies": {
+    "miniprogram-api-typings": "^5.0.1",
     "typescript": "~5.8.2"
   }
 }

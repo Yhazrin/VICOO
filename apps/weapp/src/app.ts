@@ -1,5 +1,6 @@
 // app.ts - Vicoo Mini Program Entry
-App<IAppOption>({
+
+App({
   globalData: {
     apiBase: 'http://localhost:8000',
     userInfo: null,
@@ -11,6 +12,10 @@ App<IAppOption>({
     if (token) {
       this.globalData.token = token;
     }
+    
+    // Check system info for safe area
+    const systemInfo = wx.getSystemInfoSync();
+    this.globalData.systemInfo = systemInfo;
   },
   onShow() {
     console.log('Vicoo Mini Program Started');

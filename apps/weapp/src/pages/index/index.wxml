@@ -1,68 +1,144 @@
-<!--pages/index/index.wxml-->
+<!--pages/index/index.wxml - Vicoo Dashboard -->
 <view class="container">
   <!-- Header -->
   <view class="header">
-    <view class="title-large">vicoo</view>
-    <view class="text-caption">Your Visual Coordinator</view>
+    <view class="brand">
+      <view class="logo-container">
+        <view class="logo">V</view>
+      </view>
+      <view class="brand-text">
+        <view class="title-large">vicoo</view>
+        <view class="text-caption">Your Visual Coordinator</view>
+      </view>
+    </view>
+    
+    <!-- User Avatar -->
+    <view class="user-area">
+      <view class="avatar">
+        <image src="https://picsum.photos/100/100" mode="aspectFill" />
+      </view>
+    </view>
   </view>
 
-  <!-- Stats Cards -->
-  <view class="stats-grid">
-    <view class="neo-card neo-card-primary stat-card" bindtap="goToLibrary">
-      <view class="stat-value">{{stats.total}}</view>
-      <view class="stat-label">Total Notes</view>
+  <!-- Focus Mode Button -->
+  <view class="focus-button" bindtap="goToAI">
+    <view class="focus-icon">
+      <text class="icon">⚡</text>
     </view>
-    <view class="neo-card neo-card-secondary stat-card" bindtap="goToLibrary">
-      <view class="stat-value">{{stats.ideas}}</view>
-      <view class="stat-label">Ideas</view>
+    <text class="focus-text">Focus Mode</text>
+    <view class="focus-arrow">
+      <text class="icon">›</text>
     </view>
-    <view class="neo-card neo-card-info stat-card" bindtap="goToLibrary">
-      <view class="stat-value">{{stats.code}}</view>
-      <view class="stat-label">Code</view>
-    </view>
-    <view class="neo-card neo-card-accent stat-card" bindtap="goToLibrary">
-      <view class="stat-value">{{stats.meeting}}</view>
-      <view class="stat-label">Meetings</view>
+  </view>
+
+  <!-- Stats Grid -->
+  <view class="stats-section">
+    <view class="section-title title-medium mb-md">Overview</view>
+    <view class="stats-grid">
+      <view class="stat-card stat-card-primary" bindtap="goToLibrary">
+        <view class="stat-icon">
+          <text class="icon">📚</text>
+        </view>
+        <view class="stat-info">
+          <view class="stat-value">{{stats.total}}</view>
+          <view class="stat-label">Total Notes</view>
+        </view>
+      </view>
+      
+      <view class="stat-card stat-card-secondary" bindtap="goToLibrary">
+        <view class="stat-icon">
+          <text class="icon">💡</text>
+        </view>
+        <view class="stat-info">
+          <view class="stat-value">{{stats.ideas}}</view>
+          <view class="stat-label">Ideas</view>
+        </view>
+      </view>
+      
+      <view class="stat-card stat-card-info" bindtap="goToLibrary">
+        <view class="stat-icon">
+          <text class="icon">💻</text>
+        </view>
+        <view class="stat-info">
+          <view class="stat-value">{{stats.code}}</view>
+          <view class="stat-label">Code</view>
+        </view>
+      </view>
+      
+      <view class="stat-card stat-card-accent" bindtap="goToInbox">
+        <view class="stat-icon">
+          <text class="icon">📥</text>
+        </view>
+        <view class="stat-info">
+          <view class="stat-value">{{stats.meeting}}</view>
+          <view class="stat-label">Inbox</view>
+        </view>
+      </view>
     </view>
   </view>
 
   <!-- Quick Actions -->
-  <view class="actions">
-    <button class="neo-button neo-button-primary w-full" bindtap="createNote">
-      <text class="icon">+</text> New Note
-    </button>
-    <button class="neo-button w-full mt-md" bindtap="goToSearch">
-      <text class="icon">🔍</text> Search
-    </button>
+  <view class="actions-section">
+    <view class="action-row">
+      <button class="neo-button neo-button-primary action-button" bindtap="createNote">
+        <text class="icon">+</text>
+        <text>New Note</text>
+      </button>
+    </view>
+    <view class="action-row mt-md">
+      <button class="neo-button action-button" bindtap="goToProjects">
+        <text class="icon">📋</text>
+        <text>Projects</text>
+      </button>
+      <button class="neo-button action-button ml-md" bindtap="goToAI">
+        <text class="icon">🤖</text>
+        <text>AI Chat</text>
+      </button>
+    </view>
   </view>
 
   <!-- Recent Notes -->
-  <view class="section-title title-medium mt-lg mb-md">Recent Notes</view>
-
-  <view wx:if="{{loading}}" class="loading">
-    <text>Loading...</text>
-  </view>
-
-  <view wx:else>
-    <view wx:if="{{recentNotes.length === 0}}" class="empty-state">
-      <text>No notes yet. Create your first note!</text>
-    </view>
-
-    <view wx:for="{{recentNotes}}" wx:key="id" class="neo-card note-card" data-id="{{item.id}}" bindtap="goToEditor">
-      <view class="note-header">
-        <view class="note-category neo-tag neo-tag-{{item.category}}">{{item.category}}</view>
-        <text class="note-date">{{item.timestamp}}</text>
-      </view>
-      <view class="note-title title-small">{{item.title}}</view>
-      <view class="note-snippet text-body">{{item.snippet}}</view>
-      <view class="note-tags" wx:if="{{item.tags.length > 0}}">
-        <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag">#{{tag}}</text>
+  <view class="recent-section mt-lg">
+    <view class="section-header">
+      <view class="title-medium">Recent Notes</view>
+      <view class="view-all" bindtap="goToLibrary">
+        <text>View All</text>
+        <text class="icon">›</text>
       </view>
     </view>
+
+    <view wx:if="{{loading}}" class="loading-container">
+      <view class="loading-spinner"></view>
+      <text class="text-caption mt-md">Loading...</text>
+    </view>
+
+    <view wx:else>
+      <view wx:if="{{recentNotes.length === 0}}" class="empty-state">
+        <view class="empty-state-icon">📝</view>
+        <text class="empty-state-text">No notes yet. Create your first note!</text>
+        <button class="neo-button neo-button-primary mt-lg" bindtap="createNote">Create Note</button>
+      </view>
+
+      <view wx:for="{{recentNotes}}" wx:key="id" 
+            class="note-card animate-pop" 
+            style="animation-delay: {{index * 0.05}}s"
+            data-id="{{item.id}}" 
+            bindtap="goToEditor">
+        <view class="note-header">
+          <view class="note-category neo-tag neo-tag-{{item.category || 'default'}}">
+            {{item.category || 'note'}}
+          </view>
+          <text class="note-date">{{item.timestamp}}</text>
+        </view>
+        <view class="note-title title-small">{{item.title}}</view>
+        <view class="note-snippet text-body text-gray-500">{{item.snippet || item.content}}</view>
+        <view class="note-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+          <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag">#{{tag}}</text>
+        </view>
+      </view>
+    </view>
   </view>
 
-  <!-- Version -->
-  <view class="version text-caption mt-lg">
-    v{{version}}
-  </view>
+  <!-- Bottom Safe Area -->
+  <view class="safe-area-bottom"></view>
 </view>

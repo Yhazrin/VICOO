@@ -1,0 +1,7 @@
+/* app.wxss - Global Styles */
+@import './styles/global.wxss';
+
+/* Icon using Unicode symbols */
+.icon {
+  font-style: normal;
+}

@@ -1,73 +1,83 @@
-<!--pages/library/library.wxml-->
+<!--pages/library/library.wxml - Library Page -->
 <view class="container">
   <!-- Header -->
   <view class="header">
     <view class="title-large">Library</view>
+    <view class="header-actions">
+      <view class="view-toggle" bindtap="toggleViewMode">
+        <text class="icon {{viewMode === 'grid' ? 'active' : ''}}">▦</text>
+        <text class="icon {{viewMode === 'list' ? 'active' : ''}}">☰</text>
+      </view>
+    </view>
   </view>
 
-  <!-- Search -->
-  <view class="search-box">
-    <input
-      class="neo-input"
-      placeholder="Search notes..."
+  <!-- Search Bar -->
+  <view class="search-bar">
+    <text class="icon search-icon">🔍</text>
+    <input 
+      class="search-input" 
+      placeholder="Search notes..." 
+      placeholder-class="search-placeholder"
       value="{{searchQuery}}"
       bindinput="onSearch"
     />
+    <text wx:if="{{searchQuery}}" class="icon clear-icon" bindtap="onSearch">✕</text>
   </view>
 
-  <!-- Category Filter -->
-  <view class="filter-bar">
-    <scroll-view scroll-x class="filter-scroll">
-      <view class="filter-list">
-        <view
-          wx:for="{{categories}}"
-          wx:key="*this"
-          class="filter-item {{filter === item ? 'active' : ''}}"
-          data-filter="{{item}}"
-          bindtap="setFilter"
-        >
-          {{item}}
-        </view>
-      </view>
-    </scroll-view>
+  <!-- Filter Tabs -->
+  <view class="filter-tabs">
+    <view 
+      wx:for="{{categories}}" 
+      wx:key="*this" 
+      class="filter-tab {{filter === item ? 'active' : ''}}"
+      data-filter="{{item}}"
+      bindtap="setFilter"
+    >
+      {{item}}
+    </view>
   </view>
 
-  <!-- Notes Grid -->
-  <view wx:if="{{loading}}" class="loading">
-    <text>Loading...</text>
-  </view>
-
-  <view wx:else>
-    <view wx:if="{{filteredNotes.length === 0}}" class="empty-state">
-      <text>No notes found</text>
+  <!-- Notes Grid/List -->
+  <view class="notes-container {{viewMode === 'grid' ? 'grid-view' : 'list-view'}}">
+    <view wx:if="{{loading}}" class="loading-container">
+      <view class="loading-spinner"></view>
+      <text class="text-caption mt-md">Loading...</text>
     </view>
 
-    <view class="notes-grid">
-      <view
-        wx:for="{{filteredNotes}}"
-        wx:key="id"
-        class="neo-card note-card"
-        data-id="{{item.id}}"
+    <view wx:elif="{{filteredNotes.length === 0}}" class="empty-state">
+      <view class="empty-state-icon">📚</view>
+      <text class="empty-state-text">No notes found</text>
+      <button class="neo-button neo-button-primary mt-lg" bindtap="createNote">Create Note</button>
+    </view>
+
+    <view wx:else>
+      <view 
+        wx:for="{{filteredNotes}}" 
+        wx:key="id" 
+        class="note-card {{viewMode === 'grid' ? '' : 'note-card-list'}}"
+        data-id="{{item.id}}" 
         bindtap="goToEditor"
       >
         <view class="note-header">
-          <view class="neo-tag neo-tag-{{item.category}}">{{item.category}}</view>
-          <view wx:if="{{!item.published}}" class="draft-badge">Draft</view>
+          <view class="note-category neo-tag neo-tag-{{item.category || 'default'}}">
+            {{item.category || 'note'}}
+          </view>
+          <text class="note-date">{{item.timestamp}}</text>
         </view>
         <view class="note-title title-small">{{item.title}}</view>
-        <view class="note-snippet text-body">{{item.snippet}}</view>
-        <view class="note-footer">
-          <text class="note-date">{{item.timestamp}}</text>
-          <view class="note-actions">
-            <text class="action-btn" catchtap="deleteNote" data-id="{{item.id}}">🗑️</text>
-          </view>
+        <view class="note-snippet text-body text-gray-500">{{item.snippet || item.content}}</view>
+        <view class="note-tags" wx:if="{{item.tags && item.tags.length > 0}}">
+          <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag">#{{tag}}</text>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- FAB -->
+  <!-- FAB - Create Note -->
   <view class="fab" bindtap="createNote">
-    <text class="fab-icon">+</text>
+    <text class="icon">+</text>
   </view>
+
+  <!-- Safe Area -->
+  <view class="safe-area-bottom"></view>
 </view>

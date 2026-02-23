@@ -29,6 +29,17 @@ const MOCK_BACKLINKS = [
     { id: 'bl2', title: 'Frontend Architecture', preview: '...standardize on patterns from [React Performance Tips] for all widgets...', date: '1 week ago' },
 ];
 
+// Helper function to parse [[page]] links from content
+const parseWikiLinks = (content: string): string[] => {
+    const regex = /\[\[([^\]]+)\]\]/g;
+    const links: string[] = [];
+    let match;
+    while ((match = regex.exec(content)) !== null) {
+        links.push(match[1]);
+    }
+    return links;
+};
+
 interface EditorProps {
     initialNoteId?: string | null;
 }
@@ -48,6 +59,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [detectedConcepts, setDetectedConcepts] = useState<typeof KNOWLEDGE_GRAPH>([]);
   const [isScanning, setIsScanning] = useState(false);
+  const [wikiLinks, setWikiLinks] = useState<string[]>([]);
 
   // Load note data if editing existing note
   useEffect(() => {
@@ -129,6 +141,12 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
 
     return () => clearTimeout(timer);
   }, [title, content, category, isPublished, handleSave]);
+
+  // Parse [[wiki links]] from content
+  useEffect(() => {
+    const links = parseWikiLinks(content);
+    setWikiLinks(links);
+  }, [content]);
 
   const handlePublishToggle = async () => {
     setIsPublished(!isPublished);
@@ -405,8 +423,22 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                  <h3 className="font-bold uppercase tracking-widest text-sm dark:text-gray-400">{t('editor.linked_mentions')}</h3>
                  <div className="flex-1 h-px bg-ink/20 dark:bg-white/20"></div>
              </div>
-             
+
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 {/* Outgoing [[wiki links]] */}
+                 {wikiLinks.length > 0 && wikiLinks.map((link, idx) => (
+                     <div key={`out-${idx}`} className="bg-white dark:bg-gray-800 border-2 border-dashed border-amber-300 dark:border-amber-600 rounded-xl p-4 hover:border-amber-500 hover:shadow-neo-sm transition-all cursor-pointer group opacity-70 hover:opacity-100">
+                         <div className="flex justify-between items-start mb-2">
+                             <h4 className="font-bold text-amber-700 dark:text-amber-400 group-hover:underline">[[{link}]]</h4>
+                             <span className="text-[10px] font-bold bg-amber-100 dark:bg-amber-900/50 px-2 py-0.5 rounded text-amber-700 dark:text-amber-400">Outgoing</span>
+                         </div>
+                         <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
+                             Click to create or open note
+                         </p>
+                     </div>
+                 ))}
+
+                 {/* Incoming backlinks (mock for now) */}
                  {MOCK_BACKLINKS.map(link => (
                      <div key={link.id} className="bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4 hover:border-ink dark:hover:border-white hover:shadow-neo-sm transition-all cursor-pointer group opacity-70 hover:opacity-100">
                          <div className="flex justify-between items-start mb-2">
@@ -418,9 +450,12 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                          </p>
                      </div>
                  ))}
-                 <div className="flex items-center justify-center p-4 border-2 border-dashed border-transparent text-gray-400 text-xs font-bold">
-                     AI is scanning for more connections...
-                 </div>
+
+                 {wikiLinks.length === 0 && MOCK_BACKLINKS.length === 0 && (
+                     <div className="flex items-center justify-center p-4 border-2 border-dashed border-transparent text-gray-400 text-xs font-bold">
+                         Type [[note name]] to create links to other notes
+                     </div>
+                 )}
              </div>
           </div>
           

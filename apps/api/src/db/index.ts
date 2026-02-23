@@ -70,6 +70,7 @@ function initializeTables() {
       user_id TEXT NOT NULL DEFAULT 'dev_user_1',
       title TEXT NOT NULL,
       category TEXT DEFAULT 'idea',
+      status TEXT DEFAULT 'inbox' CHECK(status IN ('inbox', 'clarified', 'archived')),
       snippet TEXT,
       content TEXT DEFAULT '',
       summary TEXT,
@@ -78,6 +79,33 @@ function initializeTables() {
       color TEXT,
       icon TEXT,
       timestamp TEXT DEFAULT (datetime('now')),
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Note links table for bidirectional linking
+  db.run(`
+    CREATE TABLE IF NOT EXISTS note_links (
+      id TEXT PRIMARY KEY,
+      source_note_id TEXT NOT NULL,
+      target_note_id TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      UNIQUE(source_note_id, target_note_id)
+    )
+  `);
+
+  // Tasks table for Project Board
+  db.run(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL DEFAULT 'dev_user_1',
+      title TEXT NOT NULL,
+      description TEXT,
+      status TEXT DEFAULT 'todo' CHECK(status IN ('todo', 'doing', 'done')),
+      priority TEXT DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high')),
+      linked_note_id TEXT,
+      due_date TEXT,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )
@@ -196,6 +224,15 @@ function initializeTables() {
     )
   `);
 
+  // General settings table (for agent config, etc.)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT,
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // Music/Playlist table for Focus Mode
   db.run(`
     CREATE TABLE IF NOT EXISTS music (
@@ -214,16 +251,70 @@ function initializeTables() {
     )
   `);
 
+  // Social media accounts table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS social_accounts (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL DEFAULT 'dev_user_1',
+      platform TEXT NOT NULL,
+      account_name TEXT NOT NULL,
+      cookie_path TEXT,
+      status INTEGER DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT
+    )
+  `);
+
+  // Publish tasks table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS publish_tasks (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL DEFAULT 'dev_user_1',
+      video_path TEXT NOT NULL,
+      title TEXT,
+      tags TEXT,
+      platforms TEXT NOT NULL,
+      accounts TEXT,
+      status TEXT DEFAULT 'pending',
+      scheduled_at TEXT,
+      published_at TEXT,
+      result TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // Create indexes (ignore if exists)
   try {
     db.run('CREATE INDEX IF NOT EXISTS idx_notes_user_id ON notes(user_id)');
     db.run('CREATE INDEX IF NOT EXISTS idx_notes_category ON notes(category)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_notes_status ON notes(status)');
     db.run('CREATE INDEX IF NOT EXISTS idx_notes_published ON notes(published)');
     db.run('CREATE INDEX IF NOT EXISTS idx_notes_timestamp ON notes(timestamp)');
     db.run('CREATE INDEX IF NOT EXISTS idx_nodes_label ON nodes(label)');
     db.run('CREATE INDEX IF NOT EXISTS idx_tags_name ON tags(name)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_note_links_source ON note_links(source_note_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_note_links_target ON note_links(target_note_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_tasks_linked_note ON tasks(linked_note_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_social_accounts_user ON social_accounts(user_id)');
+    db.run('CREATE INDEX IF NOT EXISTS idx_publish_tasks_user ON publish_tasks(user_id)');
   } catch (e) {
     // Indexes may already exist
+  }
+
+  // Migration: Add status column to notes if it doesn't exist
+  try {
+    db.run('ALTER TABLE notes ADD COLUMN status TEXT DEFAULT "inbox"');
+  } catch (e) {
+    // Column may already exist
+  }
+
+  // Migration: Add priority and due_date to tasks if needed
+  try {
+    db.run('ALTER TABLE tasks ADD COLUMN priority TEXT DEFAULT "medium"');
+    db.run('ALTER TABLE tasks ADD COLUMN due_date TEXT');
+  } catch (e) {
+    // Columns may already exist
   }
 
   // Migration: Add color column to tags if it doesn't exist

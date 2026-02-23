@@ -7,7 +7,7 @@ import { useApi } from '../contexts/ApiContext';
 import { Mascot } from '../components/Mascot';
 import { cozeService, type CozeConfig } from '../utils/coze';
 
-type Tab = 'general' | 'integration' | 'ai' | 'music' | 'coze';
+type Tab = 'general' | 'integration' | 'ai' | 'music' | 'coze' | 'minimax';
 
 interface CozeMessage {
   role: 'user' | 'assistant';
@@ -101,6 +101,72 @@ export const Settings: React.FC = () => {
     setCozeMessages([]);
     setCozeError(null);
   };
+
+  // ==================== MiniMax 状态 ====================
+  const [miniMaxApiKey, setMiniMaxApiKey] = useState('');
+  const [miniMaxModel, setMiniMaxModel] = useState('M2-her');
+  const [miniMaxConfigured, setMiniMaxConfigured] = useState(false);
+  const [miniMaxError, setMiniMaxError] = useState<string | null>(null);
+  const [miniMaxStatus, setMiniMaxStatus] = useState<'unknown' | 'checking' | 'configured' | 'error'>('unknown');
+
+  // 加载 MiniMax 配置
+  useEffect(() => {
+    const checkMiniMaxStatus = async () => {
+      setMiniMaxStatus('checking');
+      try {
+        const response = await fetch('http://localhost:8000/api/agent/status');
+        const data = await response.json();
+        if (data.success && data.data?.minimax?.configured) {
+          setMiniMaxConfigured(true);
+          setMiniMaxStatus('configured');
+        } else {
+          setMiniMaxStatus('unknown');
+        }
+      } catch {
+        setMiniMaxStatus('unknown');
+      }
+    };
+    checkMiniMaxStatus();
+  }, []);
+
+  // 保存 MiniMax 配置
+  const saveMiniMaxConfig = async () => {
+    if (!miniMaxApiKey) {
+      setMiniMaxError('请填写 API Key');
+      return;
+    }
+    setMiniMaxError(null);
+    try {
+      const response = await fetch('http://localhost:8000/api/agent/config/minimax', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey: miniMaxApiKey,
+          model: miniMaxModel
+        })
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMiniMaxConfigured(true);
+        setMiniMaxStatus('configured');
+        setMiniMaxError(null);
+      } else {
+        setMiniMaxError(data.error || '配置保存失败');
+        setMiniMaxStatus('error');
+      }
+    } catch (error: any) {
+      setMiniMaxError(error.message || '配置保存失败');
+      setMiniMaxStatus('error');
+    }
+  };
+
+  // 清除 MiniMax 配置
+  const clearMiniMaxConfig = async () => {
+    setMiniMaxApiKey('');
+    setMiniMaxConfigured(false);
+    setMiniMaxStatus('unknown');
+    setMiniMaxError(null);
+  };
   
   // Claude Code connection state
   const [claudeEndpoint, setClaudeEndpoint] = useState('http://localhost:3000');
@@ -176,6 +242,7 @@ export const Settings: React.FC = () => {
             { id: 'integration', label: t('settings.tab.integration'), icon: 'terminal' },
             { id: 'ai', label: t('settings.tab.ai'), icon: 'psychology' },
             { id: 'coze', label: 'Coze AI', icon: 'smart_toy' },
+            { id: 'minimax', label: 'MiniMax', icon: 'hub' },
           ].map((tab) => (
              <button
                key={tab.id}
@@ -427,6 +494,84 @@ export const Settings: React.FC = () => {
                    </div>
                 </NeoCard>
              </div>
+          )}
+
+          {activeTab === 'minimax' && (
+            <div className="space-y-6">
+              <NeoCard className="p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="bg-gradient-to-br from-blue-400 to-blue-600 border-3 border-ink rounded-xl p-3 shadow-neo-sm">
+                    <span className="material-icons-round text-3xl text-white">hub</span>
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold">MiniMax AI</h2>
+                    <p className="text-gray-500 font-bold text-sm">LLM 智能体核心驱动</p>
+                  </div>
+                  <div className="ml-auto">
+                    <span className={`inline-flex items-center px-3 py-1 rounded-full border-2 border-ink text-xs font-bold shadow-neo-sm ${
+                      miniMaxStatus === 'configured' ? 'bg-green-100 text-green-800' :
+                      miniMaxStatus === 'error' ? 'bg-red-100 text-red-800' :
+                      miniMaxStatus === 'checking' ? 'bg-yellow-100 text-yellow-800' :
+                      'bg-gray-100 text-gray-800'
+                    }`}>
+                      {miniMaxStatus === 'configured' ? '✅ 已配置' :
+                       miniMaxStatus === 'error' ? '❌ 错误' :
+                       miniMaxStatus === 'checking' ? '⏳ 检查中...' :
+                       '⚪ 未配置'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-bold mb-2">API Key</label>
+                    <input
+                      type="password"
+                      value={miniMaxApiKey}
+                      onChange={(e) => setMiniMaxApiKey(e.target.value)}
+                      placeholder="输入你的 MiniMax API Key"
+                      className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-3 font-bold shadow-neo-sm text-ink dark:text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold mb-2">Model</label>
+                    <select
+                      value={miniMaxModel}
+                      onChange={(e) => setMiniMaxModel(e.target.value)}
+                      className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-3 font-bold shadow-neo-sm text-ink dark:text-white"
+                    >
+                      <option value="M2-her">M2-her (推荐)</option>
+                      <option value="abab6.5s-chat">abab6.5s-chat</option>
+                      <option value="abab6.5g-chat">abab6.5g-chat</option>
+                      <option value="abab4-chat">abab4-chat</option>
+                    </select>
+                  </div>
+                  {miniMaxError && (
+                    <p className="text-red-500 text-sm font-bold">{miniMaxError}</p>
+                  )}
+                  <div className="flex gap-3">
+                    <NeoButton onClick={saveMiniMaxConfig}>
+                      {miniMaxConfigured ? '更新配置' : '保存配置'}
+                    </NeoButton>
+                    {miniMaxConfigured && (
+                      <NeoButton variant="secondary" onClick={clearMiniMaxConfig}>
+                        清除配置
+                      </NeoButton>
+                    )}
+                  </div>
+                </div>
+              </NeoCard>
+
+              <NeoCard className="p-6">
+                <h3 className="text-lg font-bold mb-4">如何获取 API Key？</h3>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+                  <li>访问 <a href="https://platform.minimax.io" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">MiniMax 开放平台</a></li>
+                  <li>注册/登录账号</li>
+                  <li>在「应用管理」中创建应用获取 API Key</li>
+                  <li>复制 API Key 并粘贴到上方输入框</li>
+                </ol>
+              </NeoCard>
+            </div>
           )}
           
           {activeTab === 'music' && (

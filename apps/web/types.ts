@@ -3,6 +3,7 @@ export enum View {
   DASHBOARD = 'dashboard',
   SEARCH = 'search',
   LIBRARY = 'library',
+  INBOX = 'inbox',
   GALAXY = 'galaxy',
   TAXONOMY = 'taxonomy',
   HABITAT = 'habitat',
@@ -14,7 +15,10 @@ export enum View {
   FOCUS = 'focus',
   PUBLIC_GATEWAY = 'public_gateway',
   AUTH = 'auth',
-  VIBE_CODING = 'vibe_coding'
+  VIBE_CODING = 'vibe_coding',
+  PROJECTS = 'projects',
+  ASK_AI = 'ask_ai',
+  PUBLISH = 'publish'
 }
 
 export interface NavItem {
@@ -27,6 +31,7 @@ export interface Note {
   id: string;
   title: string;
   category: 'code' | 'design' | 'meeting' | 'idea';
+  status?: 'inbox' | 'clarified' | 'archived';
   snippet?: string;
   tags: string[];
   timestamp: string;

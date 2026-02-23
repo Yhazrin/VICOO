@@ -1,0 +1,243 @@
+/* pages/inbox/inbox.wxss - Inbox Page Styles */
+
+.container {
+  padding: 24rpx;
+  min-height: 100vh;
+  background: var(--light);
+}
+
+/* Header */
+.header {
+  margin-bottom: 24rpx;
+}
+
+.title-large {
+  font-size: 40rpx;
+  font-weight: 900;
+  color: var(--ink);
+  margin-bottom: 8rpx;
+}
+
+.text-caption {
+  font-size: 26rpx;
+  color: var(--gray-500);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 24rpx;
+  border-bottom: 2rpx solid var(--gray-200);
+  padding-bottom: 16rpx;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 20rpx;
+  border-radius: 12rpx;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.tab-label {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: var(--gray-500);
+}
+
+.tab-active {
+  background: var(--primary);
+}
+
+.tab-active .tab-label {
+  color: var(--ink);
+}
+
+.tab-count {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 10rpx;
+  font-size: 20rpx;
+  font-weight: 700;
+  background: rgba(255,255,255,0.5);
+  border-radius: 18rpx;
+  color: var(--ink);
+}
+
+.tab-active .tab-count {
+  background: var(--white);
+}
+
+/* Notes List */
+.notes-list {
+  flex: 1;
+}
+
+/* Note Card */
+.note-card {
+  background: var(--white);
+  border: 3rpx solid var(--ink);
+  border-radius: 16rpx;
+  box-shadow: 4rpx 4rpx 0rpx 0rpx var(--ink);
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+}
+
+.note-content {
+  margin-bottom: 16rpx;
+}
+
+.note-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12rpx;
+}
+
+.note-category {
+  font-size: 20rpx;
+  text-transform: capitalize;
+}
+
+.note-date {
+  font-size: 22rpx;
+  color: var(--gray-500);
+  font-weight: 500;
+}
+
+.note-title {
+  font-weight: 700;
+  color: var(--ink);
+  margin-bottom: 8rpx;
+}
+
+.note-snippet {
+  font-size: 26rpx;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.note-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8rpx;
+  margin-top: 12rpx;
+}
+
+.tag {
+  font-size: 20rpx;
+  font-weight: 600;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: 4rpx 10rpx;
+  border-radius: 6rpx;
+}
+
+/* Actions */
+.note-actions {
+  display: flex;
+  gap: 12rpx;
+  padding-top: 16rpx;
+  border-top: 2rpx solid var(--gray-100);
+}
+
+/* Category Tags */
+.neo-tag-default {
+  background: var(--gray-200);
+}
+
+.neo-tag-idea {
+  background: var(--secondary);
+}
+
+.neo-tag-code {
+  background: var(--info);
+  color: var(--white);
+  border-color: var(--info);
+}
+
+.neo-tag-design {
+  background: var(--accent);
+  color: var(--white);
+  border-color: var(--accent);
+}
+
+.neo-tag-meeting {
+  background: var(--primary);
+}
+
+/* Text Colors */
+.text-gray-500 {
+  color: var(--gray-500);
+}
+
+.text-accent {
+  color: var(--accent);
+}
+
+/* Loading */
+.loading-container {
+  padding: 80rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading-spinner {
+  width: 60rpx;
+  height: 60rpx;
+  border: 4rpx solid var(--gray-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80rpx 40rpx;
+  text-align: center;
+}
+
+.empty-state-icon {
+  font-size: 80rpx;
+  margin-bottom: 16rpx;
+}
+
+.empty-state-text {
+  font-size: 28rpx;
+  color: var(--gray-500);
+}
+
+/* Animations */
+@keyframes pop {
+  0% { transform: scale(0.95); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.animate-pop {
+  animation: pop 0.3s ease-out forwards;
+  opacity: 0;
+}
+
+/* Safe Area */
+.safe-area-bottom {
+  height: 40rpx;
+}

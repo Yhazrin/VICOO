@@ -38,7 +38,7 @@ router.get('/published', (req, res) => {
 
 // GET /api/notes - List all notes
 router.get('/', (req, res) => {
-  const { limit = '20', offset = '0', category, tag, published } = req.query;
+  const { limit = '20', offset = '0', category, tag, published, status } = req.query;
   const userId = (req as any).userId || 'dev_user_1';
 
   let query = 'SELECT * FROM notes WHERE user_id = ?';
@@ -47,6 +47,11 @@ router.get('/', (req, res) => {
   if (category) {
     query += ' AND category = ?';
     params.push(category);
+  }
+
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
   }
 
   if (published !== undefined) {
@@ -132,7 +137,7 @@ router.get('/:id', (req, res) => {
 // POST /api/notes - Create note
 router.post('/', (req, res) => {
   try {
-    const { title, category = 'idea', tags = [], content = '', snippet, published = false, color = null, icon = null } = req.body || {};
+    const { title, category = 'idea', status = 'inbox', tags = [], content = '', snippet, published = false, color = null, icon = null } = req.body || {};
     const userId = (req as any).userId || 'dev_user_1';
 
     if (!title) {
@@ -151,9 +156,9 @@ router.post('/', (req, res) => {
 
     // Insert note
     runQuery(
-      `INSERT INTO notes (id, user_id, title, category, snippet, content, published, color, icon, timestamp)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, userId, title, category, safeSnippet, safeContent, published ? 1 : 0, color, icon, timestamp]
+      `INSERT INTO notes (id, user_id, title, category, status, snippet, content, published, color, icon, timestamp)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, title, category, status, safeSnippet, safeContent, published ? 1 : 0, color, icon, timestamp]
     );
 
     // Insert tags
@@ -211,7 +216,7 @@ router.patch('/:id', (req, res) => {
     });
   }
 
-  const { title, category, tags, content, snippet, published, coverImage, color, icon } = req.body;
+  const { title, category, status, tags, content, snippet, published, coverImage, color, icon } = req.body;
 
   // Build update query dynamically
   const updates: string[] = [];
@@ -219,6 +224,7 @@ router.patch('/:id', (req, res) => {
 
   if (title !== undefined) { updates.push('title = ?'); params.push(title); }
   if (category !== undefined) { updates.push('category = ?'); params.push(category); }
+  if (status !== undefined) { updates.push('status = ?'); params.push(status); }
   if (content !== undefined) { updates.push('content = ?'); params.push(content); }
   if (snippet !== undefined) { updates.push('snippet = ?'); params.push(snippet); }
   if (published !== undefined) { updates.push('published = ?'); params.push(published ? 1 : 0); }
@@ -519,6 +525,142 @@ router.post('/import', (req, res) => {
       failed: results.filter(r => !r.success).length
     }
   });
+});
+
+// PATCH /api/notes/:id/status - Quick status update
+router.patch('/:id/status', (req, res) => {
+  const userId = (req as any).userId || 'dev_user_1';
+  const { status } = req.body;
+
+  if (!status || !['inbox', 'clarified', 'archived'].includes(status)) {
+    return res.status(400).json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'Invalid status. Must be one of: inbox, clarified, archived'
+      }
+    });
+  }
+
+  const existing = getOne<any>('SELECT * FROM notes WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+
+  if (!existing) {
+    return res.status(404).json({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Note not found'
+      }
+    });
+  }
+
+  runQuery(
+    "UPDATE notes SET status = ?, updated_at = datetime('now') WHERE id = ? AND user_id = ?",
+    [status, req.params.id, userId]
+  );
+
+  saveDatabase();
+
+  const updated = getOne<any>('SELECT * FROM notes WHERE id = ?', [req.params.id]);
+
+  res.json({
+    data: {
+      ...updated,
+      published: Boolean(updated?.published)
+    }
+  });
+});
+
+// GET /api/notes/:id/links - Get outgoing links from a note
+router.get('/:id/links', (req, res) => {
+  const userId = (req as any).userId || 'dev_user_1';
+
+  // Get notes that this note links to
+  const outgoing = getAll<any>(
+    `SELECT n.* FROM notes n
+     JOIN note_links nl ON n.id = nl.target_note_id
+     WHERE nl.source_note_id = ? AND n.user_id = ?`,
+    [req.params.id, userId]
+  );
+
+  // Get notes that link to this note
+  const incoming = getAll<any>(
+    `SELECT n.* FROM notes n
+     JOIN note_links nl ON n.id = nl.source_note_id
+     WHERE nl.target_note_id = ? AND n.user_id = ?`,
+    [req.params.id, userId]
+  );
+
+  res.json({
+    data: {
+      outgoing: outgoing.map(n => ({ ...n, published: Boolean(n.published) })),
+      incoming: incoming.map(n => ({ ...n, published: Boolean(n.published) }))
+    }
+  });
+});
+
+// POST /api/notes/:id/links - Add a link from this note to another
+router.post('/:id/links', (req, res) => {
+  const userId = (req as any).userId || 'dev_user_1';
+  const { targetNoteId } = req.body;
+
+  if (!targetNoteId) {
+    return res.status(400).json({
+      error: {
+        code: 'VALIDATION_ERROR',
+        message: 'targetNoteId is required'
+      }
+    });
+  }
+
+  // Verify both notes belong to user
+  const sourceNote = getOne<any>('SELECT * FROM notes WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+  const targetNote = getOne<any>('SELECT * FROM notes WHERE id = ? AND user_id = ?', [targetNoteId, userId]);
+
+  if (!sourceNote || !targetNote) {
+    return res.status(404).json({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'One or both notes not found'
+      }
+    });
+  }
+
+  const id = uuidv4();
+  runQuery(
+    'INSERT OR IGNORE INTO note_links (id, source_note_id, target_note_id) VALUES (?, ?, ?)',
+    [id, req.params.id, targetNoteId]
+  );
+
+  saveDatabase();
+
+  res.status(201).json({
+    data: { id, source_note_id: req.params.id, target_note_id: targetNoteId }
+  });
+});
+
+// DELETE /api/notes/:id/links/:targetId - Remove a link
+router.delete('/:id/links/:targetId', (req, res) => {
+  const userId = (req as any).userId || 'dev_user_1';
+
+  // Verify note belongs to user
+  const sourceNote = getOne<any>('SELECT * FROM notes WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+
+  if (!sourceNote) {
+    return res.status(404).json({
+      error: {
+        code: 'NOT_FOUND',
+        message: 'Note not found'
+      }
+    });
+  }
+
+  runQuery(
+    'DELETE FROM note_links WHERE source_note_id = ? AND target_note_id = ?',
+    [req.params.id, req.params.targetId]
+  );
+
+  saveDatabase();
+
+  res.status(204).send();
 });
 
 export default router;

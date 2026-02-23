@@ -23,6 +23,12 @@ import { graphqlHTTP } from 'express-graphql';
 import { schema } from './graphql/schema.js';
 import { startAutoGraphService } from './services/auto-graph.js';
 import aiRouter from './routes/ai.js';
+import tasksRouter from './routes/tasks.js';
+import noteLinksRouter from './routes/note-links.js';
+import ragRouter from './routes/rag.js';
+import writerRouter from './routes/writer.js';
+import agentRouter from './routes/agent.js';
+import publishRouter from './routes/publish.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -122,6 +128,10 @@ async function start() {
     // Initialize database
     await initDatabase();
 
+    // 初始化 MiniMax
+    const { initializeMiniMax } = await import('./services/minimax.js');
+    await initializeMiniMax();
+
     // Seed if empty
     await seedIfEmpty();
 
@@ -146,6 +156,12 @@ async function start() {
     app.use('/api/workflow', workflowRouter);
     app.use('/api/claude', claudeRouter);
     app.use('/api/ai', aiRouter);
+    app.use('/api/tasks', tasksRouter);
+    app.use('/api/note-links', noteLinksRouter);
+    app.use('/api/rag', ragRouter);
+    app.use('/api/writer', writerRouter);
+    app.use('/api/agent', agentRouter);
+    app.use('/api/publish', publishRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({

@@ -1,0 +1,122 @@
+<!--pages/projects/projects.wxml - Projects Kanban Page -->
+<view class="container">
+  <!-- Header -->
+  <view class="header">
+    <view class="title-large">Projects</view>
+    <button class="neo-button neo-button-primary" bindtap="openNewTaskModal">
+      <text class="icon">+</text>
+      Add Task
+    </button>
+  </view>
+
+  <!-- Kanban Board -->
+  <view class="kanban-board">
+    <!-- To Do Column -->
+    <view class="kanban-column" style="background-color: #f3f4f6" data-status="todo" binddrop="onDrop" binddragover="onDragOver">
+      <view class="column-header">
+        <text class="column-title">To Do</text>
+        <view class="column-count">{{todoTasks.length}}</view>
+      </view>
+      <view class="tasks-list">
+        <view wx:for="{{todoTasks}}" wx:key="id" class="task-card" draggable="true" data-id="{{item.id}}" bindtouchstart="onDragStart">
+          <view class="task-header">
+            <view class="priority-badge" style="background-color: {{item.priority === 'high' ? '#FEE2E2' : item.priority === 'medium' ? '#FEF3C7' : '#DBEAFE'}}">
+              <text style="color: {{item.priority === 'high' ? '#DC2626' : item.priority === 'medium' ? '#D97706' : '#2563EB'}}">{{item.priority}}</text>
+            </view>
+            <view class="task-delete" data-id="{{item.id}}" catchtap="deleteTask">
+              <text class="icon">✕</text>
+            </view>
+          </view>
+          <view class="task-title">{{item.title}}</view>
+          <view wx:if="{{item.description}}" class="task-description">{{item.description}}</view>
+        </view>
+        <view wx:if="{{todoTasks.length === 0}}" class="empty-column">
+          <text>Drop tasks here</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- In Progress Column -->
+    <view class="kanban-column" style="background-color: #FEF3C7" data-status="doing" binddrop="onDrop" binddragover="onDragOver">
+      <view class="column-header">
+        <text class="column-title">In Progress</text>
+        <view class="column-count">{{doingTasks.length}}</view>
+      </view>
+      <view class="tasks-list">
+        <view wx:for="{{doingTasks}}" wx:key="id" class="task-card" draggable="true" data-id="{{item.id}}" bindtouchstart="onDragStart">
+          <view class="task-header">
+            <view class="priority-badge" style="background-color: {{item.priority === 'high' ? '#FEE2E2' : item.priority === 'medium' ? '#FEF3C7' : '#DBEAFE'}}">
+              <text style="color: {{item.priority === 'high' ? '#DC2626' : item.priority === 'medium' ? '#D97706' : '#2563EB'}}">{{item.priority}}</text>
+            </view>
+            <view class="task-delete" data-id="{{item.id}}" catchtap="deleteTask">
+              <text class="icon">✕</text>
+            </view>
+          </view>
+          <view class="task-title">{{item.title}}</view>
+          <view wx:if="{{item.description}}" class="task-description">{{item.description}}</view>
+        </view>
+        <view wx:if="{{doingTasks.length === 0}}" class="empty-column">
+          <text>Drop tasks here</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- Done Column -->
+    <view class="kanban-column" style="background-color: #D1FAE5" data-status="done" binddrop="onDrop" binddragover="onDragOver">
+      <view class="column-header">
+        <text class="column-title">Done</text>
+        <view class="column-count">{{doneTasks.length}}</view>
+      </view>
+      <view class="tasks-list">
+        <view wx:for="{{doneTasks}}" wx:key="id" class="task-card" draggable="true" data-id="{{item.id}}" bindtouchstart="onDragStart">
+          <view class="task-header">
+            <view class="priority-badge" style="background-color: {{item.priority === 'high' ? '#FEE2E2' : item.priority === 'medium' ? '#FEF3C7' : '#DBEAFE'}}">
+              <text style="color: {{item.priority === 'high' ? '#DC2626' : item.priority === 'medium' ? '#D97706' : '#2563EB'}}">{{item.priority}}</text>
+            </view>
+            <view class="task-delete" data-id="{{item.id}}" catchtap="deleteTask">
+              <text class="icon">✕</text>
+            </view>
+          </view>
+          <view class="task-title">{{item.title}}</view>
+          <view wx:if="{{item.description}}" class="task-description">{{item.description}}</view>
+        </view>
+        <view wx:if="{{doneTasks.length === 0}}" class="empty-column">
+          <text>Drop tasks here</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- New Task Modal -->
+  <view wx:if="{{showNewTaskModal}}" class="modal-overlay" catchtap="closeNewTaskModal">
+    <view class="modal-content" catchtap="">
+      <view class="modal-header">
+        <text class="modal-title">New Task</text>
+        <view class="modal-close" catchtap="closeNewTaskModal">
+          <text class="icon">✕</text>
+        </view>
+      </view>
+      
+      <view class="modal-body">
+        <input class="neo-input" placeholder="Task title..." value="{{newTaskTitle}}" bindinput="onNewTaskTitleInput" focus="{{true}}"/>
+        
+        <view class="priority-selector">
+          <text class="priority-label">Priority:</text>
+          <view class="priority-options">
+            <view class="priority-option {{newTaskPriority === 'low' ? 'active' : ''}}" data-priority="low" bindtap="onPriorityChange">Low</view>
+            <view class="priority-option {{newTaskPriority === 'medium' ? 'active' : ''}}" data-priority="medium" bindtap="onPriorityChange">Medium</view>
+            <view class="priority-option {{newTaskPriority === 'high' ? 'active' : ''}}" data-priority="high" bindtap="onPriorityChange">High</view>
+          </view>
+        </view>
+      </view>
+      
+      <view class="modal-footer">
+        <button class="neo-button neo-button-ghost" catchtap="closeNewTaskModal">Cancel</button>
+        <button class="neo-button neo-button-primary" catchtap="addTask">Add Task</button>
+      </view>
+    </view>
+  </view>
+
+  <!-- Safe Area -->
+  <view class="safe-area-bottom"></view>
+</view>

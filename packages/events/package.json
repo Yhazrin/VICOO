@@ -1,0 +1,13 @@
+{
+  "name": "@vicoo/events",
+  "version": "1.0.0",
+  "description": "Vicoo Event Bus",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  }
+}

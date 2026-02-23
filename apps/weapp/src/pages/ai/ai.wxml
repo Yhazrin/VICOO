@@ -1,0 +1,84 @@
+<!--pages/ai/ai.wxml - AI Chat Assistant -->
+<view class="container">
+  <!-- Header -->
+  <view class="header">
+    <view class="header-left">
+      <view class="ai-avatar">
+        <text class="icon">🤖</text>
+      </view>
+      <view class="header-info">
+        <text class="header-title">AI Assistant</text>
+        <text class="header-status">{{isTyping ? 'Thinking...' : 'Online'}}</text>
+      </view>
+    </view>
+    <view class="header-actions">
+      <view class="action-btn" bindtap="clearChat">
+        <text class="icon">🗑️</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Welcome Screen -->
+  <view wx:if="{{showWelcome}}" class="welcome-screen">
+    <view class="welcome-icon">
+      <text class="icon">🧠</text>
+    </view>
+    <text class="welcome-title">How can I help you today?</text>
+    <text class="welcome-subtitle">Ask me anything or use quick prompts</text>
+    
+    <!-- Quick Prompts -->
+    <view class="quick-prompts">
+      <view wx:for="{{quickPrompts}}" wx:key="id" class="quick-prompt" data-prompt="{{item.prompt}}" bindtap="onQuickPrompt">
+        <text class="icon">{{item.icon === 'lightbulb' ? '💡' : item.icon === 'summarize' ? '📝' : item.icon === 'edit' ? '✏️' : '📚'}}</text>
+        <text>{{item.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Messages -->
+  <view wx:else class="messages-container">
+    <view wx:for="{{messages}}" wx:key="id" class="message {{item.role === 'user' ? 'message-user' : 'message-assistant'}}">
+      <!-- Avatar -->
+      <view wx:if="{{item.role === 'assistant'}}" class="message-avatar">
+        <text class="icon">🤖</text>
+      </view>
+      
+      <!-- Content -->
+      <view class="message-content">
+        <text class="message-text">{{item.content}}</text>
+        <view class="message-actions" wx:if="{{item.role === 'assistant'}}">
+          <view class="message-action" data-content="{{item.content}}" catchtap="copyMessage">
+            <text class="icon">📋</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- Typing Indicator -->
+    <view wx:if="{{isTyping}}" class="message message-assistant">
+      <view class="message-avatar">
+        <text class="icon">🤖</text>
+      </view>
+      <view class="message-content typing-content">
+        <view class="typing-indicator">
+          <view class="typing-dot"></view>
+          <view class="typing-dot"></view>
+          <view class="typing-dot"></view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Input Area -->
+  <view class="input-area">
+    <view class="input-wrapper">
+      <input class="input-field" placeholder="Ask AI..." placeholder-class="input-placeholder" value="{{inputValue}}" bindinput="onInput" bindconfirm="sendMessage" adjust-position="{{true}}"/>
+      <view class="send-btn {{inputValue ? 'active' : ''}}" bindtap="sendMessage">
+        <text class="icon">➤</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- Safe Area -->
+  <view class="safe-area-bottom"></view>
+</view>
