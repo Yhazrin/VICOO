@@ -1,0 +1,152 @@
+[
+  {
+    "file": "vicoo_01_write.svg",
+    "name": "Write",
+    "slug": "write"
+  },
+  {
+    "file": "vicoo_02_ai_assistant.svg",
+    "name": "AI Assistant",
+    "slug": "ai_assistant"
+  },
+  {
+    "file": "vicoo_03_chat.svg",
+    "name": "Chat",
+    "slug": "chat"
+  },
+  {
+    "file": "vicoo_04_prompt.svg",
+    "name": "Prompt",
+    "slug": "prompt"
+  },
+  {
+    "file": "vicoo_05_vibe_coding.svg",
+    "name": "Vibe Coding",
+    "slug": "vibe_coding"
+  },
+  {
+    "file": "vicoo_06_code_editor.svg",
+    "name": "Code Editor",
+    "slug": "code_editor"
+  },
+  {
+    "file": "vicoo_07_focus.svg",
+    "name": "Focus",
+    "slug": "focus"
+  },
+  {
+    "file": "vicoo_08_inspiration.svg",
+    "name": "Inspiration",
+    "slug": "inspiration"
+  },
+  {
+    "file": "vicoo_09_draft.svg",
+    "name": "Draft",
+    "slug": "draft"
+  },
+  {
+    "file": "vicoo_10_template.svg",
+    "name": "Template",
+    "slug": "template"
+  },
+  {
+    "file": "vicoo_11_inbox.svg",
+    "name": "Inbox",
+    "slug": "inbox"
+  },
+  {
+    "file": "vicoo_12_knowledge.svg",
+    "name": "Knowledge",
+    "slug": "knowledge"
+  },
+  {
+    "file": "vicoo_13_project.svg",
+    "name": "Project",
+    "slug": "project"
+  },
+  {
+    "file": "vicoo_14_kanban.svg",
+    "name": "Kanban",
+    "slug": "kanban"
+  },
+  {
+    "file": "vicoo_15_folder.svg",
+    "name": "Folder",
+    "slug": "folder"
+  },
+  {
+    "file": "vicoo_16_category.svg",
+    "name": "Category",
+    "slug": "category"
+  },
+  {
+    "file": "vicoo_17_tag.svg",
+    "name": "Tag",
+    "slug": "tag"
+  },
+  {
+    "file": "vicoo_18_graph.svg",
+    "name": "Graph",
+    "slug": "graph"
+  },
+  {
+    "file": "vicoo_19_node.svg",
+    "name": "Node",
+    "slug": "node"
+  },
+  {
+    "file": "vicoo_20_connection.svg",
+    "name": "Connection",
+    "slug": "connection"
+  },
+  {
+    "file": "vicoo_21_favorite.svg",
+    "name": "Favorite",
+    "slug": "favorite"
+  },
+  {
+    "file": "vicoo_22_archive.svg",
+    "name": "Archive",
+    "slug": "archive"
+  },
+  {
+    "file": "vicoo_23_tree.svg",
+    "name": "Tree",
+    "slug": "tree"
+  },
+  {
+    "file": "vicoo_24_cluster.svg",
+    "name": "Cluster",
+    "slug": "cluster"
+  },
+  {
+    "file": "vicoo_25_stack.svg",
+    "name": "Stack",
+    "slug": "stack"
+  },
+  {
+    "file": "vicoo_26_map.svg",
+    "name": "Map",
+    "slug": "map"
+  },
+  {
+    "file": "vicoo_27_library.svg",
+    "name": "Library",
+    "slug": "library"
+  },
+  {
+    "file": "vicoo_28_collection.svg",
+    "name": "Collection",
+    "slug": "collection"
+  },
+  {
+    "file": "vicoo_29_bookmark.svg",
+    "name": "Bookmark",
+    "slug": "bookmark"
+  },
+  {
+    "file": "vicoo_30_structure.svg",
+    "name": "Structure",
+    "slug": "structure"
+  }
+]

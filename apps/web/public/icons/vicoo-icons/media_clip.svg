@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" fill="none">
+  <defs>
+    <filter id="neoShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="2" dy="2" stdDeviation="0" flood-color="#111111" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <rect x="3" y="3" width="26" height="26" rx="7" fill="#FF4D4D" filter="url(#neoShadow)"/>
+  <path d="M14 13l4-2" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M18 11l3 3-5 5a3 3 0 0 1-4-4l6-6" stroke="#111111" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

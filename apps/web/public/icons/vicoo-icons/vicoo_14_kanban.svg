@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Kanban">
+<rect x="3" y="3" width="26" height="26" rx="7" fill="#111111" opacity="0.12"/>
+<rect x="2" y="2" width="26" height="26" rx="7" fill="#FF8787" stroke="#111111" stroke-width="2.6"/>
+<g stroke="#111111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><rect x="10" y="10" width="12" height="12" rx="3" fill="none"/>
+<line x1="14" y1="10.5" x2="14" y2="21.5"/>
+<line x1="18" y1="10.5" x2="18" y2="21.5"/>
+<line x1="11.5" y1="13" x2="12.8" y2="13"/>
+<line x1="15.2" y1="13" x2="16.8" y2="13"/>
+<line x1="19.2" y1="13" x2="20.5" y2="13"/></g>
+</svg>

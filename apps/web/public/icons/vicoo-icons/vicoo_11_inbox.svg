@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Inbox">
+<rect x="3" y="3" width="26" height="26" rx="7" fill="#111111" opacity="0.12"/>
+<rect x="2" y="2" width="26" height="26" rx="7" fill="#FFD43B" stroke="#111111" stroke-width="2.6"/>
+<g stroke="#111111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M10 20 L12.5 12 H19.5 L22 20" fill="none"/>
+<path d="M10 20 H14 Q14 22 16 22 Q18 22 18 20 H22" fill="none"/>
+<path d="M16 9.5 V15" fill="none"/>
+<path d="M13.5 12.5 L16 15 L18.5 12.5" fill="none"/></g>
+</svg>

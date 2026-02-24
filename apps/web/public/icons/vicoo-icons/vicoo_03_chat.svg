@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Chat">
+<rect x="3" y="3" width="26" height="26" rx="7" fill="#111111" opacity="0.12"/>
+<rect x="2" y="2" width="26" height="26" rx="7" fill="#63E6BE" stroke="#111111" stroke-width="2.6"/>
+<g stroke="#111111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M10 11.5 Q10 10 11.5 10 H20.5 Q22 10 22 11.5 V18 Q22 19.5 20.5 19.5 H15.5 L12.5 22 V19.5 H11.5 Q10 19.5 10 18 Z" fill="none"/>
+<line x1="12.5" y1="13.5" x2="19.5" y2="13.5"/>
+<line x1="12.5" y1="16" x2="17.5" y2="16"/></g>
+</svg>

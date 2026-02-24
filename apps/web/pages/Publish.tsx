@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
+import { VicooIcon } from '../components/VicooIcon';
 
 interface Platform {
   id: string;
@@ -39,15 +40,15 @@ interface Note {
 const API_BASE = 'http://localhost:8000/api/publish';
 const NOTES_API = 'http://localhost:8000/api/notes';
 
-// Platform icons and colors
+// Platform icons and colors (使用自定义图标 slug)
 const PLATFORM_CONFIG: Record<string, { icon: string; color: string; bgColor: string }> = {
-  douyin: { icon: '🎵', color: '#000000', bgColor: 'bg-black' },
-  xhs: { icon: '📕', color: '#FF2442', bgColor: 'bg-red-500' },
-  bilibili: { icon: '📺', color: '#00A1D6', bgColor: 'bg-blue-400' },
-  ks: { icon: '📹', color: '#FF4906', bgColor: 'bg-orange-500' },
-  tencent: { icon: '💬', color: '#07C160', bgColor: 'bg-green-500' },
-  baijiahao: { icon: '📰', color: '#3060FF', bgColor: 'bg-blue-600' },
-  tiktok: { icon: '🌐', color: '#000000', bgColor: 'bg-gray-900' },
+  douyin: { icon: 'platform_douyin', color: '#000000', bgColor: 'bg-black' },
+  xhs: { icon: 'platform_xhs', color: '#FF2442', bgColor: 'bg-red-500' },
+  bilibili: { icon: 'platform_bilibili', color: '#00A1D6', bgColor: 'bg-blue-400' },
+  ks: { icon: 'platform_kuaishou', color: '#FF4906', bgColor: 'bg-orange-500' },
+  tencent: { icon: 'platform_shipinhao', color: '#07C160', bgColor: 'bg-green-500' },
+  baijiahao: { icon: 'platform_baijiahao', color: '#3060FF', bgColor: 'bg-blue-600' },
+  tiktok: { icon: 'platform_tiktok', color: '#000000', bgColor: 'bg-gray-900' },
 };
 
 export const Publish: React.FC = () => {
@@ -285,7 +286,8 @@ export const Publish: React.FC = () => {
   };
 
   const getPlatformIcon = (platformId: string) => {
-    return PLATFORM_CONFIG[platformId]?.icon || '📱';
+    const iconName = PLATFORM_CONFIG[platformId]?.icon || 'platform_douyin';
+    return <VicooIcon name={iconName} size={20} />;
   };
 
   const getPlatformName = (platformId: string) => {

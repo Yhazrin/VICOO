@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Code Editor">
+<rect x="3" y="3" width="26" height="26" rx="7" fill="#111111" opacity="0.12"/>
+<rect x="2" y="2" width="26" height="26" rx="7" fill="#FFA94D" stroke="#111111" stroke-width="2.6"/>
+<g stroke="#111111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M14 12 L11.5 16 L14 20" fill="none"/>
+<path d="M18 12 L20.5 16 L18 20" fill="none"/>
+<line x1="15.6" y1="12.5" x2="16.8" y2="19.5"/></g>
+</svg>

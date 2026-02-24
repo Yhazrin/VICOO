@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { View, NavItem } from '../types';
 import { AnimatedLogo } from './AnimatedLogo';
+import { VicooIcon } from './VicooIcon';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface SidebarProps {
@@ -28,33 +29,33 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
     {
       groupKey: 'nav.group_create',
       items: [
-        { id: View.FOCUS, labelKey: 'nav.focus', icon: 'adjust' },
-        { id: View.ASK_AI, labelKey: 'nav.ai_assistant', icon: 'psychology' },
-        { id: View.EDITOR, labelKey: 'nav.write', icon: 'edit_note' },
-        { id: View.VIBE_CODING, labelKey: 'nav.vibe_coding', icon: 'terminal' },
+        { id: View.FOCUS, labelKey: 'nav.focus', icon: 'focus' },
+        { id: View.ASK_AI, labelKey: 'nav.ai_assistant', icon: 'ai_assistant' },
+        { id: View.EDITOR, labelKey: 'nav.write', icon: 'write' },
+        { id: View.VIBE_CODING, labelKey: 'nav.vibe_coding', icon: 'vibe_coding' },
       ]
     },
     {
       groupKey: 'nav.group_organize',
       items: [
-        { id: View.INBOX, labelKey: 'nav.inbox', icon: 'all_inbox' },
-        { id: View.LIBRARY, labelKey: 'nav.library', icon: 'layers' },
-        { id: View.PROJECTS, labelKey: 'nav.projects', icon: 'view_kanban' },
-        { id: View.GALAXY, labelKey: 'nav.galaxy', icon: 'category' },
-        { id: View.TAXONOMY, labelKey: 'nav.taxonomy', icon: 'account_tree' },
+        { id: View.INBOX, labelKey: 'nav.inbox', icon: 'inbox' },
+        { id: View.LIBRARY, labelKey: 'nav.library', icon: 'library' },
+        { id: View.PROJECTS, labelKey: 'nav.projects', icon: 'project' },
+        { id: View.GALAXY, labelKey: 'nav.galaxy', icon: 'graph' },
+        { id: View.TAXONOMY, labelKey: 'nav.taxonomy', icon: 'category' },
       ]
     },
     {
       groupKey: 'nav.group_publish',
       items: [
-        { id: View.PUBLISH, labelKey: 'nav.publish_center', icon: 'publish' },
+        { id: View.PUBLISH, labelKey: 'nav.publish_center', icon: 'publish_center' },
       ]
     },
     {
       groupKey: 'nav.group_system',
       items: [
         { id: View.TIMELINE, labelKey: 'nav.timeline', icon: 'timeline' },
-        { id: View.ANALYTICS, labelKey: 'nav.analytics', icon: 'insights' },
+        { id: View.ANALYTICS, labelKey: 'nav.analytics', icon: 'analytics' },
         { id: View.SETTINGS, labelKey: 'nav.settings', icon: 'settings' },
       ]
     }
@@ -107,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
             `}
             title={!isExpanded ? t('nav.focus') : t('nav.focus_tooltip')}
          >
-            <span className="material-icons-round text-xl group-hover:animate-spin">adjust</span>
+            <VicooIcon name="focus" className="group-hover:animate-spin" size={20} />
             {isExpanded && <span className="font-bold">{t('nav.focus')}</span>}
          </button>
       </div>
@@ -147,9 +148,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
                       `}
                       title={!isExpanded ? label : ''}
                     >
-                      <span className={`material-icons-round text-2xl flex-shrink-0 transition-transform ${isActive ? 'text-ink' : 'text-gray-500 dark:text-gray-400'} ${!isActive && 'group-hover:scale-110'}`}>
-                        {item.icon}
-                      </span>
+                      <VicooIcon
+                        name={item.icon}
+                        className={`flex-shrink-0 transition-transform ${isActive ? 'text-ink' : 'text-gray-500 dark:text-gray-400'} ${!isActive && 'group-hover:scale-110'}`}
+                        size={24}
+                      />
                       <span
                         className={`
                           hidden lg:block font-bold whitespace-nowrap overflow-hidden transition-all duration-300

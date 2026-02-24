@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" role="img" aria-label="Inspiration">
+<rect x="3" y="3" width="26" height="26" rx="7" fill="#111111" opacity="0.12"/>
+<rect x="2" y="2" width="26" height="26" rx="7" fill="#8CE99A" stroke="#111111" stroke-width="2.6"/>
+<g stroke="#111111" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" fill="none"><path d="M13 18.5 Q11 17 11 14.5 Q11 11 16 11 Q21 11 21 14.5 Q21 17 19 18.5 V20 H13 Z" fill="none"/>
+<line x1="13.5" y1="22" x2="18.5" y2="22"/>
+<line x1="14.5" y1="24" x2="17.5" y2="24"/>
+<line x1="16" y1="8" x2="16" y2="9.5"/></g>
+</svg>
