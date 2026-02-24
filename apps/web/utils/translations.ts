@@ -21,6 +21,14 @@ export const translations = {
     'nav.collapse': 'Collapse Sidebar',
     'nav.expand': 'Expand Sidebar',
     'nav.user_role': 'vicoo Pro',
+    'nav.group_create': 'Create',
+    'nav.group_organize': 'Organize',
+    'nav.group_publish': 'Publish',
+    'nav.group_system': 'System',
+    'nav.vibe_coding': 'Vibe Coding',
+    'nav.timeline': 'Timeline',
+    'nav.analytics': 'Analytics',
+    'nav.publish_center': 'Publish Center',
 
     // Dashboard
     'dash.welcome': 'Hello, Alex!',
@@ -203,6 +211,14 @@ export const translations = {
     'nav.collapse': '收起侧边栏',
     'nav.expand': '展开侧边栏',
     'nav.user_role': 'vicoo 专业版',
+    'nav.group_create': '创作',
+    'nav.group_organize': '整理',
+    'nav.group_publish': '发布',
+    'nav.group_system': '系统',
+    'nav.vibe_coding': 'Vibe Coding',
+    'nav.timeline': '时间线',
+    'nav.analytics': '数据',
+    'nav.publish_center': '发布中心',
 
     // Dashboard
     'dash.welcome': '你好, Alex!',

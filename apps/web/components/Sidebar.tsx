@@ -24,38 +24,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
   };
 
   // Move nav items definition inside component to access `t`
-  const navItems: { group: string; items: NavItem[] }[] = [
+  const navItems: { groupKey: string; items: NavItem[] }[] = [
     {
-      group: 'Create 创作',
+      groupKey: 'nav.group_create',
       items: [
-        { id: View.FOCUS, label: 'Focus 专注', icon: 'adjust' },
-        { id: View.ASK_AI, label: 'Ask AI 智能助手', icon: 'psychology' },
-        { id: View.EDITOR, label: 'Write 写作', icon: 'edit_note' },
-        { id: View.VIBE_CODING, label: 'Vibe Coding', icon: 'terminal' },
+        { id: View.FOCUS, labelKey: 'nav.focus', icon: 'adjust' },
+        { id: View.ASK_AI, labelKey: 'nav.ai_assistant', icon: 'psychology' },
+        { id: View.EDITOR, labelKey: 'nav.write', icon: 'edit_note' },
+        { id: View.VIBE_CODING, labelKey: 'nav.vibe_coding', icon: 'terminal' },
       ]
     },
     {
-      group: 'Organize 整理',
+      groupKey: 'nav.group_organize',
       items: [
-        { id: View.INBOX, label: 'Inbox 收件箱', icon: 'all_inbox' },
-        { id: View.LIBRARY, label: 'Library 知识库', icon: 'layers' },
-        { id: View.PROJECTS, label: 'Projects 项目', icon: 'view_kanban' },
-        { id: View.GALAXY, label: 'Galaxy 知识图', icon: 'category' },
-        { id: View.TAXONOMY, label: 'Taxonomy 分类', icon: 'account_tree' },
+        { id: View.INBOX, labelKey: 'nav.inbox', icon: 'all_inbox' },
+        { id: View.LIBRARY, labelKey: 'nav.library', icon: 'layers' },
+        { id: View.PROJECTS, labelKey: 'nav.projects', icon: 'view_kanban' },
+        { id: View.GALAXY, labelKey: 'nav.galaxy', icon: 'category' },
+        { id: View.TAXONOMY, labelKey: 'nav.taxonomy', icon: 'account_tree' },
       ]
     },
     {
-      group: 'Publish 发布',
+      groupKey: 'nav.group_publish',
       items: [
-        { id: View.PUBLISH, label: 'Publish Center 发布中心', icon: 'publish' },
+        { id: View.PUBLISH, labelKey: 'nav.publish_center', icon: 'publish' },
       ]
     },
     {
-      group: 'System 系统',
+      groupKey: 'nav.group_system',
       items: [
-        { id: View.TIMELINE, label: 'Timeline 时间线', icon: 'timeline' },
-        { id: View.ANALYTICS, label: 'Analytics 数据', icon: 'insights' },
-        { id: View.SETTINGS, label: 'Settings 设置', icon: 'settings' },
+        { id: View.TIMELINE, labelKey: 'nav.timeline', icon: 'timeline' },
+        { id: View.ANALYTICS, labelKey: 'nav.analytics', icon: 'insights' },
+        { id: View.SETTINGS, labelKey: 'nav.settings', icon: 'settings' },
       ]
     }
   ];
@@ -127,36 +127,37 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
           <div key={groupIdx}>
              {isExpanded && (
                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2 px-3">
-                 {group.group}
+                 {t(group.groupKey)}
                </h3>
              )}
              <div className="space-y-1">
                {group.items.map((item) => {
                   const isActive = currentView === item.id;
+                  const label = item.labelKey ? t(item.labelKey) : item.label;
                   return (
                     <button
                       key={item.id}
                       onClick={() => onChangeView(item.id)}
                       className={`
                         w-full flex items-center gap-4 p-3 rounded-xl border-3 transition-all duration-200 group
-                        ${isActive 
-                          ? 'bg-primary border-ink dark:border-white shadow-neo dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] translate-x-1' 
+                        ${isActive
+                          ? 'bg-primary border-ink dark:border-white shadow-neo dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.3)] translate-x-1'
                           : 'bg-transparent border-transparent hover:bg-gray-100 dark:hover:bg-gray-800 hover:border-gray-200 dark:hover:border-gray-600'}
                         ${!isExpanded ? 'lg:w-12 lg:h-12 lg:p-0 lg:justify-center' : ''}
                       `}
-                      title={!isExpanded ? item.label : ''}
+                      title={!isExpanded ? label : ''}
                     >
                       <span className={`material-icons-round text-2xl flex-shrink-0 transition-transform ${isActive ? 'text-ink' : 'text-gray-500 dark:text-gray-400'} ${!isActive && 'group-hover:scale-110'}`}>
                         {item.icon}
                       </span>
-                      <span 
+                      <span
                         className={`
                           hidden lg:block font-bold whitespace-nowrap overflow-hidden transition-all duration-300
                           ${isActive ? 'text-ink' : 'text-gray-500 dark:text-gray-400'}
                           ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'}
                         `}
                       >
-                        {item.label}
+                        {label}
                       </span>
                     </button>
                   );

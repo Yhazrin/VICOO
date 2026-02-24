@@ -23,7 +23,8 @@ export enum View {
 
 export interface NavItem {
   id: View;
-  label: string;
+  label?: string;
+  labelKey?: string;
   icon: string;
 }
 
