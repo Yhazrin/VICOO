@@ -23,6 +23,7 @@ import { graphqlHTTP } from 'express-graphql';
 import { schema } from './graphql/schema.js';
 import { startAutoGraphService } from './services/auto-graph.js';
 import aiRouter from './routes/ai.js';
+import publishRouter from './routes/publish.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -72,6 +73,7 @@ async function start() {
     app.use('/api/workflow', authMiddleware, workflowRouter);
     app.use('/api/claude', authMiddleware, claudeRouter);
     app.use('/api/ai', authMiddleware, aiRouter);
+    app.use('/api/publish', authMiddleware, publishRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({
