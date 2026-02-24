@@ -4,6 +4,7 @@ import { NeoButton } from '../components/NeoButton';
 import { Mascot } from '../components/Mascot';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 import { eventBus, Events } from '@vicoo/events';
 
 interface SearchResult {
@@ -145,7 +146,7 @@ export const Search: React.FC<SearchProps> = ({ onOpenNote }) => {
       {/* Search Bar (Sticky-ish feel) */}
       <div className="relative mb-6 max-w-3xl mx-auto w-full z-20">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
-          <span className={`material-icons-round text-3xl transition-colors ${isSearching ? 'text-primary animate-spin' : 'text-gray-400'}`}>
+          <VicooIcon name="search" size={32} className={`transition-colors ${isSearching ? 'text-primary animate-spin' : 'text-gray-400'}`} />
             {isSearching ? 'sync' : 'psychology'}
           </span>
         </div>
@@ -257,7 +258,7 @@ export const Search: React.FC<SearchProps> = ({ onOpenNote }) => {
               <NeoCard className="p-8 bg-white dark:bg-gray-800 border-primary relative overflow-visible">
                   {/* Decorative quote mark */}
                   <div className="absolute -top-4 -left-2 bg-primary border-3 border-ink rounded-lg w-10 h-10 flex items-center justify-center shadow-neo-sm">
-                      <span className="material-icons-round text-white text-2xl">auto_awesome</span>
+                      <VicooIcon name="auto_awesome" size={24} className="text-white" />
                   </div>
                   
                   <div className="text-lg leading-loose font-medium text-ink dark:text-gray-100">
@@ -267,13 +268,13 @@ export const Search: React.FC<SearchProps> = ({ onOpenNote }) => {
 
                   <div className="mt-8 flex gap-3">
                       <button className="text-sm font-bold text-gray-500 hover:text-ink dark:hover:text-white flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
-                          <span className="material-icons-round text-sm">content_copy</span> {t('search.copy')}
+                          <VicooIcon name="content_copy" size={14} /> {t('search.copy')}
                       </button>
                       <button className="text-sm font-bold text-gray-500 hover:text-ink dark:hover:text-white flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
-                          <span className="material-icons-round text-sm">thumb_up</span> {t('search.helpful')}
+                          <VicooIcon name="thumb_up" size={14} /> {t('search.helpful')}
                       </button>
                       <button className="text-sm font-bold text-gray-500 hover:text-ink dark:hover:text-white flex items-center gap-1 bg-gray-100 dark:bg-gray-700 px-3 py-1 rounded-lg border-2 border-transparent hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
-                          <span className="material-icons-round text-sm">restart_alt</span> {t('search.regenerate')}
+                          <VicooIcon name="restart_alt" size={14} /> {t('search.regenerate')}
                       </button>
                   </div>
               </NeoCard>
@@ -295,7 +296,7 @@ export const Search: React.FC<SearchProps> = ({ onOpenNote }) => {
            <div className="lg:w-1/2">
                <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-xl flex items-center gap-2 dark:text-white">
-                      <span className="material-icons-round text-gray-400">library_books</span>
+                      <VicooIcon name="library_books" size={20} className="text-gray-400" />
                       {t('search.sources')} ({results.length})
                   </h3>
                   <button className="text-sm font-bold text-primary hover:underline">View All in Galaxy</button>
@@ -367,7 +368,7 @@ export const Search: React.FC<SearchProps> = ({ onOpenNote }) => {
                     { icon: 'bug_report', text: 'Debug notes' }
                 ].map((item, i) => (
                     <button key={i} onClick={() => setQuery(item.text)} className="p-4 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl hover:border-ink dark:hover:border-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center gap-3 font-bold text-gray-500 dark:text-gray-400 hover:text-ink dark:hover:text-white">
-                        <span className="material-icons-round">{item.icon}</span>
+                        <VicooIcon name={item.icon} size={20} />
                         {item.text}
                     </button>
                 ))}

@@ -27,6 +27,7 @@ import '@xyflow/react/dist/style.css';
 import { NeoButton } from '../components/NeoButton';
 import { GalaxyNode } from '../components/GalaxyNode';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 import type { Node as VicooNode, Link } from '../types';
 
 // 自定义节点类型
@@ -279,7 +280,7 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
         {/* 搜索面板 */}
         <Panel position="top-left" className="!left-4 !top-4">
           <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur border-3 border-ink dark:border-gray-500 shadow-neo-sm rounded-xl p-2 flex items-center gap-2 max-w-md w-full">
-            <span className="material-icons-round text-gray-400 ml-2">search</span>
+            <VicooIcon name="search" size={20} className="text-gray-400 ml-2" />
             <input
               type="text"
               value={searchQuery}
@@ -296,7 +297,7 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
                   onClick={() => handleFocusNode(node.id)}
                   className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-2 text-ink dark:text-white"
                 >
-                  <span className="material-icons-round text-sm">{node.data.icon}</span>
+                  <VicooIcon name={node.data.icon} size={14} />
                   {node.data.label}
                 </button>
               ))}
@@ -317,8 +318,7 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
               text-ink dark:text-white
             `}
           >
-            <span className="material-icons-round text-sm">
-              {isGenerating ? 'hourglass_empty' : 'auto_awesome'}
+            <VicooIcon name={isGenerating ? 'hourglass_empty' : 'auto_awesome'} size={14} />
             </span>
             {isGenerating ? '生成中...' : '从笔记生成'}
           </button>
@@ -360,10 +360,10 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
                 onClick={() => setSelectedNodeId(null)}
                 className="absolute top-4 right-4 w-8 h-8 bg-white/50 border-2 border-ink dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-white/80 shadow-neo-sm"
               >
-                <span className="material-icons-round text-sm text-ink">close</span>
+                <VicooIcon name="close" size={14} className="text-ink" />
               </button>
               <div className="w-12 h-12 bg-white border-2 border-ink dark:border-gray-600 rounded-xl flex items-center justify-center shadow-neo-sm mb-3">
-                <span className="material-icons-round text-2xl text-ink">{selectedNode.icon}</span>
+                <VicooIcon name={selectedNode.icon} size={24} className="text-ink" />
               </div>
               <h2 className="text-2xl font-bold font-display text-ink">{selectedNode.label}</h2>
               <p className="text-xs font-bold opacity-70 uppercase tracking-wider mt-1 text-ink">
@@ -408,7 +408,7 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
                   className="w-10 !px-0 flex items-center justify-center"
                   onClick={handleDeleteNode}
                 >
-                  <span className="material-icons-round text-sm">delete</span>
+                  <VicooIcon name="delete" size={14} />
                 </NeoButton>
               </div>
             </div>

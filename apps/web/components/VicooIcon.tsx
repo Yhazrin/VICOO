@@ -521,6 +521,27 @@ const ICON_MAP: Record<string, string> = {
   'volume_up': 'media_music.svg',            // 提高音量
   'skip_previous': 'nav_sync.svg',           // 上一首
   'skip_next': 'nav_sync.svg',               // 下一首
+  'library_books': 'vicoo_27_library.svg',  // 图书馆/搜索
+  'content_copy': 'copy.svg',               // 复制内容
+  'thumb_up': 'confirm.svg',                // 点赞
+  'library_music': 'media_music.svg',       // 音乐库
+  'arrow_downward': 'vicoo_24_cluster.svg', // 向下箭头
+  'arrow_upward': 'vicoo_25_stack.svg',    // 向上箭头
+  'error_outline': 'status_error.svg',      // 错误轮廓
+  'filter_none': 'filter.svg',             // 筛选无
+  'share': 'share.svg',                    // 分享
+  'note': 'vicoo_06_code_editor.svg',      // 笔记
+  'search_off': 'search.svg',              // 搜索关闭
+  'upload_file': 'upload.svg',              // 上传文件
+  'chevron_right': 'expand.svg',           // 右箭头
+  'description': 'media_document.svg',     // 描述
+  'folder': 'vicoo_15_folder.svg',         // 文件夹
+  'people': 'sys_team.svg',               // 人群
+  'note_add': 'add.svg',                 // 添加笔记
+  'video_file': 'media_video.svg',        // 视频文件
+  'qr_code': 'link.svg',                 // 二维码
+  'account_circle': 'sys_profile.svg',    // 账户
+  'rocket_launch': 'ai_generate.svg',     // 发射
 };
 
 // 缓存已加载的 SVG

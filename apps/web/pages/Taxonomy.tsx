@@ -3,6 +3,7 @@ import { NeoButton } from '../components/NeoButton';
 import { NeoCard } from '../components/NeoCard';
 import { Mascot } from '../components/Mascot';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 import type { Category, Cluster } from '@vicoo/types';
 
 export const Taxonomy: React.FC = () => {
@@ -80,7 +81,7 @@ export const Taxonomy: React.FC = () => {
            <p className="text-gray-600 dark:text-gray-400 font-medium">Review AI-detected patterns and structure your knowledge.</p>
         </div>
         <NeoButton variant="secondary" size="sm">
-           <span className="material-icons-round text-sm mr-1">history</span> History
+           <span className="VicooIcon name="history" size={14} className="mr-1"</span> History
         </NeoButton>
       </header>
 
@@ -90,7 +91,7 @@ export const Taxonomy: React.FC = () => {
          <div className="lg:w-2/5 flex flex-col">
             <div className="flex justify-between items-center mb-4">
                <h3 className="font-bold text-lg flex items-center gap-2 dark:text-white">
-                  <span className="material-icons-round text-primary animate-pulse">auto_awesome</span>
+                  <VicooIcon name="auto_awesome" size={20} className="text-primary animate-pulse" />
                   Detected Patterns
                </h3>
                <span className="bg-gray-200 dark:bg-gray-800 text-xs font-bold px-2 py-0.5 rounded border border-ink dark:border-gray-600 dark:text-white">{localClusters.length} Suggestions</span>
@@ -99,7 +100,7 @@ export const Taxonomy: React.FC = () => {
             <div className="flex-1 space-y-4 overflow-y-auto pr-2 pb-12">
                {localClusters.length === 0 ? (
                    <div className="h-64 flex flex-col items-center justify-center text-gray-400 dark:text-gray-500 border-3 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl">
-                       <span className="material-icons-round text-4xl mb-2">check_circle</span>
+                       <VicooIcon name="check_circle" size={40} className="mb-2" />
                        <p className="font-bold">No new patterns detected.</p>
                        <p className="text-sm">Add more notes to trigger the engine.</p>
                    </div>
@@ -114,7 +115,7 @@ export const Taxonomy: React.FC = () => {
                                       <h4 className="font-bold text-lg text-ink dark:text-white">Create "{cluster.suggestedLabel || cluster.name}"</h4>
                                   </div>
                                   <div className="flex items-center gap-1 bg-green-100 text-green-800 border border-green-300 px-2 py-1 rounded text-xs font-bold dark:bg-green-900/30 dark:text-green-300 dark:border-green-800">
-                                      <span className="material-icons-round text-xs">bolt</span>
+                                      <VicooIcon name="bolt" size={12} />
                                       {cluster.confidence || 85}% Match
                                   </div>
                               </div>
@@ -127,7 +128,7 @@ export const Taxonomy: React.FC = () => {
                                   <ul className="space-y-2 mb-4">
                                       {(cluster.items || cluster.notes || []).slice(0, 5).map((item: any, i: number) => (
                                           <li key={i} className="flex items-center gap-2 text-sm font-bold bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 p-2 rounded text-ink dark:text-gray-200">
-                                              <span className="material-icons-round text-xs text-gray-400">article</span>
+                                              <VicooIcon name="article" size={12} className="text-gray-400" />
                                               {typeof item === 'string' ? item : item.title || 'Note'}
                                           </li>
                                       ))}
@@ -139,13 +140,13 @@ export const Taxonomy: React.FC = () => {
                                         onClick={() => handleAcceptCluster(cluster.id)}
                                         className="flex-1 bg-primary border-2 border-ink dark:border-gray-600 text-ink dark:text-ink py-2 rounded-lg font-bold shadow-neo-sm hover:translate-y-px hover:shadow-none transition-all flex items-center justify-center gap-2"
                                       >
-                                          <span className="material-icons-round text-sm">check</span> Apply
+                                          <VicooIcon name="check" size={14} /> Apply
                                       </button>
                                       <button 
                                         onClick={() => handleRejectCluster(cluster.id)}
                                         className="w-10 bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 shadow-neo-sm dark:text-white"
                                       >
-                                          <span className="material-icons-round text-sm">close</span>
+                                          <VicooIcon name="close" size={14} />
                                       </button>
                                   </div>
                               </div>
@@ -165,10 +166,10 @@ export const Taxonomy: React.FC = () => {
          <div className="flex-1 flex flex-col">
             <div className="flex justify-between items-center mb-4">
                <h3 className="font-bold text-lg flex items-center gap-2 dark:text-white">
-                  <span className="material-icons-round text-ink dark:text-white">account_tree</span>
+                  <VicooIcon name="account_tree" size={20} className="text-ink dark:text-white" />
                   Knowledge Structure
                </h3>
-               <NeoButton variant="icon" className="w-8 h-8 !p-0"><span className="material-icons-round text-sm">add</span></NeoButton>
+               <NeoButton variant="icon" className="w-8 h-8 !p-0"><VicooIcon name="add" size={14} /></NeoButton>
             </div>
 
             <div className="flex-1 bg-white dark:bg-gray-900 border-3 border-ink dark:border-gray-500 rounded-2xl p-6 relative overflow-y-auto">
@@ -180,7 +181,7 @@ export const Taxonomy: React.FC = () => {
                       >
                         <div className="flex items-center gap-2 mb-3">
                             <button className="w-6 h-6 bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-700 text-ink dark:text-white">
-                                <span className="material-icons-round text-sm">expand_more</span>
+                                <VicooIcon name="expand_more" size={14} />
                             </button>
                             <span className={`font-bold text-xl px-2 rounded ${cat.color || 'bg-primary/20'} border-2 border-ink dark:border-gray-500 shadow-sm dark:text-white`}>
                                 {cat.name || cat.label}

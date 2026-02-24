@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { Mascot } from '../components/Mascot';
+import { VicooIcon } from '../components/VicooIcon';
 import { View } from '../types';
 import { vicoo } from '@vicoo/sdk';
 
@@ -138,7 +139,7 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               { icon: 'public', text: 'Share Anywhere' }
             ].map((feature, index) => (
               <div key={index} className="flex items-center gap-2 bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-600 rounded-xl px-3 py-2">
-                <span className="material-icons-round text-primary text-lg">{feature.icon}</span>
+                <VicooIcon name={feature.icon} size={20} className="text-primary" />
                 <span className="text-xs font-bold text-ink dark:text-gray-200">{feature.text}</span>
               </div>
             ))}
@@ -269,13 +270,13 @@ export const Auth: React.FC<AuthProps> = ({ onLogin }) => {
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
-                    <span className="material-icons-round animate-spin">sync</span>
+                    <VicooIcon name="sync" size={20} className="animate-spin" />
                     {mode === 'login' ? 'Logging in...' : 'Creating account...'}
                   </span>
                 ) : (
                   <span className="flex items-center justify-center gap-2">
                     {mode === 'login' ? 'LET\'S GO' : 'GET STARTED'}
-                    <span className="material-icons-round">arrow_forward</span>
+                    <VicooIcon name="arrow_forward" size={20} />
                   </span>
                 )}
               </NeoButton>

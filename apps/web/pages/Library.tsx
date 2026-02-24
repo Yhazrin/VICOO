@@ -3,6 +3,7 @@ import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 
 // Map API category to display tag
 const categoryToTag: Record<string, string> = {
@@ -119,13 +120,13 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
                     {/* Newest Option */}
                     <div className={`w-1/2 flex items-center justify-center gap-2 transition-colors duration-300 ${sortOrder === 'desc' ? 'text-white dark:text-ink' : 'text-gray-400'}`}>
                         <span>{t('lib.sort.newest')}</span>
-                        {sortOrder === 'desc' && <span className="material-icons-round text-sm animate-pop">arrow_downward</span>}
+                        {sortOrder === 'desc' && <VicooIcon name="arrow_downward" size={14} className="animate-pop" />}
                     </div>
 
                     {/* Oldest Option */}
                     <div className={`w-1/2 flex items-center justify-center gap-2 transition-colors duration-300 ${sortOrder === 'asc' ? 'text-white dark:text-ink' : 'text-gray-400'}`}>
                         <span>{t('lib.sort.oldest')}</span>
-                        {sortOrder === 'asc' && <span className="material-icons-round text-sm animate-pop">arrow_upward</span>}
+                        {sortOrder === 'asc' && <VicooIcon name="arrow_upward" size={14} className="animate-pop" />}
                     </div>
                 </div>
             </button>
@@ -190,14 +191,14 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
                     className="w-9 h-9 bg-primary border-2 border-ink dark:border-gray-500 rounded-lg flex items-center justify-center hover:bg-green-400 shadow-neo-sm active:shadow-none active:translate-y-1 transition-all text-ink"
                     title={t('common.save')}
                 >
-                    <span className="material-icons-round text-sm">check</span>
+                    <VicooIcon name="check" size={14} />
                 </button>
                 <button 
                     onClick={() => setIsAddingTag(false)}
                     className="w-9 h-9 bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 shadow-neo-sm active:shadow-none active:translate-y-1 transition-all text-ink dark:text-white"
                     title={t('common.cancel')}
                 >
-                    <span className="material-icons-round text-sm">close</span>
+                    <VicooIcon name="close" size={14} />
                 </button>
             </div>
           ) : (
@@ -206,7 +207,7 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
                 className="px-3 py-2 rounded-xl font-bold border-2 border-dashed border-gray-400 text-gray-400 hover:text-ink hover:border-ink hover:bg-white dark:hover:bg-gray-800 dark:hover:text-white dark:hover:border-gray-400 transition-all whitespace-nowrap flex items-center gap-1 ml-1 hover:scale-105 active:scale-95"
                 title="Add Custom Tag"
             >
-                <span className="material-icons-round text-sm">add</span> {t('lib.tag.new')}
+                <VicooIcon name="add" size={14} /> {t('lib.tag.new')}
             </button>
           )}
         </div>
@@ -219,13 +220,13 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
               placeholder={t('lib.search_placeholder')}
               className="w-full bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-xl px-4 py-3 pl-12 font-bold focus:ring-0 shadow-neo-sm placeholder-gray-400 text-ink dark:text-white transition-all focus:shadow-neo-lg"
            />
-           <span className="material-icons-round absolute left-4 top-3.5 text-gray-400">search</span>
+           <VicooIcon name="search" size={20} className="absolute left-4 top-3.5 text-gray-400" />
            {searchQuery && (
               <button 
                 onClick={() => setSearchQuery('')}
                 className="absolute right-4 top-3.5 text-gray-400 hover:text-ink dark:hover:text-white hover:rotate-90 transition-transform"
               >
-                 <span className="material-icons-round text-lg">close</span>
+                 <VicooIcon name="close" size={20} />
               </button>
            )}
         </div>
@@ -235,12 +236,12 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-20">
         {loading ? (
             <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 animate-pop">
-                <span className="material-icons-round text-6xl mb-4 opacity-20 animate-spin">sync</span>
+                <VicooIcon name="sync" size={60} className="mb-4 opacity-20 animate-spin" />
                 <p className="font-bold text-xl">Loading notes...</p>
             </div>
         ) : error ? (
             <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 animate-pop">
-                <span className="material-icons-round text-6xl mb-4 opacity-20">error_outline</span>
+                <VicooIcon name="error_outline" size={60} className="mb-4 opacity-20" />
                 <p className="font-bold text-xl">Error: {error}</p>
                 <button onClick={refreshNotes} className="mt-4 px-4 py-2 bg-primary border-2 border-ink rounded-lg font-bold">
                     Retry
@@ -248,7 +249,7 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
             </div>
         ) : processedNotes.length === 0 ? (
             <div className="col-span-full py-20 flex flex-col items-center justify-center text-gray-400 animate-pop">
-                <span className="material-icons-round text-6xl mb-4 opacity-20">filter_none</span>
+                <VicooIcon name="filter_none" size={60} className="mb-4 opacity-20" />
                 <p className="font-bold text-xl">{t('lib.no_results')} "{searchQuery || filter}"</p>
                 <p className="text-sm mt-2">Try adjusting your search or filters.</p>
             </div>
@@ -280,7 +281,7 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
 
                         <div className="flex justify-between items-start mb-4 relative z-10">
                             <div className="w-10 h-10 bg-white dark:bg-black/10 border-2 border-ink dark:border-white/20 rounded-lg flex items-center justify-center shadow-sm group-hover:rotate-12 transition-transform duration-300">
-                            <span className="material-icons-round">{noteIcon}</span>
+                            <VicooIcon name={noteIcon} size={20} />
                             </div>
                             <span className={`border-2 border-ink px-2 py-0.5 rounded text-xs font-bold ${!note.published ? 'bg-red-100 text-red-800 border-red-800 animate-pulse' : 'bg-white/50 dark:bg-black/20 dark:border-white/20'}`}>
                                 {noteTag}
@@ -293,8 +294,8 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
                         <div className="mt-auto flex justify-between items-center border-t-2 border-ink/10 dark:border-white/10 pt-3 relative z-10">
                             <span className="text-xs font-bold opacity-60">{displayDate}</span>
                             <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-                                <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><span className="material-icons-round text-sm">edit</span></button>
-                                <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><span className="material-icons-round text-sm">share</span></button>
+                                <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><VicooIcon name="edit" size={14} /></button>
+                                <button className="p-1 hover:bg-white/50 dark:hover:bg-black/20 rounded hover:scale-110 transition-transform"><VicooIcon name="share" size={14} /></button>
                             </div>
                         </div>
                     </NeoCard>
@@ -311,7 +312,7 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
                 style={{ animationDelay: `${processedNotes.length * 0.05}s` }}
             >
             <div className="w-16 h-16 rounded-full bg-gray-100 dark:bg-gray-800 group-hover:bg-primary border-2 border-transparent group-hover:border-ink flex items-center justify-center mb-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-90">
-                <span className="material-icons-round text-3xl">add</span>
+                <VicooIcon name="add" size={32} />
             </div>
             <span className="font-bold">{t('lib.create_note')} '{filter === 'All' ? 'Inbox' : filter}'</span>
             </div>

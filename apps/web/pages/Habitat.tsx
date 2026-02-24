@@ -3,6 +3,7 @@ import { NeoCard } from '../components/NeoCard';
 import { Mascot } from '../components/Mascot';
 import { NeoButton } from '../components/NeoButton';
 import { NeoModal } from '../components/NeoModal';
+import { VicooIcon } from '../components/VicooIcon';
 import { useApi } from '../contexts/ApiContext';
 
 export const Habitat: React.FC = () => {
@@ -117,7 +118,7 @@ export const Habitat: React.FC = () => {
                 <label className="block text-sm font-bold mb-2">Search existing nodes...</label>
                 <div className="relative">
                     <input type="text" placeholder="Type to search..." className="w-full border-3 border-ink dark:border-gray-500 rounded-xl px-4 py-3 font-bold focus:ring-0 bg-white dark:bg-gray-800 text-ink dark:text-white" />
-                    <span className="material-icons-round absolute right-3 top-3 text-gray-400">search</span>
+                    <VicooIcon name="search" size={20} className="absolute right-3 top-3 text-gray-400" />
                 </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                     <span className="text-xs font-bold text-gray-400">Suggested:</span>
@@ -138,7 +139,7 @@ export const Habitat: React.FC = () => {
          ].map((stat, i) => (
             <NeoCard key={i} className="p-4 flex items-center gap-4">
                <div className={`w-12 h-12 ${stat.color} border-2 border-ink rounded-xl flex items-center justify-center shadow-neo-sm text-ink`}>
-                  <span className="material-icons-round text-2xl">{stat.icon}</span>
+                  <VicooIcon name={stat.icon} size={24} />
                </div>
                <div>
                   <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase">{stat.label}</p>
@@ -157,7 +158,7 @@ export const Habitat: React.FC = () => {
            <NeoCard className="p-0 overflow-hidden min-h-[400px] flex flex-col">
               <div className="bg-gray-900 text-white p-4 border-b-3 border-ink flex justify-between items-center">
                   <span className="font-mono font-bold flex items-center gap-2">
-                      <span className="material-icons-round text-sm">terminal</span>
+                      <VicooIcon name="terminal" size={14} />
                       GARDEN_MAINTENANCE.exe
                   </span>
                   <span className="text-xs font-mono text-gray-400">v2.1.0</span>
@@ -180,7 +181,7 @@ export const Habitat: React.FC = () => {
                           >
                               <div className="flex justify-between items-start mb-2">
                                   <span className="font-bold text-red-500 flex items-center gap-1">
-                                      <span className="material-icons-round text-sm">link_off</span> High Priority
+                                      <VicooIcon name="link_off" size={14} /> High Priority
                                   </span>
                                   <span className="bg-gray-100 dark:bg-gray-700 text-xs font-bold px-2 py-1 rounded text-ink dark:text-white">+50 XP</span>
                               </div>
@@ -195,7 +196,7 @@ export const Habitat: React.FC = () => {
                           <div className="bg-white dark:bg-gray-900 border-2 border-ink dark:border-gray-500 rounded-xl p-4 shadow-sm hover:shadow-neo-sm transition-shadow cursor-pointer group opacity-75 hover:opacity-100">
                               <div className="flex justify-between items-start mb-2">
                                   <span className="font-bold text-yellow-600 flex items-center gap-1">
-                                      <span className="material-icons-round text-sm">history</span> Stale Data
+                                      <VicooIcon name="history" size={14} /> Stale Data
                                   </span>
                                   <span className="bg-gray-100 dark:bg-gray-700 text-xs font-bold px-2 py-1 rounded text-ink dark:text-white">+20 XP</span>
                               </div>
@@ -272,7 +273,7 @@ export const Habitat: React.FC = () => {
            </NeoCard>
            
            <div className="bg-gray-100 dark:bg-gray-800 border-2 border-dashed border-gray-400 rounded-2xl p-6 text-center">
-               <span className="material-icons-round text-3xl text-gray-400 mb-2">backup</span>
+               <VicooIcon name="backup" size={32} className="text-gray-400 mb-2" />
                <p className="font-bold text-gray-500 dark:text-gray-400">Last Backup: 2h ago</p>
                <button className="text-sm font-bold text-ink dark:text-white underline mt-2 hover:text-primary">Backup Now</button>
            </div>

@@ -3,6 +3,7 @@ import { NeoCard } from '../components/NeoCard';
 import { Mascot } from '../components/Mascot';
 import { NeoButton } from '../components/NeoButton';
 import { MarkdownRenderer } from '../components/MarkdownRenderer';
+import { VicooIcon } from '../components/VicooIcon';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
 import { eventBus, Events } from '@vicoo/events';
@@ -159,7 +160,7 @@ export const UnifiedAI: React.FC = () => {
     return (
       <div className="mt-4 pt-4 border-t-2 border-black/10 dark:border-white/10">
         <div className="flex items-center gap-2 mb-3">
-          <span className="material-icons-round text-sm text-gray-500">library_books</span>
+          <VicooIcon name="library_books" size={14} className="text-gray-500" />
           <span className="text-xs font-bold text-gray-500 uppercase">参考资料 ({sources.length})</span>
         </div>
         <div className="space-y-2">
@@ -292,7 +293,7 @@ export const UnifiedAI: React.FC = () => {
       <div className="absolute bottom-4 left-4 right-4 md:left-8 md:right-8">
         <div className="bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-2xl p-2 shadow-neo dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] flex gap-2 items-center relative z-20">
           <button className="w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
-            <span className="material-icons-round text-xl">add_circle</span>
+            <VicooIcon name="add_circle" size={20} />
           </button>
           <input 
             type="text" 
@@ -309,7 +310,7 @@ export const UnifiedAI: React.FC = () => {
             variant="icon" 
             className="bg-ink text-white hover:bg-gray-800 dark:bg-white dark:text-ink dark:hover:bg-gray-200 w-10 h-10 flex items-center justify-center !rounded-xl !p-0 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <span className="material-icons-round">send</span>
+            <VicooIcon name="send" size={20} />
           </NeoButton>
         </div>
         <p className="text-center text-[10px] text-gray-400 mt-2">

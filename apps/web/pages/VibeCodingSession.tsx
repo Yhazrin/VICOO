@@ -5,6 +5,7 @@ import { NeoButton } from '../components/NeoButton';
 import { Mascot } from '../components/Mascot';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { VicooIcon } from '../components/VicooIcon';
 import { eventBus, Events } from '@vicoo/events';
 
 // Types representing the Agent's internal state
@@ -1083,7 +1084,7 @@ export const VibeCodingSession: React.FC = () => {
             <header className="flex justify-between items-center mb-6">
                 <div>
                     <h1 className="text-4xl font-display font-bold text-ink dark:text-white flex items-center gap-3">
-                        <span className="material-icons-round text-4xl text-orange-500">smart_toy</span>
+                        <VicooIcon name="smart_toy" size={40} className="text-orange-500" />
                         Vibe Station
                     </h1>
                     <p className="text-gray-600 dark:text-gray-400 font-medium">
@@ -1109,7 +1110,7 @@ export const VibeCodingSession: React.FC = () => {
                             )}
                             {lastError && (
                                 <span className="text-xs font-bold text-red-500" title={lastError}>
-                                    <span className="material-icons-round text-sm">error</span>
+                                    <VicooIcon name="error" size={14} />
                                 </span>
                             )}
                             <NeoButton
@@ -1117,7 +1118,7 @@ export const VibeCodingSession: React.FC = () => {
                                 size="sm"
                                 onClick={checkConnection}
                             >
-                                <span className="material-icons-round text-sm">refresh</span>
+                                <VicooIcon name="refresh" size={14} />
                             </NeoButton>
                         </>
                     )}
@@ -1156,7 +1157,7 @@ export const VibeCodingSession: React.FC = () => {
                                               log.type === 'diff_removed' ? 'bg-red-500 text-white' :
                                               'bg-white dark:bg-gray-700 text-ink dark:text-white'}
                                         `}>
-                                            <span className="material-icons-round text-xl">{getLogIcon(log.type)}</span>
+                                            <VicooIcon name={getLogIcon(log.type)} size={20} />
                                         </div>
 
                                         <div className="flex-1 min-w-0">
@@ -1209,8 +1210,7 @@ export const VibeCodingSession: React.FC = () => {
                                                         >
                                                             <div className="flex items-center justify-between px-3 py-2 bg-purple-100 dark:bg-purple-800/50">
                                                                 <span className="text-xs font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1">
-                                                                    <span className="material-icons-round text-xs">
-                                                                        {expandedLogs.has(log.id) ? 'expand_less' : 'expand_more'}
+                                                                    <VicooIcon name={expandedLogs.has(log.id) ? 'expand_less' : 'expand_more'} size={12} />
                                                                     </span>
                                                                     {expandedLogs.has(log.id) ? 'HIDE' : 'SHOW'}
                                                                 </span>
@@ -1231,8 +1231,7 @@ export const VibeCodingSession: React.FC = () => {
                                                         >
                                                             <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border-b-2 border-gray-300 dark:border-gray-600">
                                                                 <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
-                                                                    <span className="material-icons-round text-xs">
-                                                                        {expandedLogs.has(log.id) ? 'expand_less' : 'expand_more'}
+                                                                    <VicooIcon name={expandedLogs.has(log.id) ? 'expand_less' : 'expand_more'} size={12} />
                                                                     </span>
                                                                     {expandedLogs.has(log.id) ? 'COLLAPSE' : 'EXPAND'}
                                                                 </span>
@@ -1292,7 +1291,7 @@ export const VibeCodingSession: React.FC = () => {
                     <div className="absolute bottom-0 left-0 right-0 pt-4 bg-gradient-to-t from-light via-light to-transparent dark:from-dark dark:via-dark">
                         <NeoCard className="p-2 flex items-center gap-2 bg-white dark:bg-gray-900">
                             <div className="w-10 h-10 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg">
-                                <span className="material-icons-round text-gray-400">chevron_right</span>
+                                <VicooIcon name="chevron_right" size={20} className="text-gray-400" />
                             </div>
                             <input
                                 autoFocus
@@ -1309,7 +1308,7 @@ export const VibeCodingSession: React.FC = () => {
                                 disabled={isRunning || !prompt.trim()}
                                 className={isRunning ? 'opacity-50 cursor-not-allowed' : ''}
                             >
-                                <span className="material-icons-round">send</span>
+                                <VicooIcon name="send" size={20} />
                             </NeoButton>
                         </NeoCard>
                     </div>
@@ -1344,7 +1343,7 @@ export const VibeCodingSession: React.FC = () => {
                                 className="flex items-center gap-1 text-xs font-mono text-primary hover:text-secondary transition-colors"
                                 title="Click to select a different folder"
                             >
-                                <span className="material-icons-round text-sm">folder_open</span>
+                                <VicooIcon name="folder_open" size={14} />
                                 <span className="truncate max-w-[120px]">{config.workingDir.split('\\').pop() || config.workingDir}</span>
                             </button>
                         </div>
@@ -1370,16 +1369,16 @@ export const VibeCodingSession: React.FC = () => {
                     <NeoCard className="p-0 overflow-hidden bg-white dark:bg-gray-800 flex-1">
                         <div className="p-4 bg-gray-50 dark:bg-gray-700 border-b-2 border-ink dark:border-gray-600 flex justify-between items-center">
                             <span className="text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-300">Active Context</span>
-                            <span className="material-icons-round text-sm text-gray-400">folder_open</span>
+                            <VicooIcon name="folder_open" size={14} className="text-gray-400" />
                         </div>
                         <div className="p-4 space-y-3">
                             <div className="flex items-center gap-2 text-sm font-bold text-ink dark:text-gray-200">
-                                <span className="material-icons-round text-info text-base">folder</span>
+                                <VicooIcon name="folder" size={16} className="text-info" />
                                 {config.workingDir.split('\\').pop() || 'Project'}
                             </div>
                             <div className="pl-6 space-y-2">
                                 <div className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400 bg-yellow-50 dark:bg-yellow-900/20 p-1 rounded border border-yellow-200 dark:border-yellow-700">
-                                    <span className="material-icons-round text-sm">description</span>
+                                    <VicooIcon name="description" size={14} />
                                     <span className="truncate">VibeCodingSession.tsx</span>
                                     <span className="ml-auto text-[10px] uppercase font-bold text-yellow-600">Active</span>
                                 </div>
@@ -1403,7 +1402,7 @@ export const VibeCodingSession: React.FC = () => {
                                     disabled={isRunning}
                                     className="p-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-xs font-bold text-gray-500 hover:text-ink dark:hover:text-white hover:border-ink dark:hover:border-white transition-all bg-white dark:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
                                 >
-                                    <span className="material-icons-round text-sm">{icon}</span>
+                                    <VicooIcon name={icon} size={14} />
                                     {cmd.split(' ')[0]}
                                 </button>
                             ))}

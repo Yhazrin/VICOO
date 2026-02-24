@@ -6,6 +6,7 @@ import { DraggableMascot } from './components/DraggableMascot';
 import { CommandPalette } from './components/CommandPalette';
 import { QuickCapturePanel } from './components/QuickCapturePanel';
 import { PageSkeleton } from './components/PageSkeleton';
+import { VicooIcon } from './components/VicooIcon';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
 import { ApiProvider } from './contexts/ApiContext';
@@ -212,7 +213,7 @@ const AppContent: React.FC = () => {
             className="w-16 h-16 bg-primary border-4 border-ink dark:border-white rounded-full shadow-neo dark:shadow-[4px_4px_0px_0px_#ffffff] hover:shadow-neo-lg dark:hover:shadow-[6px_6px_0px_0px_#ffffff] hover:-translate-y-1 active:shadow-neo-sm active:translate-y-0 transition-all flex items-center justify-center group pointer-events-auto text-ink"
             title="New Note"
             >
-            <span className="material-icons-round text-3xl group-hover:rotate-90 transition-transform">add</span>
+            <VicooIcon name="add" size={32} className="group-hover:rotate-90 transition-transform" />
             </button>
         </div>
       )}

@@ -345,7 +345,7 @@ export const Publish: React.FC = () => {
         <div className="grid grid-cols-3 gap-4 mb-8">
           <div className="bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-              <span className="material-icons-round text-blue-600">people</span>
+              <VicooIcon name="people" size={20} className="text-blue-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{connectedAccounts}</p>
@@ -354,7 +354,7 @@ export const Publish: React.FC = () => {
           </div>
           <div className="bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-              <span className="material-icons-round text-purple-600">schedule</span>
+              <VicooIcon name="schedule" size={20} className="text-purple-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{totalTasks}</p>
@@ -363,7 +363,7 @@ export const Publish: React.FC = () => {
           </div>
           <div className="bg-white dark:bg-gray-900 border-2 border-gray-200 dark:border-gray-700 rounded-xl p-4 flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-              <span className="material-icons-round text-green-600">check_circle</span>
+              <VicooIcon name="check_circle" size={20} className="text-green-600" />
             </div>
             <div>
               <p className="text-2xl font-bold">{publishedTasks}</p>
@@ -387,7 +387,7 @@ export const Publish: React.FC = () => {
                   }
                 `}
               >
-                <span className="material-icons-round">{tab.icon}</span>
+                <VicooIcon name={tab.icon} size={20} />
                 {tab.label}
               </button>
             ))}
@@ -403,7 +403,7 @@ export const Publish: React.FC = () => {
                 <NeoCard className="p-6 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border-amber-300">
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-xl bg-amber-400 flex items-center justify-center">
-                      <span className="material-icons-round text-white text-2xl">auto_awesome</span>
+                      <VicooIcon name="auto_awesome" size={24} className="text-white" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">Content Pipeline</h2>
@@ -415,17 +415,17 @@ export const Publish: React.FC = () => {
                       <span className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold">1</span>
                       <span className="font-medium">Ask AI</span>
                     </div>
-                    <span className="material-icons-round text-gray-400">arrow_forward</span>
+                    <VicooIcon name="arrow_forward" size={20} className="text-gray-400" />
                     <div className="flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold">2</span>
                       <span className="font-medium">Select Note</span>
                     </div>
-                    <span className="material-icons-round text-gray-400">arrow_forward</span>
+                    <VicooIcon name="arrow_forward" size={20} className="text-gray-400" />
                     <div className="flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 font-bold">3</span>
                       <span className="font-medium">Generate Post</span>
                     </div>
-                    <span className="material-icons-round text-gray-400">arrow_forward</span>
+                    <VicooIcon name="arrow_forward" size={20} className="text-gray-400" />
                     <div className="flex items-center gap-2">
                       <span className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 font-bold">4</span>
                       <span className="font-medium">Publish</span>
@@ -443,7 +443,7 @@ export const Publish: React.FC = () => {
 
                   {notes.length === 0 ? (
                     <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <span className="material-icons-round text-4xl text-gray-300">note_add</span>
+                      <VicooIcon name="note_add" size={40} className="text-gray-300" />
                       <p className="text-gray-500 mt-2">No notes available</p>
                       <p className="text-sm text-gray-400">Create a note first using Ask AI or Editor</p>
                     </div>
@@ -486,12 +486,12 @@ export const Publish: React.FC = () => {
                       >
                         {generating ? (
                           <>
-                            <span className="material-icons-round animate-spin mr-2">sync</span>
+                            <VicooIcon name="sync" size={16} className="animate-spin mr-2" />
                             Generating...
                           </>
                         ) : (
                           <>
-                            <span className="material-icons-round mr-2">auto_awesome</span>
+                            <VicooIcon name="auto_awesome" size={16} className="mr-2" />
                             Generate Post
                           </>
                         )}
@@ -540,7 +540,7 @@ export const Publish: React.FC = () => {
                       </div>
                     ) : (
                       <div className="text-center py-8 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                        <span className="material-icons-round text-4xl text-gray-300">edit_note</span>
+                        <VicooIcon name="edit_note" size={40} className="text-gray-300" />
                         <p className="text-gray-500 mt-2">Click "Generate Post" to create social media content</p>
                       </div>
                     )}
@@ -594,7 +594,7 @@ export const Publish: React.FC = () => {
                 <NeoCard className="p-6 bg-white dark:bg-gray-900">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                      <span className="material-icons-round text-amber-600">add_circle</span>
+                      <VicooIcon name="add_circle" size={20} className="text-amber-600" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">Add Account</h2>
@@ -639,7 +639,7 @@ export const Publish: React.FC = () => {
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                        <span className="material-icons-round text-blue-600">people</span>
+                        <VicooIcon name="people" size={20} className="text-blue-600" />
                       </div>
                       <div>
                         <h2 className="text-xl font-bold">Connected Accounts</h2>
@@ -650,12 +650,12 @@ export const Publish: React.FC = () => {
 
                   {loading ? (
                     <div className="text-center py-8">
-                      <span className="material-icons-round text-4xl text-gray-300 animate-spin">sync</span>
+                      <VicooIcon name="sync" size={40} className="text-gray-300 animate-spin" />
                       <p className="text-gray-500 mt-2">Loading accounts...</p>
                     </div>
                   ) : accounts.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <span className="material-icons-round text-6xl text-gray-300">account_circle</span>
+                      <VicooIcon name="account_circle" size={60} className="text-gray-300" />
                       <p className="text-gray-500 mt-4 font-medium">No accounts connected yet</p>
                       <p className="text-sm text-gray-400">Add your first account above to get started</p>
                     </div>
@@ -684,13 +684,13 @@ export const Publish: React.FC = () => {
                               {account.status === 1 ? 'Active' : 'Inactive'}
                             </span>
                             <NeoButton size="sm" variant="secondary" onClick={() => handleLogin(account.id)}>
-                              <span className="material-icons-round text-sm">qr_code</span>
+                              <VicooIcon name="qr_code" size={14} />
                             </NeoButton>
                             <button
                               onClick={() => handleDeleteAccount(account.id)}
                               className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                             >
-                              <span className="material-icons-round text-sm">delete</span>
+                              <VicooIcon name="delete" size={14} />
                             </button>
                           </div>
                         </div>
@@ -708,7 +708,7 @@ export const Publish: React.FC = () => {
                 <NeoCard className="p-6 bg-white dark:bg-gray-900">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                      <span className="material-icons-round text-green-600">upload_file</span>
+                      <VicooIcon name="upload_file" size={20} className="text-green-600" />
                     </div>
                     <div>
                       <h2 className="text-xl font-bold">Publish Video</h2>
@@ -721,7 +721,7 @@ export const Publish: React.FC = () => {
                     <div>
                       <label className="block text-sm font-bold mb-2">Video File Path</label>
                       <div className="relative">
-                        <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">video_file</span>
+                        <VicooIcon name="video_file" size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           type="text"
                           value={videoPath}
@@ -789,7 +789,7 @@ export const Publish: React.FC = () => {
                             >
                               {isSelected && (
                                 <span className="absolute top-2 right-2 w-5 h-5 bg-amber-400 rounded-full flex items-center justify-center">
-                                  <span className="material-icons-round text-white text-sm">check</span>
+                                  <VicooIcon name="check" size={14} className="text-white" />
                                 </span>
                               )}
                               <span className="text-3xl">{config?.icon || platform.icon}</span>
@@ -807,7 +807,7 @@ export const Publish: React.FC = () => {
                     <div>
                       <label className="block text-sm font-bold mb-2">Schedule (Optional)</label>
                       <div className="relative">
-                        <span className="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">schedule</span>
+                        <VicooIcon name="schedule" size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                           type="datetime-local"
                           value={scheduledAt}
@@ -828,17 +828,17 @@ export const Publish: React.FC = () => {
                     >
                       {publishing ? (
                         <>
-                          <span className="material-icons-round animate-spin mr-2">sync</span>
+                          <VicooIcon name="sync" size={16} className="animate-spin mr-2" />
                           Publishing...
                         </>
                       ) : scheduledAt ? (
                         <>
-                          <span className="material-icons-round mr-2">schedule</span>
+                          <VicooIcon name="schedule" size={16} className="mr-2" />
                           Schedule Publish
                         </>
                       ) : (
                         <>
-                          <span className="material-icons-round mr-2">rocket_launch</span>
+                          <VicooIcon name="rocket_launch" size={16} className="mr-2" />
                           Publish Now
                         </>
                       )}
@@ -856,7 +856,7 @@ export const Publish: React.FC = () => {
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                        <span className="material-icons-round text-purple-600">history</span>
+                        <VicooIcon name="history" size={20} className="text-purple-600" />
                       </div>
                       <div>
                         <h2 className="text-xl font-bold">Publish History</h2>
@@ -867,18 +867,18 @@ export const Publish: React.FC = () => {
                       onClick={fetchTasks}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
                     >
-                      <span className="material-icons-round">refresh</span>
+                      <VicooIcon name="refresh" size={20} />
                     </button>
                   </div>
 
                   {loading ? (
                     <div className="text-center py-8">
-                      <span className="material-icons-round text-4xl text-gray-300 animate-spin">sync</span>
+                      <VicooIcon name="sync" size={40} className="text-gray-300 animate-spin" />
                       <p className="text-gray-500 mt-2">Loading tasks...</p>
                     </div>
                   ) : tasks.length === 0 ? (
                     <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-xl">
-                      <span className="material-icons-round text-6xl text-gray-300">inbox</span>
+                      <VicooIcon name="inbox" size={60} className="text-gray-300" />
                       <p className="text-gray-500 mt-4 font-medium">No publish tasks yet</p>
                       <p className="text-sm text-gray-400">Create your first publish task in the Workflow tab</p>
                     </div>
@@ -907,7 +907,7 @@ export const Publish: React.FC = () => {
                             </div>
                             <div className="flex items-center gap-3">
                               <span className={`px-3 py-1 rounded-lg text-xs font-bold border-2 flex items-center gap-1 ${statusConfig.color}`}>
-                                <span className="material-icons-round text-sm">{statusConfig.icon}</span>
+                                <VicooIcon name={statusConfig.icon} size={14} />
                                 {statusConfig.label}
                               </span>
                               <span className="text-xs text-gray-500 whitespace-nowrap">
@@ -922,7 +922,7 @@ export const Publish: React.FC = () => {
                                 onClick={() => handleDeleteTask(task.id)}
                                 className="p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                               >
-                                <span className="material-icons-round text-sm">delete</span>
+                                <VicooIcon name="delete" size={14} />
                               </button>
                             </div>
                           </div>

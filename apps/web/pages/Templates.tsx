@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { NeoModal } from '../components/NeoModal';
+import { VicooIcon } from '../components/VicooIcon';
 
 // 模板变量定义
 export const TEMPLATE_VARIABLES = [
@@ -298,10 +299,10 @@ export const Templates: React.FC = () => {
          </div>
          <div className="flex gap-2">
             <NeoButton variant="secondary" onClick={() => setIsVariablesOpen(true)}>
-               <span className="material-icons-round mr-2">code</span> Variables
+               <VicooIcon name="code" size={20} className="mr-2" /> Variables
             </NeoButton>
             <NeoButton variant="primary" onClick={() => setIsCreatorOpen(true)}>
-               <span className="material-icons-round mr-2">add</span> Create Custom
+               <VicooIcon name="add" size={20} className="mr-2" /> Create Custom
             </NeoButton>
          </div>
       </header>
@@ -309,7 +310,7 @@ export const Templates: React.FC = () => {
       {/* Search and Filter */}
       <div className="mb-8 flex flex-col md:flex-row gap-4">
          <div className="flex-1 relative">
-            <span className="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">search</span>
+            <VicooIcon name="search" size={20} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
                type="text"
                value={searchQuery}
@@ -347,7 +348,7 @@ export const Templates: React.FC = () => {
                <div className="p-6">
                   <div className="flex items-start gap-4 mb-4">
                      <div className={`w-12 h-12 ${template.color} border-2 border-ink dark:border-gray-600 rounded-xl flex items-center justify-center shadow-neo-sm`}>
-                        <span className="material-icons-round text-2xl text-ink">{template.icon}</span>
+                        <VicooIcon name={template.icon} size={24} className="text-ink" />
                      </div>
                      <div className="flex-1">
                         <h3 className="font-display font-bold text-lg text-ink dark:text-white group-hover:text-primary transition-colors">
@@ -358,7 +359,7 @@ export const Templates: React.FC = () => {
                   </div>
                   <div className="flex items-center justify-between">
                      <span className="text-xs font-bold text-gray-400 flex items-center gap-1">
-                        <span className="material-icons-round text-sm">content_copy</span>
+                        <VicooIcon name="content_copy" size={14} />
                         Click to copy
                      </span>
                      <NeoButton size="sm" variant="secondary">
@@ -372,7 +373,7 @@ export const Templates: React.FC = () => {
 
       {filteredTemplates.length === 0 && (
          <div className="text-center py-12">
-            <span className="material-icons-round text-6xl text-gray-300 dark:text-gray-600 mb-4">search_off</span>
+            <VicooIcon name="search_off" size={60} className="text-gray-300 dark:text-gray-600 mb-4" />
             <p className="text-gray-500 dark:text-gray-400 font-bold">No templates found</p>
          </div>
       )}
@@ -456,7 +457,7 @@ export const Templates: React.FC = () => {
                <div className={`absolute top-0 right-0 w-20 h-20 ${tpl.color} rounded-bl-full border-l-3 border-b-3 border-ink opacity-20 group-hover:opacity-100 transition-opacity -mr-4 -mt-4`}></div>
                
                <div className={`w-14 h-14 ${tpl.color} border-3 border-ink dark:border-gray-500 rounded-xl flex items-center justify-center shadow-neo-sm mb-4 group-hover:scale-110 transition-transform`}>
-                  <span className="material-icons-round text-3xl text-ink">{tpl.icon}</span>
+                  <VicooIcon name={tpl.icon} size={32} className="text-ink" />
                </div>
                
                <h3 className="text-xl font-bold mb-2">{tpl.title}</h3>
@@ -464,13 +465,13 @@ export const Templates: React.FC = () => {
                
                <div className="flex items-center gap-2 text-sm font-bold text-primary group-hover:text-ink dark:group-hover:text-white transition-colors">
                   <span>Use Template</span>
-                  <span className="material-icons-round text-base">arrow_forward</span>
+                  <VicooIcon name="arrow_forward" size={16} />
                </div>
             </NeoCard>
          ))}
          
          <div className="border-3 border-dashed border-gray-300 dark:border-gray-600 rounded-2xl p-6 flex flex-col items-center justify-center text-center text-gray-400 dark:text-gray-500 hover:text-ink dark:hover:text-white hover:border-ink dark:hover:border-white hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer min-h-[200px] group">
-             <span className="material-icons-round text-4xl mb-2">upload_file</span>
+             <VicooIcon name="upload_file" size={40} className="mb-2" />
              <span className="font-bold">Import from Markdown</span>
          </div>
       </div>

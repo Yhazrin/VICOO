@@ -3,6 +3,7 @@ import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { Mascot } from '../components/Mascot';
 import { AnimatedLogo } from '../components/AnimatedLogo';
+import { VicooIcon } from '../components/VicooIcon';
 import { useLanguage } from '../contexts/LanguageContext';
 
 interface PublicGatewayProps {
@@ -74,7 +75,7 @@ export const PublicGateway: React.FC<PublicGatewayProps> = ({ onLogin }) => {
                         className="w-full h-14 pl-6 pr-14 rounded-2xl border-3 border-ink text-lg font-bold shadow-none relative z-10 focus:ring-0 focus:outline-none bg-white"
                     />
                     <button className="absolute right-3 top-3 w-8 h-8 flex items-center justify-center rounded-lg bg-ink text-white hover:bg-gray-800 z-20">
-                        <span className="material-icons-round text-lg">search</span>
+                        <VicooIcon name="search" size={20} />
                     </button>
                 </div>
             </header>
@@ -108,7 +109,7 @@ export const PublicGateway: React.FC<PublicGatewayProps> = ({ onLogin }) => {
                                 <div className="pt-4 border-t-2 border-black/10 flex justify-between items-center">
                                     <span className="text-xs font-bold">{post.date}</span>
                                     <div className="w-8 h-8 rounded-full bg-white border-2 border-ink flex items-center justify-center group-hover:bg-ink group-hover:text-white transition-colors">
-                                        <span className="material-icons-round text-sm">arrow_forward</span>
+                                        <VicooIcon name="arrow_forward" size={14} />
                                     </div>
                                 </div>
                             </NeoCard>
