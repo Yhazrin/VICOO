@@ -1211,7 +1211,6 @@ export const VibeCodingSession: React.FC = () => {
                                                             <div className="flex items-center justify-between px-3 py-2 bg-purple-100 dark:bg-purple-800/50">
                                                                 <span className="text-xs font-bold text-purple-700 dark:text-purple-300 flex items-center gap-1">
                                                                     <VicooIcon name={expandedLogs.has(log.id) ? 'expand_less' : 'expand_more'} size={12} />
-                                                                    </span>
                                                                     {expandedLogs.has(log.id) ? 'HIDE' : 'SHOW'}
                                                                 </span>
                                                                 <span className="text-[10px] text-purple-500">{log.detail.length} chars</span>
@@ -1232,7 +1231,6 @@ export const VibeCodingSession: React.FC = () => {
                                                             <div className="flex items-center justify-between px-3 py-1.5 bg-gray-100 dark:bg-gray-800 border-b-2 border-gray-300 dark:border-gray-600">
                                                                 <span className="text-[10px] font-bold text-gray-500 flex items-center gap-1">
                                                                     <VicooIcon name={expandedLogs.has(log.id) ? 'expand_less' : 'expand_more'} size={12} />
-                                                                    </span>
                                                                     {expandedLogs.has(log.id) ? 'COLLAPSE' : 'EXPAND'}
                                                                 </span>
                                                                 {log.language && (

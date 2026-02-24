@@ -306,7 +306,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         onClick={() => setIsNoisePanelOpen(!isNoisePanelOpen)}
                         className={`group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 transition-all text-white shadow-lg hover:bg-white/10 ${isNoisePanelOpen ? 'border-primary bg-primary/20' : ''}`}
                     >
-                        <span className="VicooIcon name="waves" size={14}</span>
+                        <VicooIcon name="waves" size={14} />
                         Noise
                     </button>
                     {/* Stats Toggle */}
@@ -314,14 +314,14 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         onClick={() => setShowStatsPanel(!showStatsPanel)}
                         className={`group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 transition-all text-white shadow-lg hover:bg-white/10 ${showStatsPanel ? 'border-primary bg-primary/20' : ''}`}
                     >
-                        <span className="VicooIcon name="analytics" size={14}</span>
+                        <VicooIcon name="analytics" size={14} />
                         Stats
                     </button>
                     <button 
                         onClick={onExit}
                         className="group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 hover:bg-white hover:text-ink hover:border-white transition-all text-white shadow-lg will-change-transform"
                     >
-                        <span className="VicooIcon name="close" size={14} className="group-hover:rotate-180 transition-transform"</span> {t('focus.exit')}
+                        <VicooIcon name="close" size={14} className="group-hover:rotate-180 transition-transform" /> {t('focus.exit')}
                     </button>
                 </div>
             </div>
@@ -330,7 +330,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
             {isNoisePanelOpen && (
                 <div className="absolute top-20 right-6 z-50 bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 w-72 animate-fade-in">
                     <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3 flex items-center gap-2">
-                        <span className="VicooIcon name="waves" size={14}</span> White Noise Mixer
+                        <VicooIcon name="waves" size={14} /> White Noise Mixer
                     </div>
                     <div className="space-y-2">
                         {whiteNoises.map(noise => (
@@ -368,7 +368,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
             {showStatsPanel && (
                 <div className="absolute top-20 left-6 z-50 bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 w-80 animate-fade-in">
                     <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3 flex items-center gap-2">
-                        <span className="VicooIcon name="analytics" size={14}</span> Focus Analytics
+                        <VicooIcon name="analytics" size={14} /> Focus Analytics
                     </div>
                     {aiRecommendedTime && (
                         <div className="mb-4 p-3 bg-primary/20 rounded-xl border border-primary/30">
@@ -437,7 +437,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-white/20 bg-black/20 backdrop-blur text-white/70 hover:text-white hover:bg-white/10 hover:border-white transition-all hover:scale-110 active:scale-95 shadow-lg"
                         title="Reset Timer"
                     >
-                        <span className="VicooIcon name="restart_alt" size={24}</span>
+                        <VicooIcon name="restart_alt" size={24} />
                     </button>
 
                     <button 
@@ -449,7 +449,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                                 : 'bg-transparent text-white border-white/30 hover:bg-white/10 hover:border-white'}
                         `}
                     >
-                        <span className="VicooIcon name={isActive ? 'pause' : 'play_arrow'} size={48}</span>
+                        <VicooIcon name={isActive ? 'pause' : 'play_arrow'} size={48} />
                     </button>
                     
                     <button 
@@ -460,7 +460,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         `}
                         title="Music Controls"
                     >
-                        <span className="VicooIcon name="music_note" size={24}</span>
+                        <VicooIcon name="music_note" size={24} />
                     </button>
                 </div>
             </div>

@@ -147,8 +147,6 @@ export const Search: React.FC<SearchProps> = ({ onOpenNote }) => {
       <div className="relative mb-6 max-w-3xl mx-auto w-full z-20">
         <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none">
           <VicooIcon name="search" size={32} className={`transition-colors ${isSearching ? 'text-primary animate-spin' : 'text-gray-400'}`} />
-            {isSearching ? 'sync' : 'psychology'}
-          </span>
         </div>
         <input 
           type="text" 

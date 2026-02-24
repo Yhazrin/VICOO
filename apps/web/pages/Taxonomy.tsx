@@ -81,7 +81,7 @@ export const Taxonomy: React.FC = () => {
            <p className="text-gray-600 dark:text-gray-400 font-medium">Review AI-detected patterns and structure your knowledge.</p>
         </div>
         <NeoButton variant="secondary" size="sm">
-           <span className="VicooIcon name="history" size={14} className="mr-1"</span> History
+           <VicooIcon name="history" size={14} className="mr-1" /> History
         </NeoButton>
       </header>
 

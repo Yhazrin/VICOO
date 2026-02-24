@@ -319,7 +319,6 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
             `}
           >
             <VicooIcon name={isGenerating ? 'hourglass_empty' : 'auto_awesome'} size={14} />
-            </span>
             {isGenerating ? '生成中...' : '从笔记生成'}
           </button>
         </Panel>

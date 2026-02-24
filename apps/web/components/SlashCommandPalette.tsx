@@ -342,7 +342,6 @@ export const SlashCommandPalette: React.FC<SlashCommandPaletteProps> = ({
                   onMouseEnter={() => setSelectedIndex(globalIndex)}
                 >
                   <VicooIcon name={cmd.icon} size={20} className="text-gray-500 dark:text-gray-400" />
-                  </span>
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm text-ink dark:text-white truncate">
                       {cmd.name}
