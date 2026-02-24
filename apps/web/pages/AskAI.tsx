@@ -4,6 +4,7 @@ import { Mascot } from '../components/Mascot';
 import { NeoButton } from '../components/NeoButton';
 import { MarkdownRenderer } from '../components/MarkdownRenderer';
 import { eventBus, Events } from '@vicoo/events';
+import { VicooIcon } from '../components/VicooIcon';
 
 // 使用eventBus发送事件
 
@@ -161,7 +162,7 @@ export const AskAI: React.FC = () => {
       <div className="absolute bottom-6 left-4 right-4 md:left-20 md:right-20">
          <div className="bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-2xl p-2 shadow-neo dark:shadow-[4px_4px_0px_0px_rgba(255,255,255,0.2)] flex gap-2 items-center relative z-20">
             <button className="w-12 h-12 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400">
-               <span className="material-icons-round text-2xl">add_circle</span>
+               <VicooIcon name="add_circle" size={24} />
             </button>
             <input 
               type="text" 
@@ -171,12 +172,12 @@ export const AskAI: React.FC = () => {
               placeholder="问点什么..."
               className="flex-1 bg-transparent border-none focus:ring-0 text-lg font-bold placeholder-gray-400 text-ink dark:text-white"
             />
-            <NeoButton 
+            <NeoButton
                onClick={handleSend}
-               variant="icon" 
+               variant="icon"
                className="bg-ink text-white hover:bg-gray-800 dark:bg-white dark:text-ink dark:hover:bg-gray-200 w-12 h-12 flex items-center justify-center !rounded-xl !p-0"
             >
-               <span className="material-icons-round">send</span>
+               <VicooIcon name="send" size={20} />
             </NeoButton>
          </div>
       </div>

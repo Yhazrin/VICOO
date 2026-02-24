@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Mascot } from '../components/Mascot';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 
 interface Track {
     id: string;
@@ -305,7 +306,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         onClick={() => setIsNoisePanelOpen(!isNoisePanelOpen)}
                         className={`group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 transition-all text-white shadow-lg hover:bg-white/10 ${isNoisePanelOpen ? 'border-primary bg-primary/20' : ''}`}
                     >
-                        <span className="material-icons-round text-sm">waves</span>
+                        <span className="VicooIcon name="waves" size={14}</span>
                         Noise
                     </button>
                     {/* Stats Toggle */}
@@ -313,14 +314,14 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         onClick={() => setShowStatsPanel(!showStatsPanel)}
                         className={`group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 transition-all text-white shadow-lg hover:bg-white/10 ${showStatsPanel ? 'border-primary bg-primary/20' : ''}`}
                     >
-                        <span className="material-icons-round text-sm">analytics</span>
+                        <span className="VicooIcon name="analytics" size={14}</span>
                         Stats
                     </button>
                     <button 
                         onClick={onExit}
                         className="group flex items-center gap-2 font-bold uppercase text-xs tracking-wider border-2 border-white/20 bg-black/20 backdrop-blur-xl rounded-full px-4 py-2 hover:bg-white hover:text-ink hover:border-white transition-all text-white shadow-lg will-change-transform"
                     >
-                        <span className="material-icons-round text-sm group-hover:rotate-180 transition-transform">close</span> {t('focus.exit')}
+                        <span className="VicooIcon name="close" size={14} className="group-hover:rotate-180 transition-transform"</span> {t('focus.exit')}
                     </button>
                 </div>
             </div>
@@ -329,7 +330,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
             {isNoisePanelOpen && (
                 <div className="absolute top-20 right-6 z-50 bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 w-72 animate-fade-in">
                     <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3 flex items-center gap-2">
-                        <span className="material-icons-round text-sm">waves</span> White Noise Mixer
+                        <span className="VicooIcon name="waves" size={14}</span> White Noise Mixer
                     </div>
                     <div className="space-y-2">
                         {whiteNoises.map(noise => (
@@ -367,7 +368,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
             {showStatsPanel && (
                 <div className="absolute top-20 left-6 z-50 bg-black/60 backdrop-blur-xl border border-white/20 rounded-2xl p-4 w-80 animate-fade-in">
                     <div className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3 flex items-center gap-2">
-                        <span className="material-icons-round text-sm">analytics</span> Focus Analytics
+                        <span className="VicooIcon name="analytics" size={14}</span> Focus Analytics
                     </div>
                     {aiRecommendedTime && (
                         <div className="mb-4 p-3 bg-primary/20 rounded-xl border border-primary/30">
@@ -436,7 +437,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         className="w-14 h-14 rounded-full flex items-center justify-center border-2 border-white/20 bg-black/20 backdrop-blur text-white/70 hover:text-white hover:bg-white/10 hover:border-white transition-all hover:scale-110 active:scale-95 shadow-lg"
                         title="Reset Timer"
                     >
-                        <span className="material-icons-round text-2xl">restart_alt</span>
+                        <span className="VicooIcon name="restart_alt" size={24}</span>
                     </button>
 
                     <button 
@@ -448,7 +449,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                                 : 'bg-transparent text-white border-white/30 hover:bg-white/10 hover:border-white'}
                         `}
                     >
-                        <span className="material-icons-round text-5xl">{isActive ? 'pause' : 'play_arrow'}</span>
+                        <span className="VicooIcon name={isActive ? 'pause' : 'play_arrow'} size={48}</span>
                     </button>
                     
                     <button 
@@ -459,7 +460,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         `}
                         title="Music Controls"
                     >
-                        <span className="material-icons-round text-2xl">music_note</span>
+                        <span className="VicooIcon name="music_note" size={24}</span>
                     </button>
                 </div>
             </div>
@@ -521,13 +522,13 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                         {/* Header (Fixed Top) */}
                         <div className="flex justify-between items-center shrink-0 mb-4">
                             <span className="text-xs font-bold uppercase tracking-widest opacity-60 flex items-center gap-1 text-white">
-                                <span className="material-icons-round text-sm">surround_sound</span> {t('focus.spatial_audio')}
+                                <VicooIcon name="surround_sound" size={14} /> {t('focus.spatial_audio')}
                             </span>
                             <button 
                                 onClick={(e) => { e.stopPropagation(); setIsPlayerExpanded(false); }}
                                 className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/10 text-white"
                             >
-                                <span className="material-icons-round">expand_more</span>
+                                <VicooIcon name="expand_more" size={20} />
                             </button>
                         </div>
 
@@ -549,7 +550,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                                     <p className="text-sm font-bold opacity-60 truncate text-white">{currentTrack.artist}</p>
                                     
                                     <div className="mt-4 flex items-center gap-2 group text-white">
-                                        <span className="material-icons-round text-xs opacity-50">volume_down</span>
+                                        <VicooIcon name="volume_down" size={12} className="opacity-50" />
                                         <input 
                                             type="range" 
                                             min="0" max="1" step="0.1" 
@@ -557,7 +558,7 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                                             onChange={(e) => setVolume(parseFloat(e.target.value))}
                                             className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-150"
                                         />
-                                        <span className="material-icons-round text-xs opacity-50">volume_up</span>
+                                        <VicooIcon name="volume_up" size={12} className="opacity-50" />
                                     </div>
                                 </div>
                             </div>
@@ -565,16 +566,16 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
                             {/* Controls */}
                             <div className="flex items-center justify-between px-2 shrink-0">
                                 <button onClick={() => handleTrackChange('prev')} className="text-white/60 hover:text-white transition-colors">
-                                    <span className="material-icons-round text-3xl">skip_previous</span>
+                                    <VicooIcon name="skip_previous" size={28} />
                                 </button>
                                 <button 
                                     onClick={() => setIsPlaying(!isPlaying)}
                                     className="w-16 h-16 rounded-full bg-white text-ink flex items-center justify-center shadow-lg hover:scale-105 active:scale-95 transition-all"
                                 >
-                                    <span className="material-icons-round text-4xl">{isPlaying ? 'pause' : 'play_arrow'}</span>
+                                    <VicooIcon name={isPlaying ? 'pause' : 'play_arrow'} size={36} />
                                 </button>
                                 <button onClick={() => handleTrackChange('next')} className="text-white/60 hover:text-white transition-colors">
-                                    <span className="material-icons-round text-3xl">skip_next</span>
+                                    <VicooIcon name="skip_next" size={28} />
                                 </button>
                             </div>
                         </div>

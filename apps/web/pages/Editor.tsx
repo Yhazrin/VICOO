@@ -6,6 +6,7 @@ import { SlashCommandPalette, builtInCommands, type SlashCommand } from '../comp
 import { View } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 import { eventBus, Events } from '@vicoo/events';
 import type { Note, NoteUpdate, NoteCategory } from '@vicoo/types';
 
@@ -300,20 +301,22 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
           {/* Toolbar */}
           <div className="sticky top-0 z-20 mb-6 flex justify-between items-center bg-white/90 dark:bg-gray-800/90 backdrop-blur border-3 border-ink dark:border-gray-500 rounded-xl p-2 shadow-neo-sm">
              <div className="flex gap-2">
-                <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><span className="material-icons-round text-lg">format_bold</span></button>
-                <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><span className="material-icons-round text-lg">format_italic</span></button>
+                <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><VicooIcon name="format_bold" size={18} /></button>
+                <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><VicooIcon name="format_italic" size={18} /></button>
                 <div className="w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
-                <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><span className="material-icons-round text-lg">code</span></button>
-                <button 
+                <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><VicooIcon name="code" size={18} /></button>
+                <button
                   onClick={handleSummarize}
                   className={`
                     px-3 rounded text-xs font-bold flex items-center gap-1 transition-all
                     ${showSummary ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' : 'bg-secondary/20 hover:bg-secondary/40 text-ink dark:text-white dark:bg-secondary/30'}
                   `}
                 >
-                   <span className={`material-icons-round text-sm ${isSummarizing ? 'animate-spin' : ''}`}>
-                     {showSummary ? 'check' : 'auto_awesome'}
-                   </span> 
+                   <VicooIcon
+                     name={showSummary ? 'check' : 'auto_awesome'}
+                     size={14}
+                     className={isSummarizing ? 'animate-spin' : ''}
+                   />
                    {isSummarizing ? t('editor.summarizing') : showSummary ? t('editor.summarized') : t('editor.summarize')}
                 </button>
              </div>
@@ -323,13 +326,13 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                 {/* Save Status */}
                 {isSaving && (
                   <span className="text-xs font-bold text-gray-500 animate-pulse">
-                    <span className="material-icons-round text-xs align-middle mr-1">sync</span>
+                    <VicooIcon name="sync" size={12} className="align-middle mr-1" />
                     {t('editor.saving')}
                   </span>
                 )}
                 {!isSaving && lastSaved && (
                   <span className="text-xs font-bold text-green-600 dark:text-green-400">
-                    <span className="material-icons-round text-xs align-middle mr-1">check_circle</span>
+                    <VicooIcon name="check_circle" size={12} className="align-middle mr-1" />
                     {t('editor.saved')}
                   </span>
                 )}
@@ -348,7 +351,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
           <div className="bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-2xl shadow-neo-lg dark:shadow-none min-h-[800px] p-8 md:p-12 relative flex flex-col mb-12">
              <div className="flex items-start gap-4 mb-6">
                 <div className="w-16 h-16 bg-primary border-3 border-ink dark:border-gray-500 rounded-xl shadow-neo-sm flex items-center justify-center shrink-0 -rotate-3 text-ink">
-                   <span className="material-icons-round text-4xl">bolt</span>
+                   <VicooIcon name="bolt" size={40} />
                 </div>
                 <div className="flex-1">
                    <input 
@@ -364,7 +367,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                       </span>
                       {isPublished && (
                           <span className="bg-primary/30 border border-ink px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1 text-green-800 dark:text-green-300">
-                             <span className="material-icons-round text-xs">public</span> {t('editor.live')}
+                             <VicooIcon name="public" size={12} /> {t('editor.live')}
                           </span>
                       )}
                       <span className="text-gray-400 text-sm font-medium">{t('editor.last_edited')}</span>
@@ -377,7 +380,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                <div className="mb-8 animate-float">
                  <NeoCard color="secondary" className="p-4 relative">
                    <div className="absolute -top-3 -left-3 bg-white border-2 border-ink px-2 py-1 rounded shadow-neo-sm flex items-center gap-1">
-                     <span className="material-icons-round text-sm text-primary">stars</span>
+                     <VicooIcon name="stars" size={14} className="text-primary" />
                      <span className="text-xs font-bold text-ink">AI Summary</span>
                    </div>
                    <div className="flex gap-4 items-start pt-2">
@@ -419,7 +422,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
           {/* BACKLINKS / Linked Mentions (The Synaptic Gap Filler) */}
           <div className="mb-20">
              <div className="flex items-center gap-2 mb-4 opacity-50">
-                 <span className="material-icons-round text-xl dark:text-gray-400">hub</span>
+                 <VicooIcon name="hub" size={20} className="dark:text-gray-400" />
                  <h3 className="font-bold uppercase tracking-widest text-sm dark:text-gray-400">{t('editor.linked_mentions')}</h3>
                  <div className="flex-1 h-px bg-ink/20 dark:bg-white/20"></div>
              </div>
@@ -471,7 +474,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
 
         {detectedConcepts.length === 0 ? (
            <div className="flex-1 flex flex-col items-center justify-center text-center opacity-50 dark:text-gray-400">
-              <span className="material-icons-round text-4xl mb-2">radar</span>
+              <VicooIcon name="radar" size={40} className="mb-2" />
               <p className="font-bold text-sm">{t('editor.scanning')}</p>
               <p className="text-xs mt-2">Type "React" or "Design" to see the engine work.</p>
            </div>
@@ -491,7 +494,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                        </NeoCard>
                        {/* Add Link Button */}
                        <button className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-primary border-2 border-ink dark:border-gray-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-neo-sm hover:scale-110 text-ink" title="Link to this concept">
-                          <span className="material-icons-round text-xs">link</span>
+                          <VicooIcon name="link" size={12} />
                        </button>
                     </div>
                  ))}
@@ -504,14 +507,14 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                  <p className="text-xs font-bold text-gray-400 uppercase">{t('editor.related')}</p>
                  <NeoCard color="info" className="p-3 cursor-pointer hover:bg-blue-300 transition-colors">
                      <div className="flex items-center gap-2 mb-1">
-                        <span className="material-icons-round text-xs">code</span>
+                        <VicooIcon name="code" size={12} />
                         <span className="font-bold text-xs">React Performance Tips</span>
                      </div>
                      <p className="text-[10px] opacity-70">Mentions 'React' and 'Optimization'</p>
                  </NeoCard>
                  <NeoCard color="accent" className="p-3 cursor-pointer hover:bg-pink-300 transition-colors">
                      <div className="flex items-center gap-2 mb-1">
-                        <span className="material-icons-round text-xs">palette</span>
+                        <VicooIcon name="palette" size={12} />
                         <span className="font-bold text-xs">Design System V2</span>
                      </div>
                      <p className="text-[10px] opacity-70">Shared tag: 'UI'</p>

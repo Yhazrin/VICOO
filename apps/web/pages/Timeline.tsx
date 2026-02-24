@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 import type { TimelineEvent as ApiTimelineEvent } from '@vicoo/types';
 
 // Enhanced Types for Complex Timeline
@@ -190,7 +191,7 @@ export const Timeline: React.FC = () => {
                  <div className="absolute left-[18px] top-1 w-6 h-6 bg-green-500 border-3 border-ink rounded-full z-20 animate-pulse shadow-[0_0_15px_rgba(13,242,89,0.6)]"></div>
                  <div className="absolute left-[30px] w-full border-t-2 border-dashed border-green-500 top-4 opacity-50"></div>
                  <div className="inline-flex items-center gap-2 bg-green-100 border-2 border-green-600 px-3 py-1 rounded-full text-xs font-bold text-green-800 shadow-sm">
-                     <span className="material-icons-round text-sm">update</span>
+                     <VicooIcon name="update" size={14} />
                      CURRENT HEAD
                  </div>
              </div>
@@ -217,8 +218,8 @@ export const Timeline: React.FC = () => {
                                      border-3 border-white shadow-sm transition-transform group-hover:scale-125
                                      ${getStatusColor(event.status)}
                                  `}>
-                                     {event.status === 'blocked' && <span className="material-icons-round text-white text-[10px]">close</span>}
-                                     {event.status === 'done' && <span className="material-icons-round text-white text-[10px]">check</span>}
+                                     {event.status === 'blocked' && <VicooIcon name="close" size={10} className="text-white" />}
+                                     {event.status === 'done' && <VicooIcon name="check" size={10} className="text-white" />}
                                  </div>
                                  
                                  {/* Horizontal Connector Arm */}
@@ -244,18 +245,18 @@ export const Timeline: React.FC = () => {
                                                 {/* Status Badge */}
                                                 {event.status === 'blocked' && (
                                                     <span className="bg-red-500 text-white border-2 border-red-700 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1 animate-pulse">
-                                                        <span className="material-icons-round text-xs">warning</span> BLOCKED
+                                                        <VicooIcon name="warning" size={12} /> BLOCKED
                                                     </span>
                                                 )}
                                                 {event.status === 'in-progress' && (
                                                     <span className="bg-yellow-300 text-yellow-900 border-2 border-yellow-500 px-2 py-0.5 rounded text-[10px] font-bold flex items-center gap-1">
-                                                        <span className="material-icons-round text-xs animate-spin" style={{animationDuration: '3s'}}>sync</span> IN PROGRESS
+                                                        <VicooIcon name="sync" size={12} className="animate-spin" style={{animationDuration: '3s'}} /> IN PROGRESS
                                                     </span>
                                                 )}
                                              </div>
                                              <h3 className="text-xl font-bold flex items-center gap-2 leading-tight">
                                                  {event.title}
-                                                 {event.type === 'Milestone' && <span className="material-icons-round text-amber-500 drop-shadow-sm">stars</span>}
+                                                 {event.type === 'Milestone' && <VicooIcon name="stars" size={20} className="text-amber-500 drop-shadow-sm" />}
                                              </h3>
                                          </div>
                                          
@@ -267,7 +268,7 @@ export const Timeline: React.FC = () => {
                                                  ))}
                                              </div>
                                              <div className={`w-10 h-10 bg-white border-2 border-ink rounded-xl flex items-center justify-center shadow-sm ml-2 shrink-0`}>
-                                                 <span className="material-icons-round text-ink">{getTypeIcon(event.type)}</span>
+                                                 <VicooIcon name={getTypeIcon(event.type)} size={20} className="text-ink" />
                                              </div>
                                          </div>
                                      </div>
@@ -281,8 +282,10 @@ export const Timeline: React.FC = () => {
                                          {/* Critical Blocker Section */}
                                          {event.status === 'blocked' && event.blockerReason && (
                                              <div className="bg-red-50 border-3 border-red-500 rounded-xl p-3 mb-5 flex gap-3 items-start relative overflow-hidden">
-                                                 <div className="absolute -right-4 -top-4 text-red-100 text-6xl opacity-50 select-none pointer-events-none material-icons-round">error</div>
-                                                 <span className="material-icons-round text-red-500 mt-0.5">report_problem</span>
+                                                 <div className="absolute -right-4 -top-4 text-red-100 text-6xl opacity-50 select-none pointer-events-none">
+                                                   <VicooIcon name="error" size={60} />
+                                                 </div>
+                                                 <VicooIcon name="report_problem" size={16} className="text-red-500 mt-0.5" />
                                                  <div>
                                                      <p className="text-xs font-black text-red-800 uppercase mb-1">Blocker Detected</p>
                                                      <p className="text-sm font-bold text-red-900 leading-tight">{event.blockerReason}</p>
@@ -315,7 +318,7 @@ export const Timeline: React.FC = () => {
                                          {event.subtasks && event.subtasks.length > 0 && (
                                              <div className="bg-white border-2 border-ink/10 rounded-xl p-4">
                                                  <p className="text-xs font-bold text-gray-400 uppercase mb-3 flex items-center gap-1">
-                                                     <span className="material-icons-round text-sm">checklist</span> Subtasks
+                                                     <VicooIcon name="checklist" size={14} /> Subtasks
                                                  </p>
                                                  <div className="space-y-2.5">
                                                      {event.subtasks.map((task, idx) => (
@@ -324,7 +327,7 @@ export const Timeline: React.FC = () => {
                                                                  w-5 h-5 border-2 border-ink rounded flex items-center justify-center transition-colors mt-0.5 shrink-0
                                                                  ${task.isCompleted ? 'bg-ink' : 'bg-white group-hover/task:bg-gray-100'}
                                                              `}>
-                                                                 {task.isCompleted && <span className="material-icons-round text-white text-xs font-bold">check</span>}
+                                                                 {task.isCompleted && <VicooIcon name="check" size={12} className="text-white font-bold" />}
                                                              </div>
                                                              <span className={`text-sm font-bold leading-tight transition-opacity ${task.isCompleted ? 'text-gray-400 line-through decoration-2 decoration-gray-300' : 'text-ink'}`}>
                                                                  {task.label}
@@ -339,10 +342,10 @@ export const Timeline: React.FC = () => {
                                      {/* Footer Actions */}
                                      <div className="px-5 py-3 border-t-2 border-ink/10 flex justify-end gap-3 bg-white/30">
                                          <button className="text-xs font-bold hover:bg-black/5 px-2 py-1 rounded transition-colors flex items-center gap-1 text-gray-600 hover:text-ink">
-                                             <span className="material-icons-round text-sm">edit</span> Edit
+                                             <VicooIcon name="edit" size={14} /> Edit
                                          </button>
                                          <button className="text-xs font-bold hover:bg-black/5 px-2 py-1 rounded transition-colors flex items-center gap-1 text-gray-600 hover:text-ink">
-                                             <span className="material-icons-round text-sm">link</span> Link Note
+                                             <VicooIcon name="link" size={14} /> Link Note
                                          </button>
                                      </div>
                                  </NeoCard>

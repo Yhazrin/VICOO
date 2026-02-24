@@ -5,6 +5,7 @@ import { useTheme, MascotSkin } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
 import { Mascot } from '../components/Mascot';
+import { VicooIcon } from '../components/VicooIcon';
 import { cozeService, type CozeConfig } from '../utils/coze';
 
 type Tab = 'general' | 'integration' | 'ai' | 'music' | 'coze' | 'skills';
@@ -188,7 +189,7 @@ export const Settings: React.FC = () => {
                    : 'bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 border-transparent hover:bg-gray-100 dark:hover:bg-gray-700 hover:border-gray-200'}
                `}
              >
-               <span className="material-icons-round">{tab.icon}</span>
+               <VicooIcon name={tab.icon} size={20} />
                {tab.label}
              </button>
           ))}
@@ -225,7 +226,7 @@ export const Settings: React.FC = () => {
                  <div className="flex items-center justify-between p-3 border-2 border-ink dark:border-gray-600 rounded-xl bg-light dark:bg-gray-800 mb-6">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                            <span className="material-icons-round text-gray-500 dark:text-gray-300">dark_mode</span>
+                            <VicooIcon name="dark_mode" size={18} className="text-gray-500 dark:text-gray-300" />
                         </div>
                         <span className="font-bold">{t('settings.dark_mode')}</span>
                     </div>
@@ -278,7 +279,7 @@ export const Settings: React.FC = () => {
                                      <p className="font-bold uppercase tracking-wider text-sm">{skin}</p>
                                      {mascotSkin === skin && (
                                          <span className="absolute top-2 right-2 w-6 h-6 bg-primary border-2 border-ink rounded-full flex items-center justify-center">
-                                             <span className="material-icons-round text-sm">check</span>
+                                             <VicooIcon name="check" size={14} />
                                          </span>
                                      )}
                                  </div>
@@ -296,7 +297,7 @@ export const Settings: React.FC = () => {
                 <NeoCard className="p-8 bg-white dark:bg-gray-900 relative overflow-hidden">
                    <div className="flex items-center gap-4 mb-6">
                       <div className="bg-gradient-to-br from-orange-400 to-orange-600 border-3 border-ink rounded-xl p-3 shadow-neo-sm">
-                         <span className="material-icons-round text-3xl text-white">smart_toy</span>
+                         <VicooIcon name="smart_toy" size={30} className="text-white" />
                       </div>
                       <div>
                          <h2 className="text-2xl font-bold">Claude Code</h2>
@@ -361,7 +362,7 @@ export const Settings: React.FC = () => {
                            onClick={testClaudeConnection}
                            disabled={claudeStatus === 'connecting'}
                          >
-                            <span className="material-icons-round text-sm mr-1">refresh</span>
+                            <VicooIcon name="refresh" size={14} className="mr-1" />
                             {claudeStatus === 'connecting' ? 'Testing...' : 'Test Connection'}
                          </NeoButton>
                       </div>
@@ -379,7 +380,7 @@ export const Settings: React.FC = () => {
                           window.dispatchEvent(new CustomEvent('navigate-to-view', { detail: 'vibe_coding' }));
                         }}
                       >
-                         <span className="material-icons-round text-sm mr-1">open_in_new</span>
+                         <VicooIcon name="open_in_new" size={14} className="mr-1" />
                          Open Vibe Station
                       </NeoButton>
                    </div>
@@ -389,7 +390,7 @@ export const Settings: React.FC = () => {
                 <NeoCard className="p-8">
                    <div className="flex items-center gap-4 mb-8">
                       <div className="bg-primary border-3 border-ink rounded-xl p-3 shadow-neo-sm">
-                         <span className="material-icons-round text-3xl text-ink">terminal</span>
+                         <VicooIcon name="terminal" size={30} className="text-ink" />
                       </div>
                       <div>
                          <h2 className="text-2xl font-bold">CLI Integration</h2>
@@ -419,7 +420,7 @@ export const Settings: React.FC = () => {
                 <NeoCard className="p-6 opacity-60 grayscale">
                    <div className="flex items-center gap-4 mb-4">
                       <div className="bg-white border-3 border-ink rounded-xl p-3 shadow-neo-sm">
-                         <span className="material-icons-round text-3xl text-ink">extension</span>
+                         <VicooIcon name="extension" size={30} className="text-ink" />
                       </div>
                       <div>
                          <h2 className="text-xl font-bold">VS Code Extension</h2>
@@ -436,11 +437,11 @@ export const Settings: React.FC = () => {
                 <NeoCard className="p-6">
                    <div className="flex items-center justify-between mb-6">
                       <h2 className="text-xl font-bold flex items-center gap-2">
-                         <span className="material-icons-round text-primary">music_note</span>
+                         <VicooIcon name="music_note" size={20} className="text-primary" />
                          Focus Mode Playlist
                       </h2>
                       <NeoButton size="sm" onClick={() => setIsAddingMusic(!isAddingMusic)}>
-                         <span className="material-icons-round text-sm mr-1">add</span>
+                         <VicooIcon name="add" size={14} className="mr-1" />
                          Add Music
                       </NeoButton>
                    </div>
@@ -592,7 +593,7 @@ export const Settings: React.FC = () => {
                    {/* Playlist */}
                    {playlist.length === 0 ? (
                       <div className="text-center py-12 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl">
-                         <span className="material-icons-round text-4xl text-gray-300 dark:text-gray-600 mb-2">library_music</span>
+                         <VicooIcon name="library_music" size={40} className="text-gray-300 dark:text-gray-600 mb-2" />
                          <p className="text-gray-500 font-bold">No music added yet</p>
                          <p className="text-sm text-gray-400">Add tracks to play during Focus Mode</p>
                       </div>
@@ -615,7 +616,7 @@ export const Settings: React.FC = () => {
                                   variant="secondary"
                                   onClick={() => removeFromPlaylist(track.id)}
                                >
-                                  <span className="material-icons-round text-sm">delete</span>
+                                  <VicooIcon name="delete" size={14} />
                                </NeoButton>
                             </div>
                          ))}
@@ -865,7 +866,7 @@ const SkillsTab: React.FC = () => {
           <p className="text-gray-500">管理 AI 助手可以使用的技能和 MCP 服务器</p>
         </div>
         <NeoButton onClick={() => setShowAddModal(true)}>
-          <span className="material-icons-round mr-2">add</span>
+          <VicooIcon name="add" size={20} className="mr-2" />
           添加服务器
         </NeoButton>
       </div>
@@ -873,7 +874,7 @@ const SkillsTab: React.FC = () => {
       {/* Server List */}
       {servers.length === 0 ? (
         <NeoCard className="p-8 text-center">
-          <span className="material-icons-round text-6xl text-gray-300 mb-4">construction</span>
+          <VicooIcon name="construction" size={60} className="text-gray-300 mb-4" />
           <h3 className="text-xl font-bold mb-2">暂无技能服务器</h3>
           <p className="text-gray-500 mb-4">添加 MCP 服务器或自定义技能来扩展 AI 能力</p>
           <NeoButton onClick={() => setShowAddModal(true)}>添加第一个服务器</NeoButton>
@@ -928,7 +929,7 @@ const SkillsTab: React.FC = () => {
                       onClick={() => deleteServer(server.id)}
                       className="p-2 rounded-lg hover:bg-red-100 text-gray-400 hover:text-red-500 transition-colors"
                     >
-                      <span className="material-icons-round">delete</span>
+                      <VicooIcon name="delete" size={20} />
                     </button>
                   )}
                 </div>

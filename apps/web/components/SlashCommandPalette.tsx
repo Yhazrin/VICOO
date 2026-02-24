@@ -5,6 +5,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { VicooIcon } from './VicooIcon';
 
 export interface SlashCommand {
   id: string;
@@ -340,8 +341,7 @@ export const SlashCommandPalette: React.FC<SlashCommandPaletteProps> = ({
                   onClick={() => onSelect(cmd, query)}
                   onMouseEnter={() => setSelectedIndex(globalIndex)}
                 >
-                  <span className="material-icons-round text-xl text-gray-500 dark:text-gray-400">
-                    {cmd.icon}
+                  <VicooIcon name={cmd.icon} size={20} className="text-gray-500 dark:text-gray-400" />
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="font-bold text-sm text-ink dark:text-white truncate">

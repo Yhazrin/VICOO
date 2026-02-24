@@ -6,6 +6,7 @@ import { SuccessAnim } from '../components/SuccessAnim';
 import { View } from '../types';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
+import { VicooIcon } from '../components/VicooIcon';
 import type { FeedItem, Note } from '@vicoo/types';
 
 interface DashboardFeedItem {
@@ -236,7 +237,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
                 onClick={() => onNavigate(View.PUBLIC_GATEWAY)}
                 className="hidden md:flex"
             >
-                <span className="material-icons-round text-lg mr-2">public</span> {t('dash.view_live')}
+                <VicooIcon name="public" size={18} className="mr-2" /> {t('dash.view_live')}
             </NeoButton>
 
             {/* Quick Stats Pill */}
@@ -246,12 +247,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
                 title="Go to Public Gateway"
             >
                 <div className="flex items-center gap-1">
-                    <span className="material-icons-round text-primary text-sm">bolt</span>
+                    <VicooIcon name="bolt" size={14} className="text-primary" />
                     <span className="dark:text-white">124 {t('dash.thoughts')}</span>
                 </div>
                 <div className="w-px h-4 bg-gray-300 dark:bg-gray-600"></div>
                 <div className="flex items-center gap-1 hover:text-primary transition-colors">
-                    <span className="material-icons-round text-accent text-sm">public</span>
+                    <VicooIcon name="public" size={14} className="text-accent" />
                     <span className="dark:text-white">12 {t('dash.published')}</span>
                 </div>
             </div>
@@ -291,7 +292,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
                  {/* Research Overlay */}
                  {processingState !== 'idle' && processingState !== 'done' && (
                      <div className="absolute inset-0 flex items-center px-4 font-bold font-mono text-ink dark:text-white animate-pulse">
-                         <span className="material-icons-round mr-2 animate-spin">sync</span>
+                         <VicooIcon name="sync" size={18} className="mr-2 animate-spin" />
                          {researchStatus}
                      </div>
                  )}
@@ -305,7 +306,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
                   disabled={processingState !== 'idle'}
                 >
                   {processingState !== 'idle' && processingState !== 'done' ? t('dash.researching') : processingState === 'done' ? t('dash.generated') : t('dash.deep_dive')}
-                  {processingState === 'idle' && <span className="material-icons-round ml-2">travel_explore</span>}
+                  {processingState === 'idle' && <VicooIcon name="travel_explore" size={18} className="ml-2" />}
                 </NeoButton>
              </div>
           </NeoCard>
@@ -331,7 +332,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
       <section>
           <div className="flex items-center gap-3 mb-6">
               <h2 className="text-2xl font-bold font-display flex items-center gap-2 dark:text-white">
-                  <span className="material-icons-round text-ink dark:text-white">stream</span>
+                  <VicooIcon name="stream" size={24} className="text-ink dark:text-white" />
                   {t('dash.stream_title')}
               </h2>
               <span className="text-xs font-bold bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-300 px-2 py-1 rounded-lg">{t('dash.stream_subtitle')}</span>
@@ -350,9 +351,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
                           {/* Type Indicator */}
                           <div className="flex justify-between items-start mb-3 relative z-10">
                               <div className="bg-white/80 dark:bg-black/20 backdrop-blur border-2 border-ink dark:border-white/50 rounded-lg px-2 py-1 flex items-center gap-1 dark:text-white">
-                                  <span className="material-icons-round text-sm">
-                                      {item.type === 'resume' ? 'schedule' : item.type === 'maintenance' ? 'build' : item.type === 'insight' ? 'auto_awesome' : 'history'}
-                                  </span>
+                                  <VicooIcon
+                                    name={item.type === 'resume' ? 'schedule' : item.type === 'maintenance' ? 'build' : item.type === 'insight' ? 'auto_awesome' : 'history'}
+                                    size={14}
+                                  />
                                   <span className="text-[10px] font-bold uppercase tracking-wide">
                                       {item.type === 'resume' ? 'Draft' : item.type === 'maintenance' ? 'System' : item.type === 'insight' ? 'Research' : 'Recall'}
                                   </span>
@@ -367,7 +369,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
 
                           {/* Decorative Icon */}
                           <div className="absolute -bottom-4 -right-4 opacity-10 group-hover:opacity-20 transition-opacity transform group-hover:scale-110 group-hover:rotate-12 dark:opacity-20">
-                              <span className="material-icons-round text-9xl text-ink dark:text-white">{item.icon}</span>
+                              <VicooIcon name={item.icon} size={140} className="text-ink dark:text-white" />
                           </div>
 
                           {/* Action Footer */}
@@ -375,7 +377,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, onOpenNote }) 
                               <span className="text-xs font-bold opacity-60 dark:text-gray-200">{t('dash.priority')}</span>
                               <div className="flex items-center gap-1 font-bold text-sm dark:text-white">
                                   {item.actionLabel}
-                                  <span className="material-icons-round text-base group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                                  <VicooIcon name="arrow_forward" size={16} className="group-hover:translate-x-1 transition-transform" />
                               </div>
                           </div>
                       </NeoCard>

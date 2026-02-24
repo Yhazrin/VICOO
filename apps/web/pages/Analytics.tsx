@@ -1,6 +1,7 @@
 import React from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
+import { VicooIcon } from '../components/VicooIcon';
 
 export const Analytics: React.FC = () => {
   return (
@@ -19,7 +20,7 @@ export const Analytics: React.FC = () => {
          ].map((stat, i) => (
             <NeoCard key={i} className="p-4 flex items-center gap-4">
                <div className={`w-12 h-12 ${stat.color} border-2 border-ink rounded-xl flex items-center justify-center shadow-neo-sm`}>
-                  <span className="material-icons-round text-2xl">{stat.icon}</span>
+                  <VicooIcon name={stat.icon} size={24} />
                </div>
                <div>
                   <p className="text-xs font-bold text-gray-500 uppercase">{stat.label}</p>

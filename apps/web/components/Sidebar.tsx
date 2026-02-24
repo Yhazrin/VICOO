@@ -75,7 +75,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
         className="hidden lg:flex absolute -right-4 top-10 bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-full w-8 h-8 items-center justify-center shadow-neo-sm dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,0.2)] z-50 hover:scale-110 transition-transform hover:bg-gray-50 dark:hover:bg-gray-700"
         title={isExpanded ? t('nav.collapse') : t('nav.expand')}
       >
-        <span className="material-icons-round text-lg text-ink dark:text-white font-bold">
+        <VicooIcon name="expand" size={20} className="text-ink dark:text-white font-bold" />
           {isExpanded ? 'chevron_left' : 'chevron_right'}
         </span>
       </button>
@@ -202,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
              `}
              title={t('nav.public')}
           >
-              <span className="material-icons-round text-sm dark:text-white">public</span>
+              <VicooIcon name="public" size={14} className="dark:text-white" />
           </button>
         </div>
       </div>

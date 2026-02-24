@@ -1,4 +1,5 @@
 import React from 'react';
+import { VicooIcon } from './VicooIcon';
 
 export const SuccessAnim: React.FC = () => {
   return (
@@ -20,7 +21,7 @@ export const SuccessAnim: React.FC = () => {
 
       {/* Checkmark Circle */}
       <div className="w-12 h-12 bg-primary border-3 border-ink rounded-full flex items-center justify-center relative z-10 shadow-neo-sm">
-        <span className="material-icons-round text-ink text-3xl font-bold">check</span>
+        <VicooIcon name="check" size={32} className="text-ink font-bold" />
       </div>
     </div>
   );

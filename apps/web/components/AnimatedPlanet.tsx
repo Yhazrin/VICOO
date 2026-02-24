@@ -1,4 +1,5 @@
 import React from 'react';
+import { VicooIcon } from './VicooIcon';
 
 interface AnimatedPlanetProps {
   color: string;
@@ -62,7 +63,7 @@ export const AnimatedPlanet: React.FC<AnimatedPlanetProps> = ({
       
       {/* Centered Icon */}
       <div className="absolute inset-0 flex items-center justify-center pointer-events-none animate-float">
-         <span className="material-icons-round text-3xl text-ink drop-shadow-sm">{icon}</span>
+         <VicooIcon name={icon} size={32} className="text-ink drop-shadow-sm" />
       </div>
 
       {/* Label */}
