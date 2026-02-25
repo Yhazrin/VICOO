@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getAll, getOne, runQuery, saveDatabase } from '../db/index.js';
-import { callClaudeCode, generateKnowledgeGraphPrompt } from '../services/claude-code.js';
+import { generateGraphWithMiniMax, generateKnowledgeGraphPrompt } from '../services/claude-code.js';
 
 const router = Router();
 
@@ -357,13 +357,11 @@ router.post('/generate-from-notes', async (req, res) => {
     // 3. 生成提示词
     const prompt = generateKnowledgeGraphPrompt(notesWithTags);
 
-    // 4. 调用 Claude Code 分析
-    console.log('[Graph Generate] Calling Claude Code...');
-    const result = await callClaudeCode(prompt, {
-      timeout: 5 * 60 * 1000 // 5 分钟超时
-    });
+    // 4. 调用 MiniMax-M2.5 分析
+    console.log('[Graph Generate] Calling MiniMax-M2.5...');
+    const result = await generateGraphWithMiniMax(prompt);
 
-    console.log(`[Graph Generate] Claude returned ${result.nodes.length} nodes and ${result.links.length} links`);
+    console.log(`[Graph Generate] MiniMax returned ${result.nodes.length} nodes and ${result.links.length} links`);
 
     // 5. 清除现有节点和边（如果用户要求）
     if (clearExisting) {
@@ -464,32 +462,16 @@ router.post('/generate-from-notes', async (req, res) => {
   }
 });
 
-// GET /api/graph/status - 检查 Claude Code 是否可用
+// GET /api/graph/status - 检查 MiniMax AI 是否可用
 router.get('/status', async (req, res) => {
-  try {
-    const { execSync } = await import('child_process');
-    const version = execSync('claude --version', {
-      encoding: 'utf-8',
-      timeout: 5000,
-      windowsHide: true
-    });
-
-    res.json({
-      data: {
-        available: true,
-        version: version.trim(),
-        message: 'Claude Code 可用'
-      }
-    });
-  } catch (error: any) {
-    res.json({
-      data: {
-        available: false,
-        version: null,
-        message: 'Claude Code 不可用，请安装 Claude Code'
-      }
-    });
-  }
+  const available = !!process.env.MINIMAX_API_KEY;
+  res.json({
+    data: {
+      available,
+      provider: 'minimax/m2.5',
+      message: available ? 'MiniMax AI 可用' : 'MiniMax API Key 未配置'
+    }
+  });
 });
 
 export default router;

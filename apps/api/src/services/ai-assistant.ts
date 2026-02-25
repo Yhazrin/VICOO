@@ -9,7 +9,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getAll, runQuery, saveDatabase } from '../db/index.js';
 import { semanticAISearch } from './ai.js';
-import { getMiniMaxProvider } from './minimax.js';
+import { getMiniMaxProvider, MiniMaxProvider } from './minimax.js';
 
 export interface AIAssistantMessage {
   role: 'user' | 'assistant' | 'system';
@@ -65,11 +65,24 @@ async function searchKnowledgeBase(query: string, limit: number = 10) {
   }));
 }
 
+/** MiniMax-M2.5 实例（用于摘要、标签等需要精确理解的任务） */
+let m25Provider: MiniMaxProvider | null = null;
+function getM25Provider(): MiniMaxProvider {
+  if (!m25Provider) {
+    m25Provider = new MiniMaxProvider({
+      apiKey: process.env.MINIMAX_API_KEY || '',
+      baseUrl: process.env.MINIMAX_BASE_URL,
+      model: 'MiniMax-M2.5',
+    });
+  }
+  return m25Provider;
+}
+
 /**
- * 调用 MiniMax 进行简单对话（不带工具，直接文本生成）
+ * 调用 MiniMax-M2.5 进行文本生成
  */
 async function callMiniMax(prompt: string): Promise<{ success: boolean; content?: string; error?: string }> {
-  const provider = getMiniMaxProvider();
+  const provider = getM25Provider();
   if (!provider.isConfigured()) {
     return { success: false, error: 'MiniMax API Key 未配置' };
   }

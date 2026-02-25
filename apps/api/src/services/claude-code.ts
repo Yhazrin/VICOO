@@ -189,7 +189,47 @@ ${notesList}
 请直接返回 JSON，不要包含其他内容。`;
 }
 
+/**
+ * 使用 MiniMax-M2.5 生成知识图谱（替代 Claude Code）
+ */
+export async function generateGraphWithMiniMax(
+  prompt: string,
+  _options: ClaudeCodeOptions = {}
+): Promise<ClaudeCodeGraphResult> {
+  const { MiniMaxProvider } = await import('./minimax.js');
+
+  const apiKey = process.env.MINIMAX_API_KEY || '';
+  if (!apiKey) {
+    console.error('[GraphGen] MiniMax API Key 未配置');
+    return { nodes: [], links: [] };
+  }
+
+  const provider = new MiniMaxProvider({
+    apiKey,
+    baseUrl: process.env.MINIMAX_BASE_URL,
+    model: 'MiniMax-M2.5',
+  });
+
+  try {
+    const result = await provider.simpleChat([
+      { role: 'user', content: prompt }
+    ]);
+
+    if (!result.success || !result.content) {
+      console.error('[GraphGen] MiniMax API error:', result.error);
+      return { nodes: [], links: [] };
+    }
+
+    const content = result.content.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+    return parseClaudeOutput(content);
+  } catch (error: any) {
+    console.error('[GraphGen] Error:', error.message);
+    return { nodes: [], links: [] };
+  }
+}
+
 export default {
   callClaudeCode,
+  generateGraphWithMiniMax,
   generateKnowledgeGraphPrompt,
 };
