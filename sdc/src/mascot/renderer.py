@@ -80,6 +80,7 @@ class MascotRenderer(QObject):
         "disconnected": "shiver_top", "goodbye": "shiver_top",
         "dropped": "bounce",
         "searching": "pulse", "connecting": "pulse", "focus_exit": "pulse", "listening": "pulse",
+        "walking": "translate",
         "idle": "float", "sleeping": "float", "meditating": "float", "breathing": "float",
         "break_time": "float", "greeting": "float", "receiving": "float",
         "collaborating": "float", "sharing": "float",
