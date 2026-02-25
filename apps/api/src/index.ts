@@ -26,6 +26,7 @@ import { schema } from './graphql/schema.js';
 import { startAutoGraphService } from './services/auto-graph.js';
 import aiRouter from './routes/ai.js';
 import publishRouter from './routes/publish.js';
+import publishedRouter from './routes/published.js';
 import mcpRouter from './routes/mcp.js';
 
 const app = express();
@@ -61,9 +62,12 @@ async function start() {
       initializeRecommendedMCPs();
     }
 
-    // Routes
+    // Public routes (no auth required)
     app.use('/health', healthRouter);
     app.use('/auth', authRouter);
+    app.use('/api/published', publishedRouter);
+
+    // Protected routes
     app.use('/api/notes', authMiddleware, notesRouter);
     app.use('/api/tags', authMiddleware, tagsRouter);
     app.use('/api/nodes', authMiddleware, graphRouter);
