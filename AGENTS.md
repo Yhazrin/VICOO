@@ -26,6 +26,15 @@ Optional apps (`apps/desktop`, `apps/mobile`, `apps/weapp`) require platform-spe
 - `POST /auth/dev-token` returns a bearer token for the anonymous dev user (`dev_user_1`)
 - The web frontend handles this automatically; for API-only testing, include `Authorization: Bearer <token>` header
 
+### AI Provider
+
+All AI operations are handled by **MiniMax** (via LangChain). Coze and Claude Code are bypassed.
+
+- `/api/ai/chat` — LangChain Agent with MiniMax-M2.5 (supports tool calling)
+- `/api/ai/summary` and `/api/ai/suggest-tags` — MiniMax M2-her via `simpleChat()` (no tools, faster)
+- MiniMax M2-her responses include `<think>...</think>` reasoning blocks; these are stripped in route handlers via `stripThinkingBlock()`
+- `MINIMAX_API_KEY` must be set as an environment variable (not loaded from `.env` automatically)
+
 ### Known pre-existing issues
 
 - **Smoke test mismatch**: `apps/api/tests/smoke.test.mjs` waits for stdout string `"Server running on"` but the server emits `"Vicoo API running on"`, causing a 30 s timeout. The server itself starts fine.
