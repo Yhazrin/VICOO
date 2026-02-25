@@ -267,22 +267,29 @@ export const Publish: React.FC = () => {
       });
       const data = await res.json();
       if (data.response) {
+        // Strip <think> blocks from MiniMax response
+        const cleaned = data.response.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
         try {
-          const parsed = JSON.parse(data.response);
-          setGeneratedContent({
-            title: parsed.title || selectedNote.title,
-            content: parsed.content || selectedNote.content
-          });
-          setTitle(parsed.title || selectedNote.title);
-          setContent(parsed.content || '');
+          // Try extracting JSON from response
+          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+          const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+          if (parsed?.title || parsed?.content) {
+            setGeneratedContent({
+              title: parsed.title || selectedNote.title,
+              content: parsed.content || selectedNote.content
+            });
+            setTitle(parsed.title || selectedNote.title);
+            setContent(parsed.content || '');
+          } else {
+            throw new Error('no JSON');
+          }
         } catch {
-          // If not JSON, use the whole response
           setGeneratedContent({
             title: selectedNote.title,
-            content: data.response
+            content: cleaned
           });
           setTitle(selectedNote.title);
-          setContent(data.response);
+          setContent(cleaned);
         }
       }
     } catch (err) {
