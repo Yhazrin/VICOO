@@ -61,12 +61,28 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
     }
   ];
 
+  const [mobileOpen, setMobileOpen] = useState(false);
+
   return (
+    <>
+    {/* Mobile hamburger */}
+    <button
+      onClick={() => setMobileOpen(!mobileOpen)}
+      className="lg:hidden fixed top-4 left-4 z-[60] w-10 h-10 bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-600 rounded-xl shadow-neo-sm flex items-center justify-center"
+    >
+      <VicooIcon name={mobileOpen ? 'close' : 'menu'} size={20} className="text-ink dark:text-white" />
+    </button>
+
+    {/* Mobile overlay */}
+    {mobileOpen && (
+      <div className="lg:hidden fixed inset-0 bg-black/40 z-[55] backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
+    )}
+
     <aside 
       className={`
-        h-screen bg-white dark:bg-gray-900 border-r-3 border-ink dark:border-gray-700 flex flex-col sticky top-0 z-50 
+        h-screen bg-white dark:bg-gray-900 border-r-3 border-ink dark:border-gray-700 flex flex-col sticky top-0 z-[56]
         transition-all duration-300 ease-in-out relative
-        w-20 ${isExpanded ? 'lg:w-64' : 'lg:w-24'}
+        ${mobileOpen ? 'fixed inset-y-0 left-0 w-64' : 'hidden lg:flex w-20'} ${isExpanded ? 'lg:w-64' : 'lg:w-24'}
       `}
     >
       {/* Collapse Toggle Button (Desktop only) */}
@@ -136,7 +152,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
                   return (
                     <button
                       key={item.id}
-                      onClick={() => onChangeView(item.id)}
+                      onClick={() => { onChangeView(item.id); setMobileOpen(false); }}
                       className={`
                         w-full flex items-center gap-4 p-3 rounded-xl border-3 transition-all duration-200 group
                         ${isActive
@@ -205,5 +221,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
         </div>
       </div>
     </aside>
+    </>
   );
 };

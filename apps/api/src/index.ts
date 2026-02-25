@@ -28,6 +28,10 @@ import aiRouter from './routes/ai.js';
 import publishRouter from './routes/publish.js';
 import publishedRouter from './routes/published.js';
 import mcpRouter from './routes/mcp.js';
+import writerRouter from './routes/writer.js';
+import tasksRouter from './routes/tasks.js';
+import ragRouter from './routes/rag.js';
+import noteLinksRouter from './routes/note-links.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -88,6 +92,10 @@ async function start() {
     app.use('/api/ai', authMiddleware, aiRouter);
     app.use('/api/publish', authMiddleware, publishRouter);
     app.use('/api/agent/mcp', mcpRouter);
+    app.use('/api/writer', authMiddleware, writerRouter);
+    app.use('/api/tasks', authMiddleware, tasksRouter);
+    app.use('/api/rag', authMiddleware, ragRouter);
+    app.use('/api/note-links', authMiddleware, noteLinksRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({
