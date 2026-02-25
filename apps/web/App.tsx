@@ -150,6 +150,19 @@ const AppContent: React.FC = () => {
   // --- FOCUS MODE OVERLAY ---
   const isFocusOverlayVisible = focusState !== 'idle';
   
+  // Full-screen views: no sidebar, no mascot, no FAB
+  const isFullscreenView = currentView === View.PUBLIC_GATEWAY || currentView === View.AUTH;
+
+  if (isFullscreenView) {
+    return (
+      <div className="h-screen overflow-hidden bg-light dark:bg-dark font-sans text-ink dark:text-gray-100 selection:bg-primary selection:text-ink transition-colors duration-300">
+        <Suspense fallback={<PageSkeleton />}>
+          {renderContent(currentView, setCurrentView, handleOpenNote, activeNoteId)}
+        </Suspense>
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen overflow-hidden bg-light dark:bg-dark font-sans text-ink dark:text-gray-100 selection:bg-primary selection:text-ink transition-colors duration-300">
       
@@ -161,12 +174,11 @@ const AppContent: React.FC = () => {
             isDarkMode={theme === 'dark'}
             onExpandComplete={() => {
                 setFocusState('active');
-                setCurrentView(View.FOCUS); // Only now do we unmount the background content
+                setCurrentView(View.FOCUS);
             }}
             onCollapseComplete={() => {
                 setFocusState('idle');
                 setFocusOrigin(null);
-                // No need to set currentView here, we did it on exit request
             }}
             onExitRequest={handleExitFocusMode}
           />
@@ -190,7 +202,7 @@ const AppContent: React.FC = () => {
 
       {/* Sidebar Navigation */}
       <Sidebar 
-        currentView={currentView === View.FOCUS ? previousView : currentView} // Keep sidebar indicating previous view during focus
+        currentView={currentView === View.FOCUS ? previousView : currentView}
         onChangeView={setCurrentView} 
         onEnterFocusMode={handleEnterFocusMode} 
       />

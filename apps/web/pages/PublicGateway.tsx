@@ -1,395 +1,309 @@
-import React, { useState, useEffect } from 'react';
-import { NeoCard } from '../components/NeoCard';
+import React, { useState, useEffect, useRef } from 'react';
 import { NeoButton } from '../components/NeoButton';
-import { Mascot } from '../components/Mascot';
 import { AnimatedLogo } from '../components/AnimatedLogo';
 import { AnimatedPlanet } from '../components/AnimatedPlanet';
 import { VicooIcon } from '../components/VicooIcon';
-import { useLanguage } from '../contexts/LanguageContext';
 
-interface PublicGatewayProps {
-  onLogin: () => void;
+interface PublicGatewayProps { onLogin: () => void; }
+
+interface Post {
+  id: string; title: string; category: string; snippet: string;
+  content: string; summary?: string; timestamp: string; color?: string;
 }
 
-interface PublishedNote {
-  id: string;
-  title: string;
-  category: string;
-  snippet: string;
-  content: string;
-  summary?: string;
-  timestamp: string;
-  color?: string;
-  coverImage?: string;
-}
-
-const CATEGORY_STYLES: Record<string, { icon: string; color: string; bg: string; label: string }> = {
-  code:    { icon: 'code', color: 'text-blue-700', bg: 'bg-blue-100', label: '技术' },
-  design:  { icon: 'palette', color: 'text-purple-700', bg: 'bg-purple-100', label: '设计' },
-  meeting: { icon: 'group', color: 'text-amber-700', bg: 'bg-amber-100', label: '协作' },
-  idea:    { icon: 'bolt', color: 'text-green-700', bg: 'bg-green-100', label: '灵感' },
+const CAT: Record<string, { label: string; bg: string; text: string; accent: string }> = {
+  code:    { label: '技术', bg: 'bg-blue-500',   text: 'text-white', accent: '#3B82F6' },
+  design:  { label: '设计', bg: 'bg-fuchsia-500', text: 'text-white', accent: '#D946EF' },
+  meeting: { label: '协作', bg: 'bg-amber-400',  text: 'text-ink',   accent: '#FBBF24' },
+  idea:    { label: '灵感', bg: 'bg-emerald-500', text: 'text-white', accent: '#10B981' },
 };
 
-const TECH_STACK = [
-  { name: 'React', color: '#61DAFB' },
-  { name: 'TypeScript', color: '#3178C6' },
-  { name: 'Vue.js', color: '#4FC08D' },
-  { name: 'Node.js', color: '#339933' },
-  { name: 'Vite', color: '#646CFF' },
-  { name: 'Tailwind', color: '#06B6D4' },
-  { name: 'Python', color: '#3776AB' },
-  { name: 'LangChain', color: '#1C3C3C' },
-];
-
-function timeAgo(ts: string): string {
-  const diff = Date.now() - new Date(ts).getTime();
-  const d = Math.floor(diff / 86400000);
-  if (d > 30) return `${Math.floor(d / 30)} 个月前`;
-  if (d > 0) return `${d} 天前`;
-  const h = Math.floor(diff / 3600000);
-  if (h > 0) return `${h} 小时前`;
-  return '刚刚';
-}
-
-function readTime(content: string): string {
-  const words = content.length;
-  const min = Math.max(1, Math.ceil(words / 400));
-  return `${min} min`;
+function timeAgo(ts: string) {
+  const d = Math.floor((Date.now() - new Date(ts).getTime()) / 86400000);
+  if (d > 30) return `${Math.floor(d / 30)}月前`;
+  if (d > 0) return `${d}天前`;
+  return '今天';
 }
 
 export const PublicGateway: React.FC<PublicGatewayProps> = ({ onLogin }) => {
-  const { t } = useLanguage();
-  const [posts, setPosts] = useState<PublishedNote[]>([]);
-  const [totalNotes, setTotalNotes] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [expandedPost, setExpandedPost] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [total, setTotal] = useState(0);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [scrollY, setScrollY] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Fetch real published posts
-    fetch('/api/published?limit=50')
-      .then(r => r.json())
-      .then(data => {
-        setPosts(data.data || []);
-        setTotalNotes(data.meta?.total || 0);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-
-    // Also get total note count for stats
-    fetch('/health')
-      .then(r => r.json())
+    fetch('/api/published?limit=50').then(r => r.json())
+      .then(d => { setPosts(d.data || []); setTotal(d.meta?.total || 0); })
       .catch(() => {});
   }, []);
 
-  const filteredPosts = posts.filter(p => {
-    const matchSearch = !searchTerm || p.title.toLowerCase().includes(searchTerm.toLowerCase()) || p.snippet?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCategory = !selectedCategory || p.category === selectedCategory;
-    return matchSearch && matchCategory;
-  });
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => setScrollY(el.scrollTop);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
 
-  const featured = filteredPosts[0];
-  const rest = filteredPosts.slice(1);
-  const categories = [...new Set(posts.map(p => p.category))];
+  const featured = posts[0];
+  const grid = posts.slice(1);
 
   return (
-    <div className="min-h-screen bg-[#FFFCF5] overflow-y-auto">
-      {/* ═══════════ Nav ═══════════ */}
-      <nav className="sticky top-0 z-50 bg-white/85 backdrop-blur-lg border-b-3 border-ink px-6 py-3 flex justify-between items-center">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9"><AnimatedLogo /></div>
-          <div className="flex flex-col leading-none">
-            <span className="font-display font-black text-lg tracking-tight">vicoo</span>
-            <span className="text-[9px] font-bold tracking-[0.2em] uppercase text-gray-500">Knowledge Blog</span>
-          </div>
+    <div ref={containerRef} className="h-screen overflow-y-auto scroll-smooth" style={{ scrollBehavior: 'smooth' }}>
+
+      {/* ╔══════════════════════════════════════╗
+          ║  S1 — HERO: Full-bleed color block   ║
+          ╚══════════════════════════════════════╝ */}
+      <section className="relative min-h-screen bg-ink text-white overflow-hidden flex flex-col">
+        {/* Parallax background shapes */}
+        <div className="absolute inset-0 pointer-events-none select-none" aria-hidden>
+          <div className="absolute -top-20 -left-20 w-[500px] h-[500px] rounded-full bg-blue-600/20 blur-3xl"
+               style={{ transform: `translateY(${scrollY * 0.15}px)` }} />
+          <div className="absolute top-1/3 right-0 w-[400px] h-[400px] rounded-full bg-fuchsia-500/15 blur-3xl"
+               style={{ transform: `translateY(${scrollY * 0.1}px)` }} />
+          <div className="absolute bottom-0 left-1/4 w-[600px] h-[300px] rounded-full bg-primary/10 blur-3xl"
+               style={{ transform: `translateY(${scrollY * -0.08}px)` }} />
+          {/* Grid overlay */}
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,.03)_1px,transparent_1px)] bg-[size:60px_60px]" />
         </div>
-        <div className="flex gap-5 items-center text-sm">
-          <a href="#articles" className="font-bold hover:text-blue-600 transition-colors hidden md:block">文章</a>
-          <a href="#about" className="font-bold hover:text-blue-600 transition-colors hidden md:block">关于</a>
-          <a href="#stack" className="font-bold hover:text-blue-600 transition-colors hidden md:block">技术栈</a>
-          <NeoButton size="sm" onClick={onLogin}>进入工作台</NeoButton>
-        </div>
-      </nav>
 
-      {/* ═══════════ Hero ═══════════ */}
-      <header className="relative px-6 pt-16 pb-20 max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-          <div>
-            <div className="inline-flex items-center gap-2 bg-green-100 border-2 border-green-400 rounded-full px-4 py-1 mb-6">
-              <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-              <span className="text-xs font-bold text-green-700">Knowledge Builder • Online</span>
-            </div>
-            <h1 className="text-5xl md:text-7xl font-display font-black text-ink leading-[0.95] tracking-tight mb-6">
-              构建你的<br/>
-              <span className="relative inline-block">
-                <span className="relative z-10">知识宇宙</span>
-                <span className="absolute bottom-1 left-0 right-0 h-4 bg-primary/60 -z-0 -rotate-1"></span>
-              </span>
-            </h1>
-            <p className="text-lg text-gray-600 font-medium max-w-lg mb-8 leading-relaxed">
-              从碎片笔记到结构化知识体系。AI 驱动的知识管理、语义图谱、跨平台发布——一站式个人知识工作台。
-            </p>
-
-            {/* Stats */}
-            <div className="flex gap-6 mb-8">
-              <div className="text-center">
-                <p className="text-3xl font-black text-ink">{totalNotes || posts.length}</p>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Published</p>
-              </div>
-              <div className="w-px bg-gray-300"></div>
-              <div className="text-center">
-                <p className="text-3xl font-black text-ink">{categories.length}</p>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Categories</p>
-              </div>
-              <div className="w-px bg-gray-300"></div>
-              <div className="text-center">
-                <p className="text-3xl font-black text-ink">AI</p>
-                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Powered</p>
-              </div>
-            </div>
-
-            {/* Search */}
-            <div className="max-w-md relative group">
-              <div className="absolute inset-0 bg-ink translate-x-1.5 translate-y-1.5 rounded-xl"></div>
-              <input
-                type="text"
-                placeholder="搜索文章..."
-                value={searchTerm}
-                onChange={e => setSearchTerm(e.target.value)}
-                className="w-full h-12 pl-5 pr-12 rounded-xl border-3 border-ink text-sm font-bold relative z-10 focus:outline-none bg-white"
-              />
-              <button className="absolute right-2 top-1.5 w-9 h-9 rounded-lg bg-ink text-white flex items-center justify-center z-20">
-                <VicooIcon name="search" size={18} />
-              </button>
-            </div>
+        {/* Nav */}
+        <nav className="relative z-20 flex items-center justify-between px-8 py-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10"><AnimatedLogo /></div>
+            <span className="font-display font-black text-2xl tracking-tight">vicoo</span>
           </div>
-
-          {/* Hero visual — mini galaxy */}
-          <div className="hidden lg:flex items-center justify-center relative">
-            <div className="relative w-80 h-80">
-              <div className="absolute top-4 left-8"><AnimatedPlanet color="#3178C6" icon="code" size={70} /></div>
-              <div className="absolute top-20 right-4"><AnimatedPlanet color="#4FC08D" icon="palette" size={55} /></div>
-              <div className="absolute bottom-16 left-16"><AnimatedPlanet color="#EF476F" icon="bolt" size={60} /></div>
-              <div className="absolute bottom-4 right-20"><AnimatedPlanet color="#FFD166" icon="auto_awesome" size={50} /></div>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                <Mascot state="happy" className="w-28 h-28 opacity-90" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      {/* ═══════════ Category Filter ═══════════ */}
-      <div id="articles" className="max-w-6xl mx-auto px-6 mb-8">
-        <div className="flex items-center gap-3 flex-wrap">
-          <button
-            onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all ${
-              !selectedCategory ? 'bg-ink text-white border-ink' : 'bg-white text-ink border-gray-300 hover:border-ink'
-            }`}
-          >
-            全部
-          </button>
-          {Object.entries(CATEGORY_STYLES).map(([key, style]) => (
-            <button
-              key={key}
-              onClick={() => setSelectedCategory(selectedCategory === key ? null : key)}
-              className={`px-4 py-2 rounded-xl border-2 font-bold text-sm transition-all flex items-center gap-2 ${
-                selectedCategory === key ? 'bg-ink text-white border-ink' : `bg-white ${style.color} border-gray-300 hover:border-ink`
-              }`}
-            >
-              <VicooIcon name={style.icon} size={14} />
-              {style.label}
+          <div className="flex items-center gap-6 text-sm font-bold">
+            <a href="#articles" className="opacity-60 hover:opacity-100 transition-opacity hidden md:block">文章</a>
+            <a href="#about" className="opacity-60 hover:opacity-100 transition-opacity hidden md:block">关于</a>
+            <button onClick={onLogin}
+              className="px-5 py-2 bg-primary text-ink border-3 border-white rounded-xl font-black shadow-[3px_3px_0_#fff] hover:shadow-[5px_5px_0_#fff] hover:-translate-y-0.5 active:shadow-none active:translate-y-0 transition-all">
+              进入工作台
             </button>
-          ))}
-        </div>
-      </div>
+          </div>
+        </nav>
 
-      {/* ═══════════ Featured Article ═══════════ */}
-      {featured && (
-        <section className="max-w-6xl mx-auto px-6 mb-12">
-          <NeoCard className="overflow-hidden bg-white">
-            <div className="grid grid-cols-1 md:grid-cols-2">
-              <div className="p-8 md:p-10 flex flex-col justify-center">
-                <div className="flex items-center gap-3 mb-4">
-                  {CATEGORY_STYLES[featured.category] && (
-                    <span className={`${CATEGORY_STYLES[featured.category].bg} ${CATEGORY_STYLES[featured.category].color} border-2 border-current/20 px-3 py-1 rounded-lg text-xs font-bold`}>
-                      {CATEGORY_STYLES[featured.category].label}
-                    </span>
-                  )}
-                  <span className="text-xs font-bold text-gray-400">{timeAgo(featured.timestamp)}</span>
-                  <span className="text-xs font-bold text-gray-400">· {readTime(featured.content || featured.snippet || '')}</span>
-                </div>
-                <h2 className="text-3xl font-black text-ink mb-4 leading-tight">{featured.title}</h2>
-                <p className="text-gray-600 font-medium leading-relaxed mb-6">
-                  {featured.summary || featured.snippet || featured.content?.slice(0, 200)}
-                </p>
-                <NeoButton size="sm" onClick={() => setExpandedPost(expandedPost === featured.id ? null : featured.id)}>
-                  {expandedPost === featured.id ? '收起' : '阅读全文'} →
-                </NeoButton>
-                {expandedPost === featured.id && (
-                  <div className="mt-6 p-6 bg-gray-50 rounded-xl border-2 border-gray-200 prose max-w-none text-sm leading-relaxed whitespace-pre-wrap">
-                    {featured.content || '暂无详细内容'}
-                  </div>
-                )}
+        {/* Hero content */}
+        <div className="relative z-10 flex-1 flex items-center px-8 md:px-16 max-w-7xl mx-auto w-full">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-12 items-center w-full py-16">
+            <div className="lg:col-span-3">
+              <div className="inline-block px-4 py-1 bg-primary/20 border border-primary/40 rounded-full mb-6">
+                <span className="text-primary text-xs font-black tracking-widest uppercase">Knowledge · AI · Galaxy</span>
               </div>
-              <div className="bg-gradient-to-br from-primary/20 via-amber-100 to-orange-100 p-10 flex items-center justify-center min-h-[300px]">
-                <AnimatedPlanet
-                  color={featured.color || '#FFD166'}
-                  icon={CATEGORY_STYLES[featured.category]?.icon || 'article'}
-                  size={160}
-                />
+              <h1 className="text-6xl md:text-8xl font-display font-black leading-[0.9] tracking-tighter mb-6">
+                构建你的
+                <span className="block mt-2 relative">
+                  <span className="relative z-10">知识宇宙</span>
+                  <span className="absolute bottom-2 left-0 w-full h-5 bg-primary/70 -z-0 -skew-x-2" />
+                </span>
+              </h1>
+              <p className="text-lg md:text-xl text-white/60 font-medium max-w-xl mb-10 leading-relaxed">
+                从碎片笔记到结构化知识图谱。AI 摘要、语义关联、跨平台发布——打造属于你的第二大脑。
+              </p>
+              <div className="flex flex-wrap gap-6">
+                <div className="text-center">
+                  <p className="text-4xl font-black text-primary">{total || posts.length}</p>
+                  <p className="text-xs font-bold text-white/40 uppercase tracking-wider mt-1">Published</p>
+                </div>
+                <div className="w-px bg-white/10" />
+                <div className="text-center">
+                  <p className="text-4xl font-black text-blue-400">{[...new Set(posts.map(p => p.category))].length}</p>
+                  <p className="text-xs font-bold text-white/40 uppercase tracking-wider mt-1">Categories</p>
+                </div>
+                <div className="w-px bg-white/10" />
+                <div className="text-center">
+                  <p className="text-4xl font-black text-fuchsia-400">AI</p>
+                  <p className="text-xs font-bold text-white/40 uppercase tracking-wider mt-1">Powered</p>
+                </div>
               </div>
             </div>
-          </NeoCard>
+
+            {/* Floating planets with parallax */}
+            <div className="lg:col-span-2 hidden lg:block relative h-[400px]">
+              <div className="absolute top-0 right-12" style={{ transform: `translateY(${scrollY * -0.12}px)` }}>
+                <AnimatedPlanet color="#3B82F6" icon="code" size={110} />
+              </div>
+              <div className="absolute top-28 left-4" style={{ transform: `translateY(${scrollY * -0.08}px)` }}>
+                <AnimatedPlanet color="#D946EF" icon="palette" size={80} />
+              </div>
+              <div className="absolute bottom-8 right-4" style={{ transform: `translateY(${scrollY * -0.15}px)` }}>
+                <AnimatedPlanet color="#10B981" icon="bolt" size={90} />
+              </div>
+              <div className="absolute bottom-20 left-20" style={{ transform: `translateY(${scrollY * -0.06}px)` }}>
+                <AnimatedPlanet color="#FBBF24" icon="auto_awesome" size={65} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div className="relative z-10 text-center pb-8 animate-bounce">
+          <VicooIcon name="expand_more" size={28} className="text-white/30" />
+        </div>
+      </section>
+
+      {/* ╔══════════════════════════════════════╗
+          ║  S2 — FEATURED: Accent color block   ║
+          ╚══════════════════════════════════════╝ */}
+      {featured && (
+        <section className="relative bg-primary overflow-hidden"
+                 style={{ transform: `translateY(${Math.max(0, 100 - scrollY * 0.08)}px)` }}>
+          <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(0,0,0,.04)_25%,transparent_25%,transparent_50%,rgba(0,0,0,.04)_50%,rgba(0,0,0,.04)_75%,transparent_75%)] bg-[size:40px_40px]" />
+          <div className="relative max-w-7xl mx-auto px-8 py-20 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+              <span className="inline-block px-3 py-1 bg-ink text-white rounded-lg text-xs font-black uppercase tracking-wider mb-4">
+                ★ Featured
+              </span>
+              <h2 className="text-4xl md:text-5xl font-black text-ink leading-[1] mb-4">{featured.title}</h2>
+              <p className="text-ink/70 font-medium text-lg leading-relaxed mb-6">
+                {featured.summary || featured.snippet || featured.content?.slice(0, 250)}
+              </p>
+              <div className="flex items-center gap-4 mb-6">
+                {CAT[featured.category] && (
+                  <span className={`px-3 py-1 ${CAT[featured.category].bg} ${CAT[featured.category].text} rounded-lg text-xs font-black`}>
+                    {CAT[featured.category].label}
+                  </span>
+                )}
+                <span className="text-xs font-bold text-ink/50">{timeAgo(featured.timestamp)}</span>
+              </div>
+              <button
+                onClick={() => setExpanded(expanded === featured.id ? null : featured.id)}
+                className="px-6 py-3 bg-ink text-white font-black rounded-xl border-3 border-ink shadow-[4px_4px_0_rgba(0,0,0,.3)] hover:shadow-[6px_6px_0_rgba(0,0,0,.3)] hover:-translate-y-0.5 transition-all"
+              >
+                {expanded === featured.id ? '收起 ↑' : '阅读全文 →'}
+              </button>
+              {expanded === featured.id && (
+                <div className="mt-6 p-6 bg-white rounded-xl border-3 border-ink shadow-neo text-sm leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto">
+                  {featured.content}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-center"
+                 style={{ transform: `translateY(${Math.max(0, (scrollY - 400) * -0.08)}px)` }}>
+              <AnimatedPlanet color={featured.color || '#1a1a1a'} icon="article" size={220} />
+            </div>
+          </div>
         </section>
       )}
 
-      {/* ═══════════ Article Grid ═══════════ */}
-      <main className="max-w-6xl mx-auto px-6 pb-16">
-        <div className="flex items-center gap-4 mb-8">
-          <h2 className="text-2xl font-black font-display uppercase tracking-wider">最新文章</h2>
-          <div className="flex-1 h-0.5 bg-ink/10"></div>
-          <span className="text-sm font-bold text-gray-400">{filteredPosts.length} 篇</span>
-        </div>
-
-        {loading ? (
-          <div className="text-center py-20">
-            <VicooIcon name="sync" size={40} className="text-gray-300 animate-spin mx-auto" />
-            <p className="text-gray-500 mt-4 font-bold">加载中...</p>
+      {/* ╔══════════════════════════════════════╗
+          ║  S3 — ARTICLES: White block           ║
+          ╚══════════════════════════════════════╝ */}
+      <section id="articles" className="relative bg-white py-20">
+        <div className="max-w-7xl mx-auto px-8">
+          <div className="flex items-end gap-4 mb-12">
+            <h2 className="text-5xl font-display font-black text-ink uppercase tracking-tight">最新文章</h2>
+            <div className="flex-1 h-1 bg-ink/10 mb-3" />
+            <span className="text-sm font-black text-ink/30 mb-3">{posts.length} 篇</span>
           </div>
-        ) : rest.length === 0 && !featured ? (
-          <NeoCard className="p-16 text-center bg-white">
-            <Mascot state="thinking" className="w-24 h-24 mx-auto mb-4 opacity-40" />
-            <h3 className="text-xl font-bold text-gray-400 mb-2">暂无已发布的文章</h3>
-            <p className="text-sm text-gray-400 mb-6">在编辑器中将笔记标记为"已发布"即可在这里展示</p>
-            <NeoButton onClick={onLogin}>去发布第一篇 →</NeoButton>
-          </NeoCard>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rest.map(post => {
-              const cs = CATEGORY_STYLES[post.category] || CATEGORY_STYLES.idea;
-              const isExpanded = expandedPost === post.id;
-              return (
-                <div key={post.id} className="group">
-                  <NeoCard className="h-full flex flex-col bg-white hover:-translate-y-1.5 hover:shadow-neo-lg transition-all">
-                    {/* Color strip */}
-                    <div className={`h-1.5 ${cs.bg} rounded-t-xl`} />
-                    <div className="p-5 flex flex-col flex-1">
-                      <div className="flex justify-between items-start mb-3">
-                        <span className={`${cs.bg} ${cs.color} px-2.5 py-0.5 rounded-lg text-xs font-bold flex items-center gap-1`}>
-                          <VicooIcon name={cs.icon} size={12} />
-                          {cs.label}
-                        </span>
-                        <span className="text-xs font-bold text-gray-400">{readTime(post.content || post.snippet || '')}</span>
+
+          {grid.length === 0 && !featured ? (
+            <div className="text-center py-24 border-3 border-dashed border-ink/20 rounded-2xl">
+              <p className="text-2xl font-black text-ink/20 mb-2">暂无文章</p>
+              <p className="text-ink/30 font-medium mb-6">在编辑器中将笔记标记为「已发布」</p>
+              <NeoButton onClick={onLogin}>去写第一篇 →</NeoButton>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {grid.map((post, i) => {
+                const c = CAT[post.category] || CAT.idea;
+                const isOpen = expanded === post.id;
+                return (
+                  <article key={post.id} className="group relative"
+                           style={{ transform: `translateY(${Math.max(0, (scrollY - 800 - i * 60) * -0.03)}px)` }}>
+                    {/* Shadow layer */}
+                    <div className="absolute inset-0 bg-ink translate-x-2 translate-y-2 rounded-2xl transition-transform group-hover:translate-x-3 group-hover:translate-y-3" />
+                    <div className="relative bg-white border-3 border-ink rounded-2xl overflow-hidden flex flex-col h-full">
+                      {/* Bold color header */}
+                      <div className={`${c.bg} px-6 py-4 flex items-center justify-between`}>
+                        <span className={`${c.text} text-xs font-black uppercase tracking-wider`}>{c.label}</span>
+                        <span className={`${c.text} text-xs font-bold opacity-70`}>{timeAgo(post.timestamp)}</span>
                       </div>
-                      <h3 className="text-lg font-bold text-ink mb-2 leading-snug group-hover:text-blue-600 transition-colors">
-                        {post.title}
-                      </h3>
-                      <p className="text-sm text-gray-500 font-medium leading-relaxed mb-4 flex-1">
-                        {post.summary || post.snippet || post.content?.slice(0, 120) || ''}
-                      </p>
-
-                      {isExpanded && (
-                        <div className="mb-4 p-4 bg-gray-50 rounded-lg border border-gray-200 text-sm leading-relaxed whitespace-pre-wrap max-h-64 overflow-y-auto">
-                          {post.content || '暂无详细内容'}
-                        </div>
-                      )}
-
-                      <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
-                        <span className="text-xs font-bold text-gray-400">{timeAgo(post.timestamp)}</span>
-                        <button
-                          onClick={() => setExpandedPost(isExpanded ? null : post.id)}
-                          className="text-xs font-bold text-blue-600 hover:underline"
-                        >
-                          {isExpanded ? '收起' : '展开阅读'}
+                      <div className="p-6 flex flex-col flex-1">
+                        <h3 className="text-xl font-black text-ink mb-3 leading-snug group-hover:text-blue-600 transition-colors">
+                          {post.title}
+                        </h3>
+                        <p className="text-sm text-ink/50 font-medium leading-relaxed mb-4 flex-1">
+                          {post.summary || post.snippet || post.content?.slice(0, 140)}
+                        </p>
+                        {isOpen && (
+                          <div className="mb-4 p-4 bg-gray-50 border-2 border-ink/10 rounded-xl text-sm leading-relaxed whitespace-pre-wrap max-h-56 overflow-y-auto">
+                            {post.content}
+                          </div>
+                        )}
+                        <button onClick={() => setExpanded(isOpen ? null : post.id)}
+                          className="self-start text-xs font-black text-ink border-2 border-ink px-4 py-2 rounded-lg hover:bg-ink hover:text-white transition-all">
+                          {isOpen ? '收起' : '展开阅读 →'}
                         </button>
                       </div>
                     </div>
-                  </NeoCard>
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </main>
-
-      {/* ═══════════ Tech Stack ═══════════ */}
-      <section id="stack" className="bg-white border-y-3 border-ink py-16">
-        <div className="max-w-6xl mx-auto px-6">
-          <h2 className="text-2xl font-black font-display uppercase tracking-wider mb-8 text-center">技术栈</h2>
-          <div className="flex flex-wrap justify-center gap-4">
-            {TECH_STACK.map(tech => (
-              <div
-                key={tech.name}
-                className="group px-5 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-ink hover:-translate-y-1 hover:shadow-neo-sm transition-all flex items-center gap-3 cursor-default"
-              >
-                <div className="w-3 h-3 rounded-full" style={{ backgroundColor: tech.color }} />
-                <span className="font-bold text-sm">{tech.name}</span>
-              </div>
-            ))}
-          </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* ═══════════ About ═══════════ */}
-      <section id="about" className="py-20 max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+      {/* ╔══════════════════════════════════════╗
+          ║  S4 — ABOUT: Blue color block         ║
+          ╚══════════════════════════════════════╝ */}
+      <section id="about" className="relative bg-blue-600 text-white py-24 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none" aria-hidden>
+          <div className="absolute top-10 right-10 w-[300px] h-[300px] rounded-full bg-white/5 blur-3xl"
+               style={{ transform: `translateY(${(scrollY - 1200) * 0.1}px)` }} />
+        </div>
+        <div className="relative max-w-7xl mx-auto px-8 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
           <div>
-            <h2 className="text-3xl font-black font-display mb-6">关于 Vicoo</h2>
-            <p className="text-gray-600 font-medium leading-relaxed mb-4">
-              Vicoo 是一个 AI 驱动的个人知识管理工作台。将碎片化的笔记、想法和研究成果转化为结构化的知识体系。
+            <h2 className="text-5xl font-display font-black leading-tight mb-6">
+              AI 驱动的<br/>知识管理
+            </h2>
+            <p className="text-white/70 text-lg font-medium leading-relaxed mb-4">
+              Vicoo 将 AI 深度集成到知识管理的每一个环节：智能摘要、语义标签、知识图谱、跨平台发布。
             </p>
-            <p className="text-gray-600 font-medium leading-relaxed mb-6">
-              通过语义知识图谱、AI 摘要、智能标签和跨平台发布，帮助你更好地学习、思考和分享。
+            <p className="text-white/70 text-lg font-medium leading-relaxed mb-8">
+              通过 Galaxy View 可视化知识关联，识别「基础→进阶」「对比」「依赖」等语义关系，帮你理清学习脉络。
             </p>
-            <div className="flex gap-4">
-              <NeoButton onClick={onLogin}>开始使用</NeoButton>
-              <a href="https://github.com" className="inline-flex items-center gap-2 px-4 py-2 border-2 border-ink rounded-xl font-bold text-sm hover:bg-ink hover:text-white transition-colors">
-                <VicooIcon name="code" size={16} /> GitHub
-              </a>
+            <div className="flex flex-wrap gap-3">
+              {['React', 'TypeScript', 'Vue.js', 'Node.js', 'Python', 'LangChain', 'Tailwind', 'Vite'].map(t => (
+                <span key={t} className="px-4 py-2 bg-white/10 border border-white/20 rounded-xl text-sm font-bold">
+                  {t}
+                </span>
+              ))}
             </div>
           </div>
-          <div className="flex justify-center">
-            <Mascot state="celebrating" className="w-40 h-40 opacity-80" />
+          <div className="flex justify-center" style={{ transform: `translateY(${(scrollY - 1200) * -0.08}px)` }}>
+            <AnimatedPlanet color="#60A5FA" icon="auto_awesome" size={240} />
           </div>
         </div>
       </section>
 
-      {/* ═══════════ Newsletter CTA ═══════════ */}
-      <section className="max-w-6xl mx-auto px-6 pb-20">
-        <NeoCard className="p-10 md:p-14 bg-ink text-white relative overflow-hidden">
-          <div className="absolute inset-0 bg-dot-pattern opacity-5"></div>
-          <div className="relative z-10 max-w-2xl mx-auto text-center">
-            <h2 className="text-3xl md:text-4xl font-display font-black mb-4">订阅知识更新</h2>
-            <p className="text-gray-400 mb-8 font-medium">每周精选笔记和技术洞察，直达你的收件箱。</p>
-            <div className="flex flex-col sm:flex-row gap-3 max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="your@email.com"
-                className="flex-1 bg-white/10 border-2 border-white/20 rounded-xl px-4 py-3 text-white placeholder-gray-500 font-bold focus:border-primary focus:outline-none"
-              />
-              <NeoButton variant="primary">订阅</NeoButton>
-            </div>
-          </div>
-        </NeoCard>
+      {/* ╔══════════════════════════════════════╗
+          ║  S5 — CTA: Ink / dark block           ║
+          ╚══════════════════════════════════════╝ */}
+      <section className="bg-ink text-white py-24">
+        <div className="max-w-3xl mx-auto px-8 text-center">
+          <h2 className="text-4xl md:text-5xl font-display font-black mb-4">开始构建知识宇宙</h2>
+          <p className="text-white/40 font-medium text-lg mb-10">免费使用 · AI 驱动 · 开源</p>
+          <button onClick={onLogin}
+            className="px-10 py-4 bg-primary text-ink text-lg font-black rounded-2xl border-3 border-primary shadow-[5px_5px_0_#fff] hover:shadow-[8px_8px_0_#fff] hover:-translate-y-1 active:shadow-none active:translate-y-0 transition-all">
+            进入工作台 →
+          </button>
+        </div>
       </section>
 
-      {/* ═══════════ Footer ═══════════ */}
-      <footer className="bg-white border-t-3 border-ink py-10 px-6">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+      {/* Footer */}
+      <footer className="bg-ink border-t border-white/10 py-8 px-8">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 grayscale opacity-50 hover:opacity-100 hover:grayscale-0 transition-all">
-              <AnimatedLogo />
-            </div>
-            <p className="font-bold text-gray-500 text-sm">Vicoo • Visual Coordinator © 2024</p>
+            <div className="w-7 h-7 opacity-50"><AnimatedLogo /></div>
+            <span className="text-white/30 text-sm font-bold">Vicoo © 2024</span>
           </div>
-          <div className="flex gap-6 text-sm font-bold">
-            <a href="#" className="text-gray-500 hover:text-ink transition-colors">Twitter</a>
-            <a href="#" className="text-gray-500 hover:text-ink transition-colors">GitHub</a>
-            <a href="#" className="text-gray-500 hover:text-ink transition-colors">YouTube</a>
-            <a href="#" className="text-gray-500 hover:text-ink transition-colors">RSS</a>
+          <div className="flex gap-6 text-sm font-bold text-white/30">
+            <a href="#" className="hover:text-white transition-colors">Twitter</a>
+            <a href="#" className="hover:text-white transition-colors">GitHub</a>
+            <a href="#" className="hover:text-white transition-colors">YouTube</a>
           </div>
         </div>
       </footer>
