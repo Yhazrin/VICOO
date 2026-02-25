@@ -218,20 +218,24 @@ router.post('/', (req, res) => {
     ).map(t => t.name);
 
     // Auto-create timeline event
-    const evtId = uuidv4();
-    runQuery(
-      `INSERT OR IGNORE INTO timeline_events (id, user_id, title, type, date, description)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [evtId, userId, `创建笔记: ${title}`, 'Idea', timestamp, `新笔记「${title}」已创建`]
-    );
+    try {
+      const evtId = uuidv4();
+      runQuery(
+        `INSERT INTO timeline_events (id, title, type, date, description, related_note_id)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+        [evtId, `创建笔记: ${title}`, 'Idea', timestamp, `新笔记「${title}」已创建`, id]
+      );
+    } catch (_) {}
 
     // Auto-ensure category exists
-    const catId = uuidv4();
-    runQuery(
-      `INSERT OR IGNORE INTO categories (id, name, description, color, user_id)
-       VALUES (?, ?, ?, ?, ?)`,
-      [catId, category, `${category} 类笔记`, '#6B7280', userId]
-    );
+    try {
+      const catId = uuidv4();
+      runQuery(
+        `INSERT OR IGNORE INTO categories (id, label, color)
+         VALUES (?, ?, ?)`,
+        [catId, category, '#6B7280']
+      );
+    } catch (_) {}
 
     saveDatabase();
 
