@@ -102,6 +102,41 @@ router.get('/', (req, res) => {
   });
 });
 
+// GET /api/notes/export — must be BEFORE /:id to avoid param capture
+router.get('/export', (req, res) => {
+  const userId = (req as any).userId || 'dev_user_1';
+  const { format = 'json', includeTags = 'true', includeMetadata = 'true' } = req.query;
+  const notes = getAll<any>('SELECT * FROM notes WHERE user_id = ? ORDER BY timestamp DESC', [userId]);
+  const tags = getAll<any>('SELECT * FROM tags', []);
+  const noteTags = getAll<any>('SELECT * FROM note_tags', []);
+
+  if (format === 'json') {
+    const exportData = {
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      notes: notes.map((note: any) => {
+        const noteTagNames = includeTags === 'true'
+          ? noteTags.filter((nt: any) => nt.note_id === note.id)
+              .map((nt: any) => tags.find((t: any) => t.id === nt.tag_id)?.name).filter(Boolean)
+          : [];
+        const ex: any = { id: note.id, title: note.title, content: note.content, category: note.category, snippet: note.snippet, published: Boolean(note.published), timestamp: note.timestamp };
+        if (includeTags === 'true') ex.tags = noteTagNames;
+        if (includeMetadata === 'true') ex.updatedAt = note.updated_at;
+        return ex;
+      })
+    };
+    res.setHeader('Content-Disposition', `attachment; filename="vicoo-export-${Date.now()}.json"`);
+    res.json(exportData);
+  } else if (format === 'markdown') {
+    const md = notes.map((n: any) => `# ${n.title}\n\n${n.content || ''}\n`).join('\n---\n\n');
+    res.setHeader('Content-Type', 'text/markdown');
+    res.setHeader('Content-Disposition', `attachment; filename="vicoo-export-${Date.now()}.md"`);
+    res.send(md);
+  } else {
+    res.status(400).json({ error: { code: 'INVALID_FORMAT', message: 'Supported: json, markdown' } });
+  }
+});
+
 // GET /api/notes/:id - Get single note
 router.get('/:id', (req, res) => {
   const userId = (req as any).userId || 'dev_user_1';
@@ -181,6 +216,22 @@ router.post('/', (req, res) => {
        WHERE nt.note_id = ?`,
       [id]
     ).map(t => t.name);
+
+    // Auto-create timeline event
+    const evtId = uuidv4();
+    runQuery(
+      `INSERT OR IGNORE INTO timeline_events (id, user_id, title, type, date, description)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [evtId, userId, `创建笔记: ${title}`, 'Idea', timestamp, `新笔记「${title}」已创建`]
+    );
+
+    // Auto-ensure category exists
+    const catId = uuidv4();
+    runQuery(
+      `INSERT OR IGNORE INTO categories (id, name, description, color, user_id)
+       VALUES (?, ?, ?, ?, ?)`,
+      [catId, category, `${category} 类笔记`, '#6B7280', userId]
+    );
 
     saveDatabase();
 
@@ -374,79 +425,7 @@ router.post('/bulk', (req, res) => {
   });
 });
 
-// GET /api/notes/export - Export notes
-router.get('/export', (req, res) => {
-  const userId = (req as any).userId || 'dev_user_1';
-  const { format = 'json', includeTags = 'true', includeMetadata = 'true' } = req.query;
-
-  // Get all notes for user
-  const notes = getAll<any>('SELECT * FROM notes WHERE user_id = ? ORDER BY timestamp DESC', [userId]);
-
-  // Get all tags
-  const tags = getAll<any>('SELECT * FROM tags', []);
-
-  // Get note-tag relationships
-  const noteTags = getAll<any>('SELECT * FROM note_tags', []);
-
-  // Build response based on format
-  if (format === 'json') {
-    const exportData = {
-      version: '1.0',
-      exportedAt: new Date().toISOString(),
-      notes: notes.map((note: any) => {
-        const noteTagNames = includeTags === 'true'
-          ? noteTags
-              .filter((nt: any) => nt.note_id === note.id)
-              .map((nt: any) => tags.find((t: any) => t.id === nt.tag_id)?.name)
-              .filter(Boolean)
-          : [];
-
-        const exported: any = {
-          id: note.id,
-          title: note.title,
-          content: note.content,
-          category: note.category,
-          snippet: note.snippet,
-          published: Boolean(note.published),
-          color: note.color,
-          icon: note.icon,
-          timestamp: note.timestamp,
-        };
-
-        if (includeTags === 'true') {
-          exported.tags = noteTagNames;
-        }
-
-        if (includeMetadata === 'true') {
-          exported.updatedAt = note.updated_at;
-        }
-
-        return exported;
-      })
-    };
-
-    res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Content-Disposition', `attachment; filename="vicoo-export-${Date.now()}.json"`);
-    res.json(exportData);
-  } else if (format === 'markdown') {
-    const mdContent = notes
-      .map((note: any) => {
-        let md = `# ${note.title}\n\n`;
-        if (note.category) md += `**Category:** ${note.category}\n\n`;
-        md += `${note.content}\n`;
-        return md;
-      })
-      .join('\n---\n\n');
-
-    res.setHeader('Content-Type', 'text/markdown');
-    res.setHeader('Content-Disposition', `attachment; filename="vicoo-export-${Date.now()}.md"`);
-    res.send(mdContent);
-  } else {
-    res.status(400).json({
-      error: { code: 'INVALID_FORMAT', message: 'Supported formats: json, markdown' }
-    });
-  }
-});
+// (export route moved above /:id to avoid param capture)
 
 // POST /api/notes/import - Import notes
 router.post('/import', (req, res) => {

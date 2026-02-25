@@ -60,6 +60,20 @@ async function start() {
       await seedDatabase();
     }
 
+    // Backfill timeline events & categories for existing notes
+    try {
+      const { getAll: gAll, runQuery: rQ } = await import('./db/index.js');
+      const { v4 } = await import('uuid');
+      const existingNotes = gAll<any>('SELECT id, title, category, timestamp FROM notes WHERE user_id = ?', ['dev_user_1']);
+      for (const n of existingNotes) {
+        rQ('INSERT OR IGNORE INTO timeline_events (id, user_id, title, type, date, description) VALUES (?, ?, ?, ?, ?, ?)',
+          [v4(), 'dev_user_1', `笔记: ${n.title}`, 'Idea', n.timestamp, `笔记「${n.title}」`]);
+        rQ('INSERT OR IGNORE INTO categories (id, name, description, color, user_id) VALUES (?, ?, ?, ?, ?)',
+          [v4(), n.category, `${n.category} 类`, '#6B7280', 'dev_user_1']);
+      }
+      saveDatabase();
+    } catch (_) {}
+
     // Initialize MCP servers
     initializeBuiltinMCPServers();
     if (process.env.AUTO_INIT_MCP === 'true') {

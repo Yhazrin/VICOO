@@ -191,6 +191,19 @@ function initializeTables() {
   try { db.run(`ALTER TABLE links ADD COLUMN label TEXT DEFAULT ''`); } catch (_) {}
   try { db.run(`ALTER TABLE links ADD COLUMN strength REAL DEFAULT 0.5`); } catch (_) {}
 
+  // Note embeddings table for RAG vector search
+  db.run(`
+    CREATE TABLE IF NOT EXISTS note_embeddings (
+      id TEXT PRIMARY KEY,
+      note_id TEXT NOT NULL,
+      chunk_text TEXT NOT NULL,
+      embedding TEXT,
+      chunk_index INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+    )
+  `);
+
   // Timeline events table
   db.run(`
     CREATE TABLE IF NOT EXISTS timeline_events (
