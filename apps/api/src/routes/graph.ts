@@ -236,7 +236,10 @@ router.get('/../links', (req, res) => {
         id: l.id,
         source: l.source,
         target: l.target,
-        type: l.type
+        type: l.type,
+        relation: l.relation || 'relates',
+        label: l.label || '',
+        strength: l.strength ?? 0.5
       }))
     });
   } catch (error) {
@@ -408,15 +411,21 @@ router.post('/generate-from-notes', async (req, res) => {
 
       if (sourceId && targetId) {
         const id = uuidv4();
+        const relation = link.relation || 'relates';
+        const label = link.label || '';
+        const strength = typeof link.strength === 'number' ? link.strength : 0.5;
         runQuery(
-          'INSERT INTO links (id, source, target, type) VALUES (?, ?, ?, ?)',
-          [id, sourceId, targetId, 'solid']
+          'INSERT INTO links (id, source, target, type, relation, label, strength) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [id, sourceId, targetId, 'solid', relation, label, strength]
         );
         createdLinks.push({
           id,
           source: sourceId,
           target: targetId,
-          type: 'solid'
+          type: 'solid',
+          relation,
+          label,
+          strength
         });
       } else {
         console.warn(`[Graph Generate] Skipping link: source="${link.source}", target="${link.target}" - node not found`);

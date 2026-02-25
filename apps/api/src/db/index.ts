@@ -172,16 +172,24 @@ function initializeTables() {
     )
   `);
 
-  // Links table (for Galaxy View)
+  // Links table (for Galaxy View) — with semantic relationship fields
   db.run(`
     CREATE TABLE IF NOT EXISTS links (
       id TEXT PRIMARY KEY,
       source TEXT NOT NULL,
       target TEXT NOT NULL,
       type TEXT DEFAULT 'solid',
+      relation TEXT DEFAULT 'relates',
+      label TEXT DEFAULT '',
+      strength REAL DEFAULT 0.5,
       created_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  // Migrate: add columns if they don't exist (safe for existing DBs)
+  try { db.run(`ALTER TABLE links ADD COLUMN relation TEXT DEFAULT 'relates'`); } catch (_) {}
+  try { db.run(`ALTER TABLE links ADD COLUMN label TEXT DEFAULT ''`); } catch (_) {}
+  try { db.run(`ALTER TABLE links ADD COLUMN strength REAL DEFAULT 0.5`); } catch (_) {}
 
   // Timeline events table
   db.run(`

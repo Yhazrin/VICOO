@@ -77,18 +77,46 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
   );
 
   const initialEdges: Edge[] = useMemo(() => 
-    apiLinks.map(link => ({
-      id: link.id,
-      source: link.source,
-      target: link.target,
-      type: 'smoothstep',
-      style: { 
-        stroke: '#1a1a1a', 
-        strokeWidth: 2,
-        opacity: 0.4,
-      },
-      animated: false,
-    })), 
+    apiLinks.map(link => {
+      const rel = (link as any).relation || 'relates';
+      const strength: number = (link as any).strength ?? 0.5;
+      const edgeLabel: string = (link as any).label || '';
+
+      const RELATION_STYLES: Record<string, { stroke: string; dash?: string; animated?: boolean }> = {
+        foundation: { stroke: '#3B82F6' },             // blue — foundational
+        contains:   { stroke: '#8B5CF6' },             // purple — part-of
+        extends:    { stroke: '#10B981' },             // green — extends
+        contrasts:  { stroke: '#EF4444', dash: '6 3' }, // red dashed — contrast
+        depends:    { stroke: '#F59E0B' },             // amber — dependency
+        implements: { stroke: '#06B6D4' },             // cyan — implementation
+        relates:    { stroke: '#6B7280', dash: '4 4' }, // gray dashed — weak
+      };
+
+      const s = RELATION_STYLES[rel] || RELATION_STYLES.relates;
+      const sw = 1.5 + strength * 2.5; // 1.5..4 px
+
+      return {
+        id: link.id,
+        source: link.source,
+        target: link.target,
+        type: 'smoothstep',
+        label: edgeLabel || undefined,
+        labelStyle: { fontSize: 11, fontWeight: 700, fill: s.stroke },
+        labelBgStyle: { fill: '#fff', fillOpacity: 0.85 },
+        labelBgPadding: [4, 2] as [number, number],
+        labelBgBorderRadius: 4,
+        style: {
+          stroke: s.stroke,
+          strokeWidth: sw,
+          strokeDasharray: s.dash,
+          opacity: 0.35 + strength * 0.45,
+        },
+        animated: s.animated ?? false,
+        markerEnd: rel === 'foundation' || rel === 'depends'
+          ? { type: 'arrowclosed' as const, color: s.stroke, width: 14, height: 14 }
+          : undefined,
+      };
+    }),
     [apiLinks]
   );
 
@@ -250,7 +278,7 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
         maxZoom={MAX_VISIBLE_SCALE}
         defaultEdgeOptions={{
           type: 'smoothstep',
-          style: { stroke: '#1a1a1a', strokeWidth: 2, opacity: 0.4 },
+          style: { stroke: '#6B7280', strokeWidth: 2, opacity: 0.35 },
         }}
         proOptions={{ hideAttribution: true }}
         className="bg-[#f0f4f8] dark:bg-[#0a0a0a]"

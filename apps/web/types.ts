@@ -57,8 +57,14 @@ export interface Node {
   tags?: string[];
 }
 
+export type RelationType = 'foundation' | 'contains' | 'extends' | 'contrasts' | 'depends' | 'implements' | 'relates';
+
 export interface Link {
+  id: string;
   source: string;
   target: string;
   type?: 'dashed' | 'solid';
+  relation?: RelationType;
+  label?: string;
+  strength?: number;
 }
