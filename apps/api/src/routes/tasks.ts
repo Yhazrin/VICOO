@@ -38,41 +38,34 @@ router.get('/', (req, res) => {
 
 // POST /api/tasks - Create task
 router.post('/', (req, res) => {
-  const userId = (req as any).userId || 'dev_user_1';
-  const { title, description, status = 'todo', priority = 'medium', linkedNoteId, dueDate } = req.body;
+  try {
+    const userId = (req as any).userId || 'dev_user_1';
+    const { title, description, status = 'todo', priority = 'medium', linkedNoteId, dueDate } = req.body;
 
-  if (!title) {
-    return res.status(400).json({
-      error: { code: 'VALIDATION_ERROR', message: 'Title is required' }
-    });
-  }
-
-  const id = uuidv4();
-  const timestamp = new Date().toISOString();
-
-  runQuery(
-    `INSERT INTO tasks (id, user_id, title, description, status, priority, linked_note_id, due_date, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [id, userId, title, description, status, priority, linkedNoteId, dueDate, timestamp, timestamp]
-  );
-
-  saveDatabase();
-
-  const task = getOne<any>('SELECT * FROM tasks WHERE id = ?', [id]);
-
-  res.status(201).json({
-    data: {
-      id: task.id,
-      title: task.title,
-      description: task.description,
-      status: task.status,
-      priority: task.priority,
-      linkedNoteId: task.linked_note_id,
-      dueDate: task.due_date,
-      createdAt: task.created_at,
-      updatedAt: task.updated_at
+    if (!title) {
+      return res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: 'Title is required' }
+      });
     }
-  });
+
+    const id = uuidv4();
+    const timestamp = new Date().toISOString();
+
+    runQuery(
+      `INSERT INTO tasks (id, user_id, title, description, status, priority, linked_note_id, due_date, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, userId, title, description || null, status, priority, linkedNoteId || null, dueDate || null, timestamp, timestamp]
+    );
+
+    saveDatabase();
+
+    res.status(201).json({
+      data: { id, title, description: description || null, status, priority, linkedNoteId: linkedNoteId || null, dueDate: dueDate || null, createdAt: timestamp, updatedAt: timestamp }
+    });
+  } catch (error: any) {
+    console.error('Create task error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: error.message || 'Failed to create task' } });
+  }
 });
 
 // PATCH /api/tasks/:id - Update task
