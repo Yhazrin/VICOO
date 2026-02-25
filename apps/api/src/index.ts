@@ -19,11 +19,14 @@ import claudeRouter from './routes/claude.js';
 import authRouter, { authMiddleware } from './middleware/auth.js';
 import { initDatabase, saveDatabase } from './db/index.js';
 import { seedDatabase } from './db/seed.js';
+import { initializeBuiltinMCPServers } from './services/mcp.js';
+import { initializeRecommendedMCPs } from './scripts/init-mcp.js';
 import { graphqlHTTP } from 'express-graphql';
 import { schema } from './graphql/schema.js';
 import { startAutoGraphService } from './services/auto-graph.js';
 import aiRouter from './routes/ai.js';
 import publishRouter from './routes/publish.js';
+import mcpRouter from './routes/mcp.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -52,6 +55,12 @@ async function start() {
       await seedDatabase();
     }
 
+    // Initialize MCP servers
+    initializeBuiltinMCPServers();
+    if (process.env.AUTO_INIT_MCP === 'true') {
+      initializeRecommendedMCPs();
+    }
+
     // Routes
     app.use('/health', healthRouter);
     app.use('/auth', authRouter);
@@ -74,6 +83,7 @@ async function start() {
     app.use('/api/claude', authMiddleware, claudeRouter);
     app.use('/api/ai', authMiddleware, aiRouter);
     app.use('/api/publish', authMiddleware, publishRouter);
+    app.use('/api/agent/mcp', mcpRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({
