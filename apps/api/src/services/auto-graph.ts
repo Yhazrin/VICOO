@@ -10,8 +10,8 @@ import { v4 as uuidv4 } from 'uuid';
 // 配置
 const CONFIG = {
   CHECK_INTERVAL: 5 * 60 * 1000, // 每5分钟检查一次
-  BATCH_SIZE: 10, // 每次最多处理的笔记数量
-  MIN_NOTES_TO_GENERATE: 3, // 至少需要多少笔记才开始生成
+  BATCH_SIZE: 10,
+  MIN_NOTES_TO_GENERATE: 1, // 1条笔记即触发自动生成
   ENABLE_AUTO_GENERATE: process.env.ENABLE_AUTO_GRAPH !== 'false', // 默认启用
 };
 

@@ -101,10 +101,10 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
         target: link.target,
         type: 'smoothstep',
         label: edgeLabel || undefined,
-        labelStyle: { fontSize: 11, fontWeight: 700, fill: s.stroke },
-        labelBgStyle: { fill: '#fff', fillOpacity: 0.85 },
-        labelBgPadding: [4, 2] as [number, number],
-        labelBgBorderRadius: 4,
+        labelStyle: { fontSize: 12, fontWeight: 800, fill: s.stroke },
+        labelBgStyle: { fill: '#fff', fillOpacity: 0.92, stroke: s.stroke, strokeWidth: 1 },
+        labelBgPadding: [6, 3] as [number, number],
+        labelBgBorderRadius: 6,
         style: {
           stroke: s.stroke,
           strokeWidth: sw,
@@ -231,7 +231,7 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
       alert(`成功生成知识图谱！\n处理笔记: ${result.summary.notesProcessed}\n创建节点: ${result.summary.nodesCreated}\n创建关联: ${result.summary.linksCreated}`);
     } catch (err) {
       console.error('Failed to generate graph:', err);
-      alert('生成知识图谱失败，请确保已安装 Claude Code');
+      alert('生成知识图谱失败，请确认 MiniMax API 已配置');
     } finally {
       setIsGenerating(false);
     }
@@ -278,8 +278,9 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
         maxZoom={MAX_VISIBLE_SCALE}
         defaultEdgeOptions={{
           type: 'smoothstep',
-          style: { stroke: '#6B7280', strokeWidth: 2, opacity: 0.35 },
+          style: { stroke: 'var(--edge-color, #6B7280)', strokeWidth: 2, opacity: 0.35 },
         }}
+        className="[--edge-color:#6B7280] dark:[--edge-color:#9CA3AF]"
         proOptions={{ hideAttribution: true }}
         className="bg-[#f0f4f8] dark:bg-[#0a0a0a]"
       >

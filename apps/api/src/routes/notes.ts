@@ -137,7 +137,8 @@ router.get('/:id', (req, res) => {
 // POST /api/notes - Create note
 router.post('/', (req, res) => {
   try {
-    const { title, category = 'idea', status = 'inbox', tags = [], content = '', snippet, published = false, color = null, icon = null } = req.body || {};
+    const { title, category = 'idea', status = 'inbox', tags = [], content: rawContent, body, snippet, published = false, color = null, icon = null } = req.body || {};
+    const content = rawContent || body || '';
     const userId = (req as any).userId || 'dev_user_1';
 
     if (!title) {
@@ -216,7 +217,8 @@ router.patch('/:id', (req, res) => {
     });
   }
 
-  const { title, category, status, tags, content, snippet, published, coverImage, color, icon } = req.body;
+  const { title, category, status, tags, content: rawContent, body, snippet, published, coverImage, color, icon } = req.body;
+  const content = rawContent ?? body;
 
   // Build update query dynamically
   const updates: string[] = [];

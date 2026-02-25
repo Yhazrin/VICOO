@@ -5,6 +5,81 @@ import { generateGraphWithMiniMax, generateKnowledgeGraphPrompt } from '../servi
 
 const router = Router();
 
+/**
+ * Simple force-directed layout: related nodes cluster together.
+ * Runs a few iterations of spring-electric simulation.
+ */
+function computeForceLayout(
+  nodes: Array<{ label: string }>,
+  links: Array<{ source: string; target: string; strength?: number }>
+): Array<{ x: number; y: number }> {
+  const n = nodes.length;
+  if (n === 0) return [];
+
+  const labelIdx = new Map(nodes.map((nd, i) => [nd.label, i]));
+
+  // Initial positions: circle layout
+  const pos = nodes.map((_, i) => ({
+    x: Math.cos((2 * Math.PI * i) / n) * 200,
+    y: Math.sin((2 * Math.PI * i) / n) * 150,
+  }));
+
+  const REPULSION = 8000;
+  const SPRING_K = 0.04;
+  const DAMPING = 0.85;
+  const ITERATIONS = 80;
+
+  const vx = new Float64Array(n);
+  const vy = new Float64Array(n);
+
+  for (let iter = 0; iter < ITERATIONS; iter++) {
+    // Repulsion between all pairs
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        let dx = pos[i].x - pos[j].x;
+        let dy = pos[i].y - pos[j].y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        let force = REPULSION / (dist * dist);
+        let fx = (dx / dist) * force;
+        let fy = (dy / dist) * force;
+        vx[i] += fx; vy[i] += fy;
+        vx[j] -= fx; vy[j] -= fy;
+      }
+    }
+
+    // Attraction along edges
+    for (const link of links) {
+      const si = labelIdx.get(link.source);
+      const ti = labelIdx.get(link.target);
+      if (si === undefined || ti === undefined) continue;
+      let dx = pos[ti].x - pos[si].x;
+      let dy = pos[ti].y - pos[si].y;
+      let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      let strength = (link.strength ?? 0.5) * SPRING_K;
+      let fx = dx * strength;
+      let fy = dy * strength;
+      vx[si] += fx; vy[si] += fy;
+      vx[ti] -= fx; vy[ti] -= fy;
+    }
+
+    // Apply velocity with damping
+    for (let i = 0; i < n; i++) {
+      vx[i] *= DAMPING;
+      vy[i] *= DAMPING;
+      pos[i].x += vx[i];
+      pos[i].y += vy[i];
+    }
+  }
+
+  // Center the layout
+  let cx = 0, cy = 0;
+  for (const p of pos) { cx += p.x; cy += p.y; }
+  cx /= n; cy /= n;
+  for (const p of pos) { p.x -= cx; p.y -= cy; }
+
+  return pos.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+}
+
 // ==================== NODES ====================
 
 // GET /api/nodes - Get all nodes
@@ -373,15 +448,18 @@ router.post('/generate-from-notes', async (req, res) => {
       console.log('[Graph Generate] Cleared existing nodes and links');
     }
 
-    // 6. 存储节点
-    const nodeIdMap = new Map<string, string>(); // label -> id
+    // 6. Force-directed layout: compute positions based on relationships
+    const nodePositions = computeForceLayout(result.nodes, result.links);
+
+    const nodeIdMap = new Map<string, string>();
     const createdNodes: any[] = [];
 
-    for (const node of result.nodes) {
+    for (let i = 0; i < result.nodes.length; i++) {
+      const node = result.nodes[i];
       const id = uuidv4();
-      // 随机位置分布在画布上
-      const x = Math.random() * 800 - 400;
-      const y = Math.random() * 600 - 300;
+      const pos = nodePositions[i] || { x: Math.random() * 600 - 300, y: Math.random() * 400 - 200 };
+      const x = pos.x;
+      const y = pos.y;
 
       runQuery(
         `INSERT INTO nodes (id, x, y, label, type, color, icon, description, created_at)

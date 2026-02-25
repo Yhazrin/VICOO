@@ -47,7 +47,7 @@ interface EditorProps {
 
 export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
   const { t } = useLanguage();
-  const { getNote, createNote, updateNote } = useApi();
+  const { getNote, createNote, updateNote, token } = useApi();
 
   const [noteId, setNoteId] = useState<string | null>(initialNoteId === 'new' ? null : initialNoteId || null);
   const [content, setContent] = useState('');
@@ -258,18 +258,25 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
     }
   }, [showSlashMenu, slashMenuIndex, slashQuery, handleSlashCommandSelect]);
 
-  const handleSummarize = () => {
+  const handleSummarize = async () => {
+    if (!content || content.length < 30) return;
     setIsSummarizing(true);
     eventBus.emit(Events.MASCOT_STATE, { state: 'thinking', message: 'Analyzing...', duration: 0 });
-    setTimeout(() => {
-      setIsSummarizing(false);
-      setShowSummary(true);
-      eventBus.emit(Events.MASCOT_STATE, {
-        state: 'celebrating',
-        message: 'Analysis complete!',
-        duration: 2000
+    try {
+      const res = await fetch('/api/ai/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(noteId ? { noteId } : { text: content }),
       });
-    }, 1500);
+      const data = await res.json();
+      if (data.success && data.summary) {
+        setShowSummary(true);
+        eventBus.emit(Events.MASCOT_STATE, { state: 'celebrating', message: data.summary.slice(0, 50), duration: 3000 });
+      }
+    } catch (err) {
+      console.error('Summarize failed:', err);
+    }
+    setIsSummarizing(false);
   };
 
   // Typing detection - emit typing event
