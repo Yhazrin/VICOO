@@ -28,12 +28,14 @@ Optional apps (`apps/desktop`, `apps/mobile`, `apps/weapp`) require platform-spe
 
 ### AI Provider
 
-All AI operations are handled by **MiniMax** (via LangChain). Coze and Claude Code are bypassed.
+All AI operations are handled by **MiniMax**. Coze and Claude Code are bypassed.
 
-- `/api/ai/chat` — LangChain Agent with MiniMax-M2.5 (supports tool calling)
-- `/api/ai/summary` and `/api/ai/suggest-tags` — MiniMax M2-her via `simpleChat()` (no tools, faster)
-- MiniMax M2-her responses include `<think>...</think>` reasoning blocks; these are stripped in route handlers via `stripThinkingBlock()`
-- `MINIMAX_API_KEY` must be set as an environment variable (not loaded from `.env` automatically)
+- `/api/ai/chat` — LangChain Agent + MiniMax-M2.5（工具调用模式，支持搜索笔记、创建笔记等）
+- `/api/ai/summary` and `/api/ai/suggest-tags` — MiniMax-M2.5 via `simpleChat()`（直接文本生成，精确理解任务）
+- `/api/graph/generate-from-notes` — MiniMax-M2.5 生成知识图谱（节点 + 关联），结果展示在 Galaxy View
+- Auto-graph 后台服务（`auto-graph.ts`）也使用 MiniMax-M2.5
+- MiniMax 响应可能包含 `<think>...</think>` 推理块；在 route handler 中用 `stripThinkingBlock()` 清理
+- `MINIMAX_API_KEY` 必须设置为环境变量（dotenv 未自动加载 `.env` 文件）
 
 ### Known pre-existing issues
 
