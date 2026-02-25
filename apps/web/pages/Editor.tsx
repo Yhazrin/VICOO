@@ -271,8 +271,8 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
         body: JSON.stringify({ content }),
       });
       const data = await res.json();
-      if (data.data?.result) {
-        const cleaned = data.data.result.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+      if (data.result) {
+        const cleaned = data.result.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
         setContent(cleaned);
         eventBus.emit(Events.MASCOT_STATE, { state: 'celebrating', message: `${action} 完成!`, duration: 2000 });
       }

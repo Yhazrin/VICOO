@@ -48,13 +48,18 @@ export const Habitat: React.FC = () => {
     orphanCount: orphans.length
   };
 
-  const handleLinkOrphan = () => {
+  const handleLinkOrphan = async () => {
+      // Create a graph node for this orphan note via auto-graph
+      try {
+        await refreshGraph();
+      } catch (_) {}
       // Move to next orphan
       if (currentOrphanIndex < orphans.length - 1) {
           setCurrentOrphanIndex(prev => prev + 1);
       } else {
           setIsOrphanModalOpen(false);
           setCurrentOrphanIndex(0);
+          refreshGraph();
       }
   };
 
