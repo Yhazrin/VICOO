@@ -9,11 +9,17 @@
 
 import { Router, Request, Response } from 'express';
 import { runAIAssistant } from '../services/ai-assistant.js';
-import { isCozeConfigured } from '../services/coze-config.js';
 import { getOne, runQuery, saveDatabase } from '../db/index.js';
 import { chatWithAgent } from '../services/langchain/index.js';
 
 const router = Router();
+
+/**
+ * 去除 MiniMax M2-her 模型返回的 <think>...</think> 推理块，只保留实际回答
+ */
+function stripThinkingBlock(text: string): string {
+  return text.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+}
 
 // POST /api/ai/chat - AI 聊天接口（使用 LangChain + MiniMax 智能体）
 router.post('/chat', async (req: Request, res: Response) => {
@@ -61,30 +67,13 @@ router.post('/chat', async (req: Request, res: Response) => {
 // GET /api/ai/status - AI 服务状态
 router.get('/status', async (req: Request, res: Response) => {
   try {
-    // 检查 Claude Code
-    const { execSync } = await import('child_process');
-    let claudeStatus = 'unavailable';
-
-    try {
-      const version = execSync('claude --version', {
-        encoding: 'utf-8',
-        timeout: 5000,
-        windowsHide: true
-      });
-      claudeStatus = version.trim();
-    } catch {
-      claudeStatus = 'not installed';
-    }
-
-    // 检查 Coze
-    const cozeConfigured = isCozeConfigured();
+    const minimaxConfigured = !!process.env.MINIMAX_API_KEY;
 
     res.json({
       success: true,
       data: {
-        claudeCode: claudeStatus !== 'not installed',
-        claudeVersion: claudeStatus,
-        coze: cozeConfigured,
+        minimax: minimaxConfigured,
+        provider: 'minimax/langchain',
         modes: ['auto', 'knowledge', 'search', 'action']
       }
     });
@@ -137,14 +126,20 @@ router.post('/summary', async (req: Request, res: Response) => {
     let keywords: string[] = [];
 
     if (result.success && result.response) {
-      // Parse the response
-      const lines = result.response.split('\n');
-      for (const line of lines) {
-        if (line.startsWith('摘要：')) {
-          summary = line.replace('摘要：', '').trim();
-        } else if (line.startsWith('关键词：')) {
-          keywords = line.replace('关键词：', '').split(/[,，、]/).map(k => k.trim()).filter(Boolean);
-        }
+      const cleaned = stripThinkingBlock(result.response);
+
+      const summaryMatch = cleaned.match(/摘要[：:]\s*([\s\S]*?)(?=关键词[：:]|$)/);
+      if (summaryMatch) {
+        summary = summaryMatch[1].trim();
+      }
+
+      const keywordsMatch = cleaned.match(/关键词[：:]\s*([\s\S]*)/);
+      if (keywordsMatch) {
+        keywords = keywordsMatch[1].split(/[,，、\n]/).map(k => k.trim()).filter(Boolean);
+      }
+
+      if (!summary && !keywordsMatch) {
+        summary = cleaned;
       }
     }
 
@@ -222,7 +217,8 @@ router.post('/suggest-tags', async (req: Request, res: Response) => {
     const suggestions: Array<{ tag: string; confidence: number; isExisting: boolean }> = [];
 
     if (result.success && result.response) {
-      const tags = result.response.split(/[,，、\n]/).map(t => t.trim()).filter(Boolean).slice(0, 5);
+      const cleaned = stripThinkingBlock(result.response);
+      const tags = cleaned.split(/[,，、\n]/).map(t => t.trim()).filter(Boolean).slice(0, 5);
 
       for (const tag of tags) {
         const isExisting = existingTags.includes(tag);
