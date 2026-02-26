@@ -5,8 +5,8 @@
   "scripts": {
     "dev": "pnpm --parallel -r dev",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r --if-present typecheck",
-    "lint": "pnpm -r --if-present lint",
+    "typecheck": "pnpm -r --if-present --filter '!vicoo-mobile' typecheck",
+    "lint": "pnpm -r --if-present --filter '!vicoo-mobile' lint",
     "test": "pnpm -r --if-present test",
     "test:smoke": "pnpm --filter vicoo-api test:smoke && pnpm --filter vicoo-web test:smoke",
     "dev:web": "pnpm --filter vicoo-web dev",

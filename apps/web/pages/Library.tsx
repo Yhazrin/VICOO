@@ -40,9 +40,11 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
   const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Derive tags from notes
+  const [customTags, setCustomTags] = useState<string[]>([]);
+
+  // Derive tags from notes + custom
   const tags = useMemo(() => {
-    const tagSet = new Set(['All', 'Inbox']);
+    const tagSet = new Set(['All', 'Inbox', ...customTags]);
     notes.forEach(note => {
       tagSet.add(categoryToTag[note.category] || note.category);
       note.tags.forEach(tag => tagSet.add(tag));
@@ -81,7 +83,7 @@ export const Library: React.FC<LibraryProps> = ({ onOpenNote }) => {
   const handleAddTag = () => {
     const trimmedTag = newTagValue.trim();
     if (trimmedTag && !tags.includes(trimmedTag)) {
-      setTags([...tags, trimmedTag]);
+      setCustomTags(prev => [...prev, trimmedTag]);
       setFilter(trimmedTag); // Automatically select the new tag
       setNewTagValue('');
       setIsAddingTag(false);

@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, NavItem } from '../types';
 import { AnimatedLogo } from './AnimatedLogo';
 import { VicooIcon } from './VicooIcon';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
 
 interface SidebarProps {
   currentView: View;
@@ -13,6 +14,21 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onEnterFocusMode }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const focusButtonRef = useRef<HTMLButtonElement>(null);
+  const { token } = useApi();
+  const [userName, setUserName] = useState('个人中心');
+  const [userPlan, setUserPlan] = useState('free');
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.data?.username) setUserName(d.data.username); })
+      .catch(() => {});
+    fetch('/api/subscription', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.data?.plan) setUserPlan(d.data.plan); })
+      .catch(() => {});
+  }, [token]);
   const { t } = useLanguage();
 
   const handleFocusClick = () => {
@@ -187,24 +203,38 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
       {/* User Profile */}
       <div className="p-4 border-t-3 border-ink/10 dark:border-white/10 mt-auto overflow-hidden">
         <div 
+          onClick={() => { onChangeView(View.PROFILE); setMobileOpen(false); }}
           className={`
-            flex items-center gap-3 p-2 rounded-xl border-2 border-transparent hover:border-ink dark:hover:border-white hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer relative group
+            flex items-center gap-3 p-2 rounded-xl border-2 transition-all cursor-pointer relative group
+            ${currentView === View.PROFILE
+              ? 'border-ink dark:border-white bg-primary/20 dark:bg-primary/10'
+              : 'border-transparent hover:border-ink dark:hover:border-white hover:bg-white dark:hover:bg-gray-800'}
             ${!isExpanded ? 'justify-center' : ''}
           `}
         >
-          <img 
-            src="https://picsum.photos/100/100" 
-            alt="User" 
-            className="w-10 h-10 rounded-full border-2 border-ink dark:border-white object-cover bg-secondary flex-shrink-0"
-          />
+          <div className="w-10 h-10 rounded-full border-2 border-ink dark:border-white bg-secondary flex-shrink-0 flex items-center justify-center overflow-hidden text-lg font-black">
+            {userName?.[0]?.toUpperCase() || '?'}
+          </div>
           <div 
              className={`
                hidden lg:block text-left whitespace-nowrap transition-all duration-300
                ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'}
              `}
           >
-            <p className="text-sm font-bold text-ink dark:text-white">Alex Chen</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">{t('nav.user_role')}</p>
+            <p className="text-sm font-bold text-ink dark:text-white">{userName}</p>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                userPlan === 'team' ? 'bg-purple-100 text-purple-700' :
+                userPlan === 'pro' ? 'bg-blue-100 text-blue-700' :
+                'bg-gray-100 text-gray-500'
+              }`}>
+                {userPlan === 'team' ? 'TEAM' : userPlan === 'pro' ? 'PRO' : 'FREE'}
+              </span>
+              {userPlan === 'free' && (
+                <button onClick={(e) => { e.stopPropagation(); onChangeView(View.PRICING); setMobileOpen(false); }}
+                  className="text-[10px] font-bold text-primary hover:underline">升级</button>
+              )}
+            </div>
           </div>
 
           {/* Mini Public Site Link (appears on hover) */}

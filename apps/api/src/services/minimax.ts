@@ -171,7 +171,7 @@ export class MiniMaxProvider {
       const timeout = setTimeout(() => {
         console.error('[MiniMax] Request timeout!');
         controller.abort();
-      }, 30000); // 30秒超时
+      }, (request.max_tokens && request.max_tokens > 2048) ? 90000 : 60000); // M2.5: 90s, M2-her: 60s
 
       let response: Response;
       try {

@@ -1,0 +1,64 @@
+<!--pages/profile/profile.wxml — 个人中心 -->
+<view class="container">
+  <view class="header">
+    <text class="title-large">个人中心</text>
+  </view>
+
+  <!-- User Card -->
+  <view class="card user-card">
+    <view class="avatar">
+      <text class="avatar-text">{{user.username[0] || '?'}}</text>
+    </view>
+    <view class="user-info">
+      <text class="user-name">{{user.username || '加载中...'}}</text>
+      <text class="user-email">{{user.email || ''}}</text>
+    </view>
+    <view class="badge badge-green">
+      <text class="badge-text">{{user.provider === 'google' ? 'Google' : user.provider === 'github' ? 'GitHub' : '邮箱注册'}}</text>
+    </view>
+  </view>
+
+  <!-- Menu -->
+  <view class="card">
+    <view class="menu-item" bindtap="editProfile">
+      <text class="menu-icon">✏️</text>
+      <text class="menu-label">编辑资料</text>
+      <text class="menu-arrow">→</text>
+    </view>
+    <view class="menu-item" bindtap="goSettings">
+      <text class="menu-icon">⚙️</text>
+      <text class="menu-label">设置</text>
+      <text class="menu-arrow">→</text>
+    </view>
+    <view class="menu-item" bindtap="goPricing">
+      <text class="menu-icon">💎</text>
+      <text class="menu-label">订阅管理</text>
+      <text class="menu-arrow">→</text>
+    </view>
+    <view class="menu-item" bindtap="exportData">
+      <text class="menu-icon">📤</text>
+      <text class="menu-label">数据导出</text>
+      <text class="menu-arrow">→</text>
+    </view>
+  </view>
+
+  <!-- Account Info -->
+  <view class="card">
+    <view class="info-row">
+      <text class="info-label">用户 ID</text>
+      <text class="info-value">{{user.id}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">角色</text>
+      <text class="info-value">{{user.role === 'admin' ? '管理员' : '普通用户'}}</text>
+    </view>
+    <view class="info-row">
+      <text class="info-label">套餐</text>
+      <text class="info-value">{{subscription.planName || '免费版'}}</text>
+    </view>
+  </view>
+
+  <view class="version">
+    <text>Vicoo v1.0.0 · AI 知识管理</text>
+  </view>
+</view>

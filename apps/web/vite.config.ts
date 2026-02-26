@@ -35,12 +35,15 @@ export default defineConfig(({ mode }) => {
           registerType: 'autoUpdate',
           includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
           manifest: {
-            name: 'Vicoo',
+            name: 'Vicoo — AI 知识管理',
             short_name: 'Vicoo',
-            description: 'Visual Note-Taking and Knowledge Management',
-            theme_color: '#6366f1',
-            background_color: '#ffffff',
+            description: 'AI 驱动的个人知识管理工作台',
+            theme_color: '#0df259',
+            background_color: '#FFFCF5',
             display: 'standalone',
+            start_url: '/',
+            orientation: 'any',
+            categories: ['productivity', 'education'],
             icons: [
               {
                 src: 'pwa-192x192.png',
@@ -62,17 +65,23 @@ export default defineConfig(({ mode }) => {
           },
           workbox: {
             globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+            navigateFallback: 'index.html',
             runtimeCaching: [
               {
-                urlPattern: /^https:\/\/api\./i,
+                urlPattern: /\/api\//i,
                 handler: 'NetworkFirst',
                 options: {
                   cacheName: 'api-cache',
-                  expiration: {
-                    maxEntries: 100,
-                    maxAgeSeconds: 60 * 60 * 24 // 24 hours
-                  },
-                  networkTimeoutSeconds: 10
+                  expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
+                  networkTimeoutSeconds: 5,
+                }
+              },
+              {
+                urlPattern: /\/uploads\//i,
+                handler: 'CacheFirst',
+                options: {
+                  cacheName: 'media-cache',
+                  expiration: { maxEntries: 100, maxAgeSeconds: 60 * 60 * 24 * 30 },
                 }
               },
               {

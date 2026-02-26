@@ -17,14 +17,24 @@ Optional apps (`apps/desktop`, `apps/mobile`, `apps/weapp`) require platform-spe
 
 - Start both services: `pnpm dev` (runs api + web in parallel)
 - Start individually: `pnpm dev:api` then `pnpm dev:web`
-- The web dev server (Vite) proxies `/api` and `/health` requests to port 8000
+- The web dev server (Vite) proxies `/api`, `/auth`, `/health`, and `/graphql` to port 8000
 - The API uses SQLite via sql.js (in-process, no external DB needed); the DB file auto-creates at `apps/api/data/vicoo.db`
 - A `.env` file must exist at the repo root (copy from `.env.example`); AI features degrade gracefully without real API keys
+- The `MINIMAX_API_KEY` env var is required for AI features; set it in Cursor Secrets or export before starting the API
 
 ### Authentication in dev mode
 
 - `POST /auth/dev-token` returns a bearer token for the anonymous dev user (`dev_user_1`)
-- The web frontend handles this automatically; for API-only testing, include `Authorization: Bearer <token>` header
+- The web frontend auto-acquires this token on first load (via `ApiContext.tsx`) — no manual login needed
+- For API-only testing, include `Authorization: Bearer <token>` header
+
+### Vite proxy
+
+The Vite dev server proxies these paths to `http://localhost:8000`:
+- `/api` — all REST endpoints
+- `/auth` — token endpoints (critical for auto-auth)
+- `/health` — health check
+- `/graphql` — GraphQL endpoint
 
 ### AI Provider
 

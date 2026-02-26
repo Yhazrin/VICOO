@@ -32,17 +32,27 @@ import writerRouter from './routes/writer.js';
 import tasksRouter from './routes/tasks.js';
 import ragRouter from './routes/rag.js';
 import noteLinksRouter from './routes/note-links.js';
+import subscriptionRouter from './routes/subscription.js';
+import adminRouter from './routes/admin.js';
+import uploadRouter from './routes/upload.js';
+import importRouter from './routes/import.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Middleware
+// Security middleware
+import { securityHeaders, globalRateLimiter, authRateLimiter, aiRateLimiter, sanitizeInput } from './middleware/security.js';
+app.use(securityHeaders);
+app.use(globalRateLimiter);
+
+// CORS
 app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(sanitizeInput); // Must be AFTER body parsers
 
 // Serve uploaded files
 import path from 'path';
@@ -89,7 +99,7 @@ async function start() {
 
     // Public routes (no auth required)
     app.use('/health', healthRouter);
-    app.use('/auth', authRouter);
+    app.use('/auth', authRouter); // rate limiting applied per-route inside auth.ts
     app.use('/api/published', publishedRouter);
 
     // Protected routes
@@ -110,13 +120,17 @@ async function start() {
     app.use('/api/download', authMiddleware, downloaderRouter);
     app.use('/api/workflow', authMiddleware, workflowRouter);
     app.use('/api/claude', authMiddleware, claudeRouter);
-    app.use('/api/ai', authMiddleware, aiRouter);
+    app.use('/api/ai', authMiddleware, aiRateLimiter, aiRouter);
     app.use('/api/publish', authMiddleware, publishRouter);
     app.use('/api/agent/mcp', mcpRouter);
     app.use('/api/writer', authMiddleware, writerRouter);
     app.use('/api/tasks', authMiddleware, tasksRouter);
     app.use('/api/rag', authMiddleware, ragRouter);
     app.use('/api/note-links', authMiddleware, noteLinksRouter);
+    app.use('/api/subscription', authMiddleware, subscriptionRouter);
+    app.use('/api/admin', authMiddleware, adminRouter);
+    app.use('/api/upload', authMiddleware, uploadRouter);
+    app.use('/api/import', authMiddleware, importRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({
@@ -149,9 +163,16 @@ async function start() {
       process.exit(0);
     });
 
-    app.listen(PORT, () => {
+    // Create HTTP server and attach WebSocket collaboration
+    const http = await import('http');
+    const { setupCollaborationServer } = await import('./services/collaboration.js');
+    const server = http.createServer(app);
+    setupCollaborationServer(server);
+
+    server.listen(PORT, () => {
       console.log(`🚀 Vicoo API running on http://localhost:${PORT}`);
       console.log(`📚 OpenAPI docs available at http://localhost:${PORT}/openapi.json`);
+      console.log(`🔄 WebSocket collaboration at ws://localhost:${PORT}/ws/collab`);
       
       // 启动后台知识图谱自动生成服务
       startAutoGraphService();

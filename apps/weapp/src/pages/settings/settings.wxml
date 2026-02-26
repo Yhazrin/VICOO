@@ -1,0 +1,43 @@
+<!--pages/settings/settings.wxml — 设置 -->
+<view class="container">
+  <view class="header">
+    <text class="title-large">设置</text>
+  </view>
+
+  <view class="card">
+    <view class="setting-row">
+      <text class="setting-label">🌙 深色模式</text>
+      <switch checked="{{darkMode}}" bindchange="toggleDark" color="#FFD166" />
+    </view>
+    <view class="setting-row">
+      <text class="setting-label">🌐 语言</text>
+      <view class="lang-group">
+        <view class="lang-btn {{language === 'zh' ? 'lang-active' : ''}}" bindtap="setLang" data-lang="zh">
+          <text>中文</text>
+        </view>
+        <view class="lang-btn {{language === 'en' ? 'lang-active' : ''}}" bindtap="setLang" data-lang="en">
+          <text>EN</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="card">
+    <view class="setting-row" bindtap="goAIConfig">
+      <text class="setting-label">🤖 AI Provider</text>
+      <text class="setting-value">{{aiProvider}}</text>
+    </view>
+    <view class="setting-row">
+      <text class="setting-label">📊 AI 用量</text>
+      <text class="setting-value">{{aiUsage}}</text>
+    </view>
+    <view class="setting-row" bindtap="clearCache">
+      <text class="setting-label">🗑️ 清除缓存</text>
+      <text class="setting-arrow">→</text>
+    </view>
+    <view class="setting-row" bindtap="about">
+      <text class="setting-label">ℹ️ 关于 Vicoo</text>
+      <text class="setting-arrow">→</text>
+    </view>
+  </view>
+</view>
