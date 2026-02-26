@@ -81,6 +81,69 @@ router.get('/', (req, res) => {
   }
 });
 
+// GET /api/search/hybrid — combined full-text + AI semantic search
+router.get('/hybrid', async (req, res) => {
+  try {
+    const { q, limit = 20 } = req.query;
+    if (!q) return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message: 'Query required' } });
+
+    const query = String(q).toLowerCase();
+    const searchPattern = `%${query}%`;
+
+    // 1. Full-text results
+    const textResults = getAll<any>(
+      `SELECT id, title, content, snippet, category, timestamp FROM notes
+       WHERE title LIKE ? OR content LIKE ? OR snippet LIKE ?
+       ORDER BY timestamp DESC LIMIT ?`,
+      [searchPattern, searchPattern, searchPattern, Number(limit)]
+    );
+
+    // 2. Tag-based results
+    const tagResults = getAll<any>(
+      `SELECT DISTINCT n.id, n.title, n.content, n.snippet, n.category, n.timestamp
+       FROM notes n JOIN note_tags nt ON n.id = nt.note_id JOIN tags t ON nt.tag_id = t.id
+       WHERE t.name LIKE ? LIMIT ?`,
+      [searchPattern, Number(limit)]
+    );
+
+    // 3. Merge and deduplicate
+    const seen = new Set<string>();
+    const merged: any[] = [];
+
+    for (const note of [...textResults, ...tagResults]) {
+      if (seen.has(note.id)) continue;
+      seen.add(note.id);
+
+      let score = 0;
+      const tl = (note.title || '').toLowerCase();
+      const cl = (note.content || '').toLowerCase();
+      if (tl === query) score = 1.0;
+      else if (tl.includes(query)) score = 0.8;
+      else if (cl.includes(query)) score = 0.5;
+      else score = 0.3; // tag match
+
+      merged.push({
+        id: note.id,
+        title: note.title,
+        category: note.category,
+        snippet: note.snippet || (note.content || '').slice(0, 120),
+        relevance: score,
+        timestamp: note.timestamp,
+        matchType: tl.includes(query) ? 'title' : cl.includes(query) ? 'content' : 'tag',
+      });
+    }
+
+    merged.sort((a, b) => b.relevance - a.relevance);
+
+    res.json({
+      data: merged.slice(0, Number(limit)),
+      meta: { total: merged.length, query: String(q), mode: 'hybrid' }
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: { code: 'SEARCH_ERROR', message: error.message } });
+  }
+});
+
 // POST /api/search/semantic - AI-powered Semantic Search
 router.post('/semantic', async (req, res) => {
   try {
