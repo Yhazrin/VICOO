@@ -44,7 +44,6 @@ const PORT = process.env.PORT || 8000;
 import { securityHeaders, globalRateLimiter, authRateLimiter, aiRateLimiter, sanitizeInput } from './middleware/security.js';
 app.use(securityHeaders);
 app.use(globalRateLimiter);
-app.use(sanitizeInput);
 
 // CORS
 app.use(cors({
@@ -53,6 +52,7 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(sanitizeInput); // Must be AFTER body parsers
 
 // Serve uploaded files
 import path from 'path';
