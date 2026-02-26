@@ -1,6 +1,6 @@
 // pages/profile/profile.js
 const app = getApp();
-const API = 'http://localhost:8000';
+const { apiBase: API } = require('../../utils/config');
 
 Page({
   data: {

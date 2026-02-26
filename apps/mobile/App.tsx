@@ -16,6 +16,9 @@ import AIAssistantScreen from './src/screens/AIAssistantScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import PricingScreen from './src/screens/PricingScreen';
+import FocusModeScreen from './src/screens/FocusModeScreen';
+import TimelineScreen from './src/screens/TimelineScreen';
+import GalaxyScreen from './src/screens/GalaxyScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -68,6 +71,9 @@ export default function App() {
         <Stack.Screen name="Projects" component={ProjectsScreen} options={{ title: '项目' }} />
         <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: '设置' }} />
         <Stack.Screen name="Pricing" component={PricingScreen} options={{ title: '订阅' }} />
+        <Stack.Screen name="FocusMode" component={FocusModeScreen} options={{ title: '专注模式', headerStyle: { backgroundColor: '#101010' }, headerTintColor: '#fff' }} />
+        <Stack.Screen name="Timeline" component={TimelineScreen} options={{ title: '时间线' }} />
+        <Stack.Screen name="Galaxy" component={GalaxyScreen} options={{ title: '知识图谱' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
