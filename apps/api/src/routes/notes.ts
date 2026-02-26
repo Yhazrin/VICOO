@@ -292,6 +292,15 @@ router.patch('/:id', (req, res) => {
   updates.push("updated_at = datetime('now')");
 
   if (updates.length > 0) {
+    // Save revision before updating
+    const before = getOne<any>('SELECT title, content FROM notes WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+    if (before) {
+      runQuery(
+        'INSERT INTO note_revisions (id, note_id, title, content, created_by) VALUES (?, ?, ?, ?, ?)',
+        [uuidv4(), req.params.id, before.title, before.content, userId]
+      );
+    }
+
     params.push(req.params.id, userId);
     runQuery(`UPDATE notes SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`, params);
   }
@@ -646,6 +655,32 @@ router.delete('/:id/links/:targetId', (req, res) => {
   saveDatabase();
 
   res.status(204).send();
+});
+
+// GET /api/notes/:id/revisions — version history
+router.get('/:id/revisions', (req, res) => {
+  const userId = (req as any).userId || 'dev_user_1';
+  const noteId = req.params.id;
+
+  const note = getOne<any>('SELECT id FROM notes WHERE id = ? AND user_id = ?', [noteId, userId]);
+  if (!note) {
+    return res.status(404).json({ error: { code: 'NOT_FOUND', message: 'Note not found' } });
+  }
+
+  const revisions = getAll<any>(
+    'SELECT * FROM note_revisions WHERE note_id = ? ORDER BY created_at DESC LIMIT 50',
+    [noteId]
+  );
+
+  res.json({
+    data: revisions.map(r => ({
+      id: r.id,
+      noteId: r.note_id,
+      title: r.title,
+      content: r.content,
+      createdAt: r.created_at,
+    }))
+  });
 });
 
 export default router;

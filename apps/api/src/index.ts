@@ -38,7 +38,13 @@ import adminRouter from './routes/admin.js';
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-// Middleware
+// Security middleware
+import { securityHeaders, globalRateLimiter, authRateLimiter, aiRateLimiter, sanitizeInput } from './middleware/security.js';
+app.use(securityHeaders);
+app.use(globalRateLimiter);
+app.use(sanitizeInput);
+
+// CORS
 app.use(cors({
   origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
   credentials: true
@@ -91,7 +97,7 @@ async function start() {
 
     // Public routes (no auth required)
     app.use('/health', healthRouter);
-    app.use('/auth', authRouter);
+    app.use('/auth', authRateLimiter, authRouter);
     app.use('/api/published', publishedRouter);
 
     // Protected routes
@@ -112,7 +118,7 @@ async function start() {
     app.use('/api/download', authMiddleware, downloaderRouter);
     app.use('/api/workflow', authMiddleware, workflowRouter);
     app.use('/api/claude', authMiddleware, claudeRouter);
-    app.use('/api/ai', authMiddleware, aiRouter);
+    app.use('/api/ai', authMiddleware, aiRateLimiter, aiRouter);
     app.use('/api/publish', authMiddleware, publishRouter);
     app.use('/api/agent/mcp', mcpRouter);
     app.use('/api/writer', authMiddleware, writerRouter);

@@ -252,6 +252,19 @@ function initializeTables() {
     )
   `);
 
+  // Note revisions (version history)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS note_revisions (
+      id TEXT PRIMARY KEY,
+      note_id TEXT NOT NULL,
+      title TEXT,
+      content TEXT,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+    )
+  `);
+
   // Note embeddings table for RAG vector search
   db.run(`
     CREATE TABLE IF NOT EXISTS note_embeddings (

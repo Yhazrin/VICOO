@@ -34,6 +34,7 @@ const AskAI = lazy(() => import('./pages/AskAI').then(m => ({ default: m.AskAI }
 const UnifiedAI = lazy(() => import('./pages/UnifiedAI').then(m => ({ default: m.UnifiedAI })));
 const Publish = lazy(() => import('./pages/Publish').then(m => ({ default: m.Publish })));
 const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
+const Pricing = lazy(() => import('./pages/Pricing').then(m => ({ default: m.Pricing })));
 
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
@@ -257,6 +258,7 @@ const renderContent = (view: View, setView: any, openNote: any, activeNoteId?: s
       case View.ASK_AI: return <UnifiedAI />;
       case View.PUBLISH: return <Publish />;
       case View.PROFILE: return <Profile />;
+      case View.PRICING: return <Pricing />;
       default: return <Dashboard onNavigate={setView} />;
     }
 }
@@ -387,15 +389,37 @@ const FocusTransitionLayer: React.FC<{
     );
 };
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { error: Error | null }> {
+  state = { error: null as Error | null };
+  static getDerivedStateFromError(error: Error) { return { error }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="h-screen flex flex-col items-center justify-center bg-light dark:bg-dark p-8 text-center">
+          <h1 className="text-4xl font-black text-ink dark:text-white mb-4">出了点问题</h1>
+          <p className="text-gray-500 mb-6 max-w-md">{this.state.error.message}</p>
+          <button onClick={() => { this.setState({ error: null }); window.location.reload(); }}
+            className="px-6 py-3 bg-primary text-ink font-bold rounded-xl border-2 border-ink">
+            刷新页面
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <LanguageProvider>
-        <ApiProvider>
-          <AppContent />
-        </ApiProvider>
-      </LanguageProvider>
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider>
+        <LanguageProvider>
+          <ApiProvider>
+            <AppContent />
+          </ApiProvider>
+        </LanguageProvider>
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 }
 
