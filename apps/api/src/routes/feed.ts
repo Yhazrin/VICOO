@@ -3,58 +3,94 @@ import { getAll, getOne } from '../db/index.js';
 
 const router = Router();
 
+// Types for feed items
+interface FeedItem {
+  id: string;
+  type: string;
+  title: string;
+  description?: string;
+  priority?: string;
+  timestamp: string;
+  metadata?: Record<string, unknown>;
+  action?: Record<string, unknown>;
+}
+
+interface DraftNote {
+  id: string;
+  title: string;
+  timestamp: string;
+  category?: string;
+  snippet?: string;
+}
+
+// Helper to transform database rows to feed items
+function transformDrafts(drafts: DraftNote[]): FeedItem[] {
+  return drafts.map(draft => ({
+    id: `draft-${draft.id}`,
+    type: 'draft',
+    title: draft.title,
+    description: 'Unpublished note',
+    priority: 'medium',
+    timestamp: draft.timestamp,
+    metadata: { noteId: draft.id }
+  }));
+}
+
+function transformSuggestions(notes: DraftNote[], type: string, actionType: string): FeedItem[] {
+  return notes.map(note => ({
+    id: `${type}-${note.id}`,
+    type,
+    title: type === 'publish' ? 'Consider publishing' : type === 'tag' ? 'Add tags' : 'Add to Galaxy',
+    description: type === 'publish' ? `"${note.title}" is ready to share`
+      : type === 'tag' ? `"${note.title}" has no tags`
+      : `Add "${note.title}" to your knowledge graph`,
+    action: { type: actionType, noteId: note.id }
+  }));
+}
+
 // GET /api/feed - Get dashboard feed items
 router.get('/', (req, res) => {
   try {
-    const items: any[] = [];
-
     // Get draft notes (unpublished)
-    const drafts = getAll<any>(
+    const drafts = getAll<DraftNote>(
       "SELECT id, title, timestamp FROM notes WHERE published = 0 ORDER BY timestamp DESC LIMIT 5"
     );
-    drafts.forEach(draft => {
-      items.push({
-        id: `draft-${draft.id}`,
-        type: 'draft',
-        title: draft.title,
-        description: 'Unpublished note',
-        priority: 'medium',
-        timestamp: draft.timestamp,
-        metadata: { noteId: draft.id }
-      });
-    });
 
     // Get recent notes for suggestions
-    const recentNotes = getAll<any>(
+    const recentNotes = getAll<DraftNote>(
       'SELECT id, title, category, timestamp FROM notes ORDER BY timestamp DESC LIMIT 3'
     );
-    recentNotes.forEach(note => {
-      items.push({
-        id: `suggestion-${note.id}`,
-        type: 'suggestion',
-        title: `Review: ${note.title}`,
-        description: `Category: ${note.category}`,
-        priority: 'low',
-        timestamp: note.timestamp,
-        metadata: { noteId: note.id }
-      });
-    });
 
-    // Add some mock memory items
-    items.push({
+    // Build items using map and concat instead of forEach + push
+    const draftItems = transformDrafts(drafts);
+    const suggestionItems = recentNotes.map(note => ({
+      id: `suggestion-${note.id}`,
+      type: 'suggestion',
+      title: `Review: ${note.title}`,
+      description: `Category: ${note.category}`,
+      priority: 'low',
+      timestamp: note.timestamp,
+      metadata: { noteId: note.id }
+    }));
+
+    // Add mock memory item
+    const memoryItem: FeedItem = {
       id: 'memory-1',
       type: 'memory',
       title: 'You wrote about React last week',
       description: 'Consider revisiting your React notes',
       priority: 'low',
       timestamp: new Date().toISOString()
-    });
+    };
 
-    // Sort by timestamp
-    items.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    // Combine and sort by timestamp
+    const items = [memoryItem, ...draftItems, ...suggestionItems].sort(
+      (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
 
     res.json({ data: items });
   } catch (error) {
+    console.error('[Feed] Failed to fetch feed:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch feed' }
     });
@@ -64,11 +100,12 @@ router.get('/', (req, res) => {
 // GET /api/feed/drafts - Get draft notes
 router.get('/drafts', (req, res) => {
   try {
-    const { limit = 10, offset = 0 } = req.query;
+    const limit = Math.min(Number(req.query.limit) || 10, 100); // Cap at 100
+    const offset = Number(req.query.offset) || 0;
 
-    const drafts = getAll<any>(
+    const drafts = getAll<DraftNote>(
       'SELECT * FROM notes WHERE published = 0 ORDER BY timestamp DESC LIMIT ? OFFSET ?',
-      [Number(limit), Number(offset)]
+      [limit, offset]
     );
 
     const total = getOne<{ count: number }>('SELECT COUNT(*) as count FROM notes WHERE published = 0');
@@ -83,11 +120,12 @@ router.get('/drafts', (req, res) => {
       })),
       meta: {
         total: total?.count || 0,
-        limit: Number(limit),
-        offset: Number(offset)
+        limit,
+        offset
       }
     });
   } catch (error) {
+    console.error('[Feed] Failed to fetch drafts:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch drafts' }
     });
@@ -97,58 +135,37 @@ router.get('/drafts', (req, res) => {
 // GET /api/feed/suggestions - Get system suggestions
 router.get('/suggestions', (req, res) => {
   try {
-    const suggestions: any[] = [];
-
     // Suggest publishing unpublished notes
-    const unpublished = getAll<any>(
+    const unpublished = getAll<DraftNote>(
       "SELECT id, title, timestamp FROM notes WHERE published = 0 ORDER BY timestamp DESC LIMIT 3"
     );
-    unpublished.forEach(note => {
-      suggestions.push({
-        id: `publish-${note.id}`,
-        type: 'publish',
-        title: 'Consider publishing',
-        description: `"${note.title}" is ready to share`,
-        action: { type: 'publish', noteId: note.id }
-      });
-    });
 
     // Suggest adding tags to notes without tags
-    const noTags = getAll<any>(
+    const noTags = getAll<DraftNote>(
       `SELECT n.id, n.title FROM notes n
        LEFT JOIN note_tags nt ON n.id = nt.note_id
        WHERE nt.note_id IS NULL
        LIMIT 3`
     );
-    noTags.forEach(note => {
-      suggestions.push({
-        id: `tag-${note.id}`,
-        type: 'tag',
-        title: 'Add tags',
-        description: `"${note.title}" has no tags`,
-        action: { type: 'add_tag', noteId: note.id }
-      });
-    });
 
     // Suggest creating nodes for orphan notes
-    const orphanNotes = getAll<any>(
+    const orphanNotes = getAll<DraftNote>(
       `SELECT n.id, n.title FROM notes n
        LEFT JOIN nodes n2 ON n.id = n2.linked_note_id
        WHERE n2.linked_note_id IS NULL
        LIMIT 3`
     );
-    orphanNotes.forEach(note => {
-      suggestions.push({
-        id: `node-${note.id}`,
-        type: 'galaxy',
-        title: 'Add to Galaxy',
-        description: `Add "${note.title}" to your knowledge graph`,
-        action: { type: 'add_node', noteId: note.id }
-      });
-    });
+
+    // Build suggestions using concat instead of forEach + push
+    const suggestions = [
+      ...transformSuggestions(unpublished, 'publish', 'publish'),
+      ...transformSuggestions(noTags, 'tag', 'add_tag'),
+      ...transformSuggestions(orphanNotes, 'galaxy', 'add_node')
+    ];
 
     res.json({ data: suggestions });
   } catch (error) {
+    console.error('[Feed] Failed to fetch suggestions:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch suggestions' }
     });

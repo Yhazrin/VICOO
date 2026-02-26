@@ -5,12 +5,55 @@ import { callClaudeCode, generateKnowledgeGraphPrompt } from '../services/claude
 
 const router = Router();
 
+// Type definitions for graph entities
+interface GraphNode {
+  id: string;
+  x: number;
+  y: number;
+  label: string;
+  type: string;
+  color: string;
+  icon: string;
+  description: string;
+  linked_note_id: string;
+  tags: string;
+}
+
+interface GraphLink {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  color: string;
+}
+
+interface ApiNode {
+  id: string;
+  x: number;
+  y: number;
+  label: string;
+  type: string;
+  color: string;
+  icon: string;
+  description: string;
+  linkedNoteId: string;
+  tags: string[];
+}
+
+interface ApiLink {
+  id: string;
+  source: string;
+  target: string;
+  label: string;
+  color: string;
+}
+
 // ==================== NODES ====================
 
 // GET /api/nodes - Get all nodes
 router.get('/', (req, res) => {
   try {
-    const nodes = getAll<any>('SELECT * FROM nodes ORDER BY label');
+    const nodes = getAll<GraphNode>('SELECT * FROM nodes ORDER BY label');
 
     res.json({
       data: nodes.map(n => ({
@@ -27,6 +70,7 @@ router.get('/', (req, res) => {
       }))
     });
   } catch (error) {
+    console.error('[Graph] Failed to fetch nodes:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch nodes' }
     });
@@ -63,13 +107,14 @@ router.post('/', (req, res) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create node' }
     });
+    console.error('[Graph] Failed to create node:', error);
   }
 });
 
 // GET /api/nodes/orphans - Get orphan nodes (not connected to any note)
 router.get('/orphans', (req, res) => {
   try {
-    const nodes = getAll<any>(
+    const nodes = getAll<GraphNode>(
       "SELECT * FROM nodes WHERE linked_note_id IS NULL OR linked_note_id = '' ORDER BY label"
     );
 
@@ -88,6 +133,7 @@ router.get('/orphans', (req, res) => {
       }))
     });
   } catch (error) {
+    console.error('[Graph] Failed to fetch orphan nodes:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch orphan nodes' }
     });
@@ -98,7 +144,7 @@ router.get('/orphans', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const node = getOne<any>('SELECT * FROM nodes WHERE id = ?', [id]);
+    const node = getOne<GraphNode>('SELECT * FROM nodes WHERE id = ?', [id]);
 
     if (!node) {
       return res.status(404).json({
@@ -121,6 +167,7 @@ router.get('/:id', (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[Graph] Failed to fetch node:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch node' }
     });
@@ -133,7 +180,7 @@ router.patch('/:id', (req, res) => {
     const { id } = req.params;
     const { x, y, label, type, color, icon, description, linkedNoteId, tags } = req.body;
 
-    const existing = getOne<any>('SELECT id FROM nodes WHERE id = ?', [id]);
+    const existing = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Node not found' }
@@ -152,7 +199,7 @@ router.patch('/:id', (req, res) => {
 
     saveDatabase();
 
-    const updated = getOne<any>('SELECT * FROM nodes WHERE id = ?', [id]);
+    const updated = getOne<GraphNode>('SELECT * FROM nodes WHERE id = ?', [id]);
 
     res.json({
       data: {
@@ -172,6 +219,7 @@ router.patch('/:id', (req, res) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to update node' }
     });
+    console.error('[Graph] Failed to update node:', error);
   }
 });
 
@@ -180,7 +228,7 @@ router.delete('/:id', (req, res) => {
   try {
     const { id } = req.params;
 
-    const existing = getOne<any>('SELECT id FROM nodes WHERE id = ?', [id]);
+    const existing = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Node not found' }
@@ -194,6 +242,7 @@ router.delete('/:id', (req, res) => {
 
     res.status(204).send();
   } catch (error) {
+    console.error('[Graph] Failed to delete node:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete node' }
     });
@@ -206,7 +255,7 @@ router.post('/:id/connect', (req, res) => {
     const { id } = req.params;
     const { noteId } = req.body;
 
-    const node = getOne<any>('SELECT id FROM nodes WHERE id = ?', [id]);
+    const node = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [id]);
     if (!node) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Node not found' }
@@ -218,6 +267,7 @@ router.post('/:id/connect', (req, res) => {
 
     res.json({ data: { success: true, nodeId: id, linkedNoteId: noteId } });
   } catch (error) {
+    console.error('[Graph] Failed to connect node:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to connect node' }
     });
@@ -229,7 +279,7 @@ router.post('/:id/connect', (req, res) => {
 // GET /api/links - Get all links
 router.get('/../links', (req, res) => {
   try {
-    const links = getAll<any>('SELECT * FROM links');
+    const links = getAll<GraphLink>('SELECT * FROM links');
 
     res.json({
       data: links.map(l => ({
@@ -243,6 +293,7 @@ router.get('/../links', (req, res) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch links' }
     });
+    console.error('[Graph] Failed to fetch links:', error);
   }
 });
 
@@ -258,8 +309,8 @@ router.post('/../links', (req, res) => {
     }
 
     // Check if nodes exist
-    const sourceNode = getOne<any>('SELECT id FROM nodes WHERE id = ?', [source]);
-    const targetNode = getOne<any>('SELECT id FROM nodes WHERE id = ?', [target]);
+    const sourceNode = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [source]);
+    const targetNode = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [target]);
 
     if (!sourceNode || !targetNode) {
       return res.status(404).json({
@@ -268,7 +319,7 @@ router.post('/../links', (req, res) => {
     }
 
     // Check for duplicate
-    const existing = getOne<any>(
+    const existing = getOne<{ id: string }>(
       'SELECT id FROM links WHERE (source = ? AND target = ?) OR (source = ? AND target = ?)',
       [source, target, target, source]
     );
@@ -293,6 +344,7 @@ router.post('/../links', (req, res) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create link' }
     });
+    console.error('[Graph] Failed to create link:', error);
   }
 });
 
@@ -301,7 +353,7 @@ router.delete('/../links/:id', (req, res) => {
   try {
     const { id } = req.params;
 
-    const existing = getOne<any>('SELECT id FROM links WHERE id = ?', [id]);
+    const existing = getOne<{ id: string }>('SELECT id FROM links WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Link not found' }
@@ -313,6 +365,7 @@ router.delete('/../links/:id', (req, res) => {
 
     res.status(204).send();
   } catch (error) {
+    console.error('[Graph] Failed to delete link:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete link' }
     });
@@ -330,7 +383,7 @@ router.post('/generate-from-notes', async (req, res) => {
     console.log('[Graph Generate] Starting knowledge graph generation from notes...');
 
     // 1. 获取所有笔记
-    const notes = getAll<any>(
+    const notes = getAll<{ id: string; title: string; content: string }>(
       'SELECT id, title, content FROM notes WHERE user_id = ? ORDER BY timestamp DESC',
       [userId]
     );

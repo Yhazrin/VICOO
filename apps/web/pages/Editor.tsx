@@ -8,7 +8,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
 import { VicooIcon } from '../components/VicooIcon';
 import { eventBus, Events } from '@vicoo/events';
-import type { Note, NoteUpdate, NoteCategory } from '@vicoo/types';
+import type { Note, NoteUpdate, NoteCategory, NoteCreate } from '@vicoo/types';
 
 // Mock Knowledge Graph for "Cognitive Context"
 const KNOWLEDGE_GRAPH = [
@@ -96,7 +96,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
     eventBus.emit(Events.MASCOT_STATE, { state: 'saving', message: 'Saving...', duration: 0 });
 
     try {
-      const noteData = {
+      const noteData: NoteCreate = {
         title,
         content,
         category,
@@ -109,7 +109,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
         await updateNote(noteId, noteData);
       } else {
         // Create new note
-        const newNote = await createNote(noteData as any);
+        const newNote = await createNote(noteData);
         setNoteId(newNote.id);
       }
       setLastSaved(new Date());
@@ -154,7 +154,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
     if (title.trim()) {
       setIsSaving(true);
       try {
-        const noteData = {
+        const noteData: NoteCreate = {
           title,
           content,
           category,
@@ -165,7 +165,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
         if (noteId) {
           await updateNote(noteId, noteData);
         } else {
-          const newNote = await createNote(noteData as any);
+          const newNote = await createNote(noteData);
           setNoteId(newNote.id);
         }
         setLastSaved(new Date());

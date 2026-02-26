@@ -3,6 +3,27 @@ import { getAll, getOne, runQuery } from '../db/index.js';
 
 const router = Router();
 
+// Type definitions for analytics queries
+interface ActivityRow {
+  date: string;
+  count: number;
+}
+
+interface TagRow {
+  name: string;
+  count: number;
+}
+
+interface CategoryRow {
+  category: string;
+  count: number;
+}
+
+interface Last30DaysStats {
+  created: number;
+  modified: number;
+}
+
 // GET /api/analytics/overview - Get overall statistics
 router.get('/overview', (req, res) => {
   try {
@@ -13,8 +34,8 @@ router.get('/overview', (req, res) => {
     const totalTags = getOne<{ count: number }>('SELECT COUNT(*) as count FROM tags');
 
     // Last 30 days stats
-    const last30Days = getOne<any>(`
-      SELECT 
+    const last30Days = getOne<Last30DaysStats>(`
+      SELECT
         COALESCE(SUM(CASE WHEN published = 1 THEN 1 ELSE 0 END), 0) as created,
         COALESCE(SUM(CASE WHEN updated_at > datetime('now', '-30 days') THEN 1 ELSE 0 END), 0) as modified
       FROM notes
@@ -35,6 +56,7 @@ router.get('/overview', (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[Analytics] Failed to fetch overview:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch analytics' }
     });
@@ -48,8 +70,8 @@ router.get('/activity', (req, res) => {
     const numDays = Number(days);
 
     // Get notes created per day for the last N days
-    const activity = getAll<any>(`
-      SELECT 
+    const activity = getAll<ActivityRow>(`
+      SELECT
         date(timestamp) as date,
         COUNT(*) as count
       FROM notes
@@ -59,13 +81,13 @@ router.get('/activity', (req, res) => {
     `);
 
     // Fill in missing dates with 0
-    const result = [];
+    const result: { date: string; notes: number }[] = [];
     const today = new Date();
     for (let i = numDays - 1; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toISOString().split('T')[0];
-      const existing = activity.find((a: any) => a.date === dateStr);
+      const existing = activity.find((a) => a.date === dateStr);
       result.push({
         date: dateStr,
         notes: existing ? existing.count : 0
@@ -74,6 +96,7 @@ router.get('/activity', (req, res) => {
 
     res.json({ data: result });
   } catch (error) {
+    console.error('[Analytics] Failed to fetch activity:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch activity' }
     });
@@ -83,16 +106,16 @@ router.get('/activity', (req, res) => {
 // GET /api/analytics/tags - Get tag statistics
 router.get('/tags', (req, res) => {
   try {
-    const { limit = 10 } = req.query;
+    const limit = Math.min(Number(req.query.limit) || 10, 100); // Cap at 100
 
-    const tags = getAll<any>(`
+    const tags = getAll<TagRow & { id: string; color: string }>(`
       SELECT t.id, t.name, t.color, COUNT(nt.note_id) as count
       FROM tags t
       LEFT JOIN note_tags nt ON t.id = nt.tag_id
       GROUP BY t.id
       ORDER BY count DESC
       LIMIT ?
-    `, [Number(limit)]);
+    `, [limit]);
 
     const total = getOne<{ count: number }>('SELECT COUNT(*) as count FROM note_tags');
 
@@ -108,6 +131,7 @@ router.get('/tags', (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[Analytics] Failed to fetch tags:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch tag analytics' }
     });
@@ -117,7 +141,7 @@ router.get('/tags', (req, res) => {
 // GET /api/analytics/categories - Get category statistics
 router.get('/categories', (req, res) => {
   try {
-    const categories = getAll<any>(`
+    const categories = getAll<CategoryRow>(`
       SELECT category, COUNT(*) as count
       FROM notes
       GROUP BY category
@@ -145,6 +169,7 @@ router.get('/categories', (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[Analytics] Failed to fetch categories:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch category analytics' }
     });
@@ -167,6 +192,7 @@ router.get('/publish-ratio', (req, res) => {
       }
     });
   } catch (error) {
+    console.error('[Analytics] Failed to fetch publish ratio:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch publish ratio' }
     });
