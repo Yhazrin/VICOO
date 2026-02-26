@@ -107,4 +107,21 @@ class ApiService {
 }
 
 export const api = new ApiService();
+
+// Convenience wrapper with .get/.post/.patch methods
+export const apiClient = {
+  get: async (path: string) => {
+    const data = await api['request'](path);
+    return data as any;
+  },
+  post: async (path: string, body?: any) => {
+    const data = await api['request'](path, { method: 'POST', body: body ? JSON.stringify(body) : undefined });
+    return data as any;
+  },
+  patch: async (path: string, body?: any) => {
+    const data = await api['request'](path, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined });
+    return data as any;
+  },
+};
+
 export default api;
