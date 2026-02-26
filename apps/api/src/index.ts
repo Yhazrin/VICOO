@@ -161,9 +161,16 @@ async function start() {
       process.exit(0);
     });
 
-    app.listen(PORT, () => {
+    // Create HTTP server and attach WebSocket collaboration
+    const http = await import('http');
+    const { setupCollaborationServer } = await import('./services/collaboration.js');
+    const server = http.createServer(app);
+    setupCollaborationServer(server);
+
+    server.listen(PORT, () => {
       console.log(`🚀 Vicoo API running on http://localhost:${PORT}`);
       console.log(`📚 OpenAPI docs available at http://localhost:${PORT}/openapi.json`);
+      console.log(`🔄 WebSocket collaboration at ws://localhost:${PORT}/ws/collab`);
       
       // 启动后台知识图谱自动生成服务
       startAutoGraphService();

@@ -42,7 +42,10 @@
     "node-pty": "^1.1.0",
     "sql.js": "^1.11.0",
     "uuid": "^11.0.0",
+    "ws": "^8.19.0",
     "xss": "^1.0.15",
+    "y-websocket": "^3.0.0",
+    "yjs": "^13.6.29",
     "zod": "^4.3.6"
   },
   "devDependencies": {
@@ -54,6 +57,7 @@
     "@types/node": "^22.14.0",
     "@types/sql.js": "^1.4.9",
     "@types/uuid": "^10.0.0",
+    "@types/ws": "^8.18.1",
     "tsx": "^4.19.0",
     "typescript": "~5.8.2"
   }
