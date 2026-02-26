@@ -3,7 +3,7 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { Ionicons } from '@expo/vector-icons';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 
 import HomeScreen from './src/screens/HomeScreen';
@@ -28,20 +28,21 @@ function TabNavigator() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
+          // Material Community Icons — aligned with Web VicooIcon (Material Icons Round)
+          let iconName: keyof typeof MaterialCommunityIcons.glyphMap;
           if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-          else if (route.name === 'Inbox') iconName = focused ? 'archive' : 'archive-outline';
-          else if (route.name === 'AI') iconName = focused ? 'chatbubbles' : 'chatbubbles-outline';
-          else if (route.name === 'Library') iconName = focused ? 'library' : 'library-outline';
-          else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
-          else iconName = 'ellipse';
-          return <Ionicons name={iconName} size={size} color={color} />;
+          else if (route.name === 'Inbox') iconName = focused ? 'inbox' : 'inbox-outline';
+          else if (route.name === 'AI') iconName = focused ? 'robot' : 'robot-outline';
+          else if (route.name === 'Library') iconName = focused ? 'bookshelf' : 'book-outline';
+          else if (route.name === 'Profile') iconName = focused ? 'account-circle' : 'account-circle-outline';
+          else iconName = 'circle';
+          return <MaterialCommunityIcons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#1a1a1a',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: { borderTopWidth: 3, borderTopColor: '#1a1a1a', backgroundColor: '#ffffff', paddingBottom: 4, height: 60 },
         tabBarLabelStyle: { fontWeight: '700', fontSize: 11 },
-        headerStyle: { backgroundColor: '#FFD166', borderBottomWidth: 3, borderBottomColor: '#1a1a1a' },
+        headerStyle: { backgroundColor: '#FFD166', borderBottomWidth: 3, borderBottomColor: '#1a1a1a', elevation: 0, shadowOpacity: 0 },
         headerTitleStyle: { fontWeight: '900', fontSize: 18, color: '#1a1a1a' },
       })}
     >
@@ -60,8 +61,8 @@ export default function App() {
       <StatusBar style="dark" />
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: '#FFD166' },
-          headerTitleStyle: { fontWeight: '900', color: '#1a1a1a' },
+          headerStyle: { backgroundColor: '#FFD166', borderBottomWidth: 3, borderBottomColor: '#1a1a1a', elevation: 0, shadowOpacity: 0 },
+          headerTitleStyle: { fontWeight: '900', color: '#1a1a1a', fontSize: 18 },
           headerTintColor: '#1a1a1a',
         }}
       >

@@ -25,23 +25,33 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "首页"
+        "text": "首页",
+        "iconPath": "assets/tabbar/home.png",
+        "selectedIconPath": "assets/tabbar/home_active.png"
       },
       {
         "pagePath": "pages/inbox/inbox",
-        "text": "收件箱"
+        "text": "收件箱",
+        "iconPath": "assets/tabbar/inbox.png",
+        "selectedIconPath": "assets/tabbar/inbox_active.png"
       },
       {
         "pagePath": "pages/ai/ai",
-        "text": "AI 助手"
+        "text": "AI 助手",
+        "iconPath": "assets/tabbar/ai.png",
+        "selectedIconPath": "assets/tabbar/ai_active.png"
       },
       {
         "pagePath": "pages/library/library",
-        "text": "知识库"
+        "text": "知识库",
+        "iconPath": "assets/tabbar/library.png",
+        "selectedIconPath": "assets/tabbar/library_active.png"
       },
       {
         "pagePath": "pages/profile/profile",
-        "text": "我的"
+        "text": "我的",
+        "iconPath": "assets/tabbar/profile.png",
+        "selectedIconPath": "assets/tabbar/profile_active.png"
       }
     ]
   },
