@@ -35,6 +35,7 @@ const UnifiedAI = lazy(() => import('./pages/UnifiedAI').then(m => ({ default: m
 const Publish = lazy(() => import('./pages/Publish').then(m => ({ default: m.Publish })));
 const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
 const Pricing = lazy(() => import('./pages/Pricing').then(m => ({ default: m.Pricing })));
+const Legal = lazy(() => import('./pages/Legal').then(m => ({ default: m.Legal })));
 
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
@@ -259,6 +260,7 @@ const renderContent = (view: View, setView: any, openNote: any, activeNoteId?: s
       case View.PUBLISH: return <Publish />;
       case View.PROFILE: return <Profile />;
       case View.PRICING: return <Pricing />;
+      case View.LEGAL: return <Legal />;
       default: return <Dashboard onNavigate={setView} />;
     }
 }

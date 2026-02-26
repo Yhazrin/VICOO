@@ -20,7 +20,8 @@ export enum View {
   ASK_AI = 'ask_ai',
   PUBLISH = 'publish',
   PROFILE = 'profile',
-  PRICING = 'pricing'
+  PRICING = 'pricing',
+  LEGAL = 'legal'
 }
 
 export interface NavItem {
