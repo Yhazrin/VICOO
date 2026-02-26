@@ -1,6 +1,16 @@
 // Vicoo Desktop Library
 use tauri::Manager;
 
+#[tauri::command]
+fn greet(name: &str) -> String {
+    format!("你好 {}! 欢迎使用 Vicoo Desktop 🚀", name)
+}
+
+#[tauri::command]
+fn get_platform() -> String {
+    format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH)
+}
+
 pub fn run() {
     env_logger::init();
     log::info!("Starting Vicoo Desktop...");
@@ -13,20 +23,15 @@ pub fn run() {
         .plugin(tauri_plugin_os::init())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
+        .invoke_handler(tauri::generate_handler![greet, get_platform])
         .setup(|app| {
             log::info!("Vicoo Desktop setup complete");
 
-            // Get main window
             let window = app.get_webview_window("main").unwrap();
-
-            // Set window shadow (platform dependent)
-            #[cfg(target_os = "windows")]
-            {
-                use std::os::windows::process::CommandExt;
-                // Windows specific: enable shadow
-            }
-
             log::info!("Window initialized: {}", window.title().unwrap_or_default());
+
+            // Set window title with version
+            let _ = window.set_title("Vicoo — AI 知识管理");
 
             Ok(())
         })
