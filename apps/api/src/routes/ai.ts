@@ -11,6 +11,7 @@ import { Router, Request, Response } from 'express';
 import { runAIAssistant } from '../services/ai-assistant.js';
 import { getOne, runQuery, saveDatabase } from '../db/index.js';
 import { chatWithAgent } from '../services/langchain/index.js';
+import { planGuard } from '../middleware/plan-guard.js';
 
 const router = Router();
 
@@ -22,7 +23,7 @@ function stripThinkingBlock(text: string): string {
 }
 
 // POST /api/ai/chat - AI 聊天接口（使用 LangChain + MiniMax 智能体）
-router.post('/chat', async (req: Request, res: Response) => {
+router.post('/chat', planGuard('aiChatPerDay'), async (req: Request, res: Response) => {
   const { message, mode, useAgent } = req.body;
 
   if (!message) {
@@ -49,6 +50,9 @@ router.post('/chat', async (req: Request, res: Response) => {
         error: result.error || 'AI 助手调用失败',
       });
     }
+
+    // Track usage after successful AI call
+    (req as any).trackUsage?.();
 
     res.json({
       success: true,

@@ -206,6 +206,52 @@ function initializeTables() {
   try { db.run(`ALTER TABLE links ADD COLUMN label TEXT DEFAULT ''`); } catch (_) {}
   try { db.run(`ALTER TABLE links ADD COLUMN strength REAL DEFAULT 0.5`); } catch (_) {}
 
+  // Subscriptions table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE,
+      plan_id TEXT NOT NULL DEFAULT 'free',
+      status TEXT NOT NULL DEFAULT 'active',
+      payment_provider TEXT,
+      payment_id TEXT,
+      current_period_start TEXT,
+      current_period_end TEXT,
+      cancel_at_period_end INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Usage tracking table (daily counters)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS usage_tracking (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      feature TEXT NOT NULL,
+      count INTEGER DEFAULT 0,
+      UNIQUE(user_id, date, feature)
+    )
+  `);
+
+  // Payment history
+  db.run(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      currency TEXT DEFAULT 'CNY',
+      provider TEXT NOT NULL,
+      provider_payment_id TEXT,
+      plan_id TEXT NOT NULL,
+      billing_period TEXT,
+      status TEXT DEFAULT 'pending',
+      metadata TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
   // Note embeddings table for RAG vector search
   db.run(`
     CREATE TABLE IF NOT EXISTS note_embeddings (

@@ -32,6 +32,8 @@ import writerRouter from './routes/writer.js';
 import tasksRouter from './routes/tasks.js';
 import ragRouter from './routes/rag.js';
 import noteLinksRouter from './routes/note-links.js';
+import subscriptionRouter from './routes/subscription.js';
+import adminRouter from './routes/admin.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -117,6 +119,8 @@ async function start() {
     app.use('/api/tasks', authMiddleware, tasksRouter);
     app.use('/api/rag', authMiddleware, ragRouter);
     app.use('/api/note-links', authMiddleware, noteLinksRouter);
+    app.use('/api/subscription', authMiddleware, subscriptionRouter);
+    app.use('/api/admin', authMiddleware, adminRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({
