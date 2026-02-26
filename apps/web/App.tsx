@@ -33,6 +33,7 @@ const ProjectsPage = lazy(() => import('./pages/ProjectsPage').then(m => ({ defa
 const AskAI = lazy(() => import('./pages/AskAI').then(m => ({ default: m.AskAI })));
 const UnifiedAI = lazy(() => import('./pages/UnifiedAI').then(m => ({ default: m.UnifiedAI })));
 const Publish = lazy(() => import('./pages/Publish').then(m => ({ default: m.Publish })));
+const Profile = lazy(() => import('./pages/Profile').then(m => ({ default: m.Profile })));
 
 const AppContent: React.FC = () => {
   const [currentView, setCurrentView] = useState<View>(View.DASHBOARD);
@@ -255,6 +256,7 @@ const renderContent = (view: View, setView: any, openNote: any, activeNoteId?: s
       case View.PROJECTS: return <ProjectsPage onOpenNote={openNote} />;
       case View.ASK_AI: return <UnifiedAI />;
       case View.PUBLISH: return <Publish />;
+      case View.PROFILE: return <Profile />;
       default: return <Dashboard onNavigate={setView} />;
     }
 }

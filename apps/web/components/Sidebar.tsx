@@ -187,23 +187,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
       {/* User Profile */}
       <div className="p-4 border-t-3 border-ink/10 dark:border-white/10 mt-auto overflow-hidden">
         <div 
+          onClick={() => { onChangeView(View.PROFILE); setMobileOpen(false); }}
           className={`
             flex items-center gap-3 p-2 rounded-xl border-2 border-transparent hover:border-ink dark:hover:border-white hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer relative group
             ${!isExpanded ? 'justify-center' : ''}
           `}
         >
-          <img 
-            src="https://picsum.photos/100/100" 
-            alt="User" 
-            className="w-10 h-10 rounded-full border-2 border-ink dark:border-white object-cover bg-secondary flex-shrink-0"
-          />
+          <div className="w-10 h-10 rounded-full border-2 border-ink dark:border-white bg-secondary flex-shrink-0 flex items-center justify-center overflow-hidden">
+            <VicooIcon name="person" size={20} className="text-ink" />
+          </div>
           <div 
              className={`
                hidden lg:block text-left whitespace-nowrap transition-all duration-300
                ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'}
              `}
           >
-            <p className="text-sm font-bold text-ink dark:text-white">Alex Chen</p>
+            <p className="text-sm font-bold text-ink dark:text-white">个人中心</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">{t('nav.user_role')}</p>
           </div>
 

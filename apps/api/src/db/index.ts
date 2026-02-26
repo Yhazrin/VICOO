@@ -52,16 +52,31 @@ export function getDb(): Database {
 function initializeTables() {
   if (!db) return;
 
-  // Users table
+  // Users table — full auth support
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
+      username TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
+      password_hash TEXT,
+      avatar_url TEXT,
+      bio TEXT DEFAULT '',
+      provider TEXT DEFAULT 'local',
+      provider_id TEXT,
+      role TEXT DEFAULT 'user',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  // Migrate existing users table
+  try { db.run(`ALTER TABLE users ADD COLUMN username TEXT DEFAULT ''`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN bio TEXT DEFAULT ''`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN provider TEXT DEFAULT 'local'`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN provider_id TEXT`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`); } catch (_) {}
 
   // Notes table
   db.run(`

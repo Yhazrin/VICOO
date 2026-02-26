@@ -18,7 +18,8 @@ export enum View {
   VIBE_CODING = 'vibe_coding',
   PROJECTS = 'projects',
   ASK_AI = 'ask_ai',
-  PUBLISH = 'publish'
+  PUBLISH = 'publish',
+  PROFILE = 'profile'
 }
 
 export interface NavItem {

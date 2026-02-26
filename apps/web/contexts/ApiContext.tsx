@@ -171,6 +171,17 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [token]);
 
+  // Handle OAuth callback token from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get('token');
+    if (urlToken) {
+      setToken(urlToken);
+      window.history.replaceState({}, '', window.location.pathname);
+      return;
+    }
+  }, [setToken]);
+
   // Auto-obtain dev token if not present
   useEffect(() => {
     if (!token) {
