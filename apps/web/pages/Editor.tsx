@@ -10,6 +10,7 @@ import { VicooIcon } from '../components/VicooIcon';
 import { eventBus, Events } from '@vicoo/events';
 import type { Note, NoteUpdate, NoteCategory } from '@vicoo/types';
 import ReactMarkdown from 'react-markdown';
+import { TipTapEditor } from '../components/TipTapEditor';
 
 // Mock Knowledge Graph for "Cognitive Context"
 const KNOWLEDGE_GRAPH = [
@@ -462,19 +463,31 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
              )}
 
              <div className="relative flex-1">
-                {showPreview ? (
-                  <div className="prose prose-lg dark:prose-invert max-w-none min-h-[500px] text-ink dark:text-gray-100">
-                    <ReactMarkdown>{content || '*开始写点什么...*'}</ReactMarkdown>
-                  </div>
-                ) : (
-                <textarea
-                    ref={textareaRef}
-                    value={content}
-                    onChange={handleContentChange}
-                    onKeyDown={handleKeyDown}
-                    className="w-full h-full min-h-[500px] resize-none border-none focus:ring-0 p-0 text-lg leading-relaxed font-display text-ink dark:text-gray-100 bg-transparent placeholder-gray-300"
+                <TipTapEditor
+                  content={content}
+                  onChange={(html, text) => {
+                    setContent(text);
+                    // Also store HTML for rich rendering
+                    (window as any).__vicooEditorHtml = html;
+                  }}
+                  onAIAction={async (action, text) => {
+                    if (!text || text.length < 10) return;
+                    eventBus.emit(Events.MASCOT_STATE, { state: 'working', message: `AI ${action}...`, duration: 0 });
+                    try {
+                      const res = await fetch(`/api/writer/${action}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+                        body: JSON.stringify({ content: text }),
+                      });
+                      const data = await res.json();
+                      if (data.result) {
+                        const cleaned = data.result.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+                        setContent(cleaned);
+                        eventBus.emit(Events.MASCOT_STATE, { state: 'celebrating', message: '完成!', duration: 2000 });
+                      }
+                    } catch (err) { console.error(`AI ${action} failed:`, err); }
+                  }}
                 />
-                )}
 
                 {/* Slash Command Palette */}
                 <SlashCommandPalette
