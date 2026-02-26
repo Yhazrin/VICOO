@@ -148,48 +148,116 @@ export function generateKnowledgeGraphPrompt(notes: Array<{
     })
     .join('\n\n');
 
-  return `你是一个知识图谱分析助手。请分析以下笔记列表，提取知识点并建立它们之间的关联。
+  return `你是一个知识图谱分析助手。请深度分析以下笔记，提取知识点并识别它们之间的**语义关系**，帮助用户构建有条理的知识体系。
 
 ## 笔记列表：
 ${notesList}
 
 ## 任务要求：
-1. 从笔记内容中提取关键知识点作为节点
-2. 分析知识点之间的关系，建立边（links）
-3. 为每个节点分配一个合适的颜色（使用十六进制颜色代码）
+1. 提取 **核心知识点** 作为节点（避免过于泛化或重复）
+2. 识别知识点之间的 **语义关系类型**，从以下类型中选择：
+   - \`foundation\` — A 是 B 的基础/前置知识（如"JavaScript"是"React"的基础）
+   - \`contains\` — A 包含/属于 B（如"Hooks"属于"React"）
+   - \`extends\` — A 扩展/增强了 B（如"TypeScript"扩展了"JavaScript"）
+   - \`contrasts\` — A 与 B 形成对比（如"Vue"对比"React"）
+   - \`depends\` — A 依赖 B（如"组件化"依赖"虚拟DOM"）
+   - \`implements\` — A 实现了 B（如"Redux"实现了"状态管理"）
+   - \`relates\` — 一般性关联
+3. 为每条关系添加简短的中文标签（2-6字，如"是基础"、"包含"、"对比"、"扩展"）
+4. 评估关系强度 0.3-1.0（1.0=核心关系，0.5=一般关系，0.3=弱关联）
+5. 为节点选择语义化配色（同类知识用相近色系）
 
-## 输出格式：
-请返回 JSON 格式的结果，包含 nodes 和 links 两部分：
-
+## 输出格式（严格 JSON）：
 \`\`\`json
 {
   "nodes": [
     {
       "label": "知识点名称",
-      "description": "知识点的简要描述",
-      "color": "#颜色代码"
+      "description": "一句话描述",
+      "color": "#十六进制颜色"
     }
   ],
   "links": [
     {
       "source": "源节点名称",
       "target": "目标节点名称",
-      "reason": "建立关联的原因"
+      "relation": "foundation|contains|extends|contrasts|depends|implements|relates",
+      "label": "中文关系标签(2-6字)",
+      "strength": 0.8
     }
   ]
 }
 \`\`\`
 
-请确保：
-- 节点名称简洁明了，不超过 20 个字符
-- 描述不超过 50 个字符
-- 颜色选择有意义的配色方案
-- 关联关系合理，有明确的逻辑
+注意：
+- 节点名称≤15字，描述≤40字
+- 关系要体现知识的层次和脉络，不要随意关联
+- 优先建立有学习价值的关系（"先学什么再学什么"）
+- 同一对节点只建一条最重要的关系
+- 直接返回 JSON`;
+}
 
-请直接返回 JSON，不要包含其他内容。`;
+/**
+ * 使用 MiniMax-M2.5 生成知识图谱（替代 Claude Code）
+ */
+export async function generateGraphWithMiniMax(
+  prompt: string,
+  _options: ClaudeCodeOptions = {}
+): Promise<ClaudeCodeGraphResult> {
+  const { MiniMaxProvider } = await import('./minimax.js');
+
+  const apiKey = process.env.MINIMAX_API_KEY || '';
+  if (!apiKey) {
+    console.error('[GraphGen] MiniMax API Key 未配置');
+    return { nodes: [], links: [] };
+  }
+
+  const provider = new MiniMaxProvider({
+    apiKey,
+    baseUrl: process.env.MINIMAX_BASE_URL,
+    model: 'MiniMax-M2.5',
+  });
+
+  try {
+    // Use raw fetch with 90s timeout for complex graph generation
+    const config = provider.getConfig();
+    const baseUrl = config.baseUrl.replace(/\/+$/, '').replace(/\/v1$/, '');
+    const url = `${baseUrl}/v1/text/chatcompletion_v2`;
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 90000);
+
+    const resp = await fetch(url, {
+      method: 'POST',
+      signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
+      body: JSON.stringify({
+        model: 'MiniMax-M2.5',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 4096,
+      }),
+    });
+    clearTimeout(timer);
+
+    const data = await resp.json() as any;
+    const rawContent = data?.choices?.[0]?.message?.content || '';
+    const content = rawContent.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+
+    if (!content) {
+      console.error('[GraphGen] Empty response from MiniMax');
+      return { nodes: [], links: [] };
+    }
+
+    return parseClaudeOutput(content);
+  } catch (error: any) {
+    console.error('[GraphGen] Error:', error.message);
+    return { nodes: [], links: [] };
+  }
 }
 
 export default {
   callClaudeCode,
+  generateGraphWithMiniMax,
   generateKnowledgeGraphPrompt,
 };

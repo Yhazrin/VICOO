@@ -254,22 +254,27 @@ class LLMClient:
         return response
 
     async def _simulate_response(self, message: str) -> str:
-        """Simulate LLM response for testing"""
-        # Simple keyword-based responses
-        message_lower = message.lower()
+        """Try Vicoo API first, fall back to local responses."""
+        try:
+            from .vicoo_bridge import VicooBridge
+            bridge = VicooBridge()
+            response = bridge.ai_chat(message)
+            if response:
+                return response
+        except Exception as exc:
+            self._logger.debug("Vicoo AI chat failed: %s", exc)
 
-        if any(word in message_lower for word in ["hello", "hi", "hey"]):
-            return "Meow! Hello there! I'm your desktop companion. How can I help you today?"
-        elif any(word in message_lower for word in ["who are you", "what are you"]):
-            return "I'm a cute cyber cat living on your desktop! I'm here to keep you company and help out when I can."
-        elif any(word in message_lower for word in ["name"]):
-            return "You can call me Kitty! Or whatever name you like~"
-        elif any(word in message_lower for word in ["help", "what can you do"]):
-            return "I can chat with you, remember our conversations, and maybe help with some tasks on your computer!"
-        elif "?" in message:
-            return "That's an interesting question! I'm still learning things, but I'll do my best to help!"
+        message_lower = message.lower()
+        if any(w in message_lower for w in ["你好", "hello", "hi", "hey"]):
+            return "喵～ 你好呀！我是你的桌面小伙伴 Vicoo 🐱 有什么我可以帮你的吗？"
+        elif any(w in message_lower for w in ["笔记", "note"]):
+            return "想创建笔记吗？双击我然后选择 📝 快速笔记就行啦～"
+        elif any(w in message_lower for w in ["搜索", "search", "找"]):
+            return "我可以帮你搜索知识库！告诉我你想找什么？"
+        elif "?" in message or "？" in message:
+            return "好问题！让我想想… 🤔 你可以通过 AI 助手获得更详细的回答哦！"
         else:
-            return "Meow~ I understand! Tell me more about what you're thinking!"
+            return "喵～ 我听到了！还想聊些什么呢？ 😸"
 
     def get_conversation_history(self) -> List[Dict[str, str]]:
         """Get current conversation history"""

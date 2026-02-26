@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { VicooIcon } from '../components/VicooIcon';
+import { useApi } from '../contexts/ApiContext';
 
 interface Platform {
   id: string;
@@ -37,8 +38,8 @@ interface Note {
   category: string;
 }
 
-const API_BASE = 'http://localhost:8000/api/publish';
-const NOTES_API = 'http://localhost:8000/api/notes';
+const API_BASE = '/api/publish';
+const NOTES_API = '/api/notes';
 
 // Platform icons and colors (使用自定义图标 slug)
 const PLATFORM_CONFIG: Record<string, { icon: string; color: string; bgColor: string }> = {
@@ -52,6 +53,7 @@ const PLATFORM_CONFIG: Record<string, { icon: string; color: string; bgColor: st
 };
 
 export const Publish: React.FC = () => {
+  const { token } = useApi();
   const [activeTab, setActiveTab] = useState<'accounts' | 'publish' | 'tasks' | 'workflow'>('workflow');
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
@@ -59,6 +61,15 @@ export const Publish: React.FC = () => {
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Login QR/status dialog state
+  const [loginStatus, setLoginStatus] = useState<{ accountId: string; platform: string; status: 'idle' | 'logging_in' | 'success' | 'error'; message: string } | null>(null);
+
+  const authHeaders = useCallback((): Record<string, string> => {
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    return h;
+  }, [token]);
 
   // Publish form state
   const [videoPath, setVideoPath] = useState('');
@@ -80,17 +91,17 @@ export const Publish: React.FC = () => {
 
   // Fetch platforms
   useEffect(() => {
-    fetch(`${API_BASE}/platforms`)
+    fetch(`${API_BASE}/platforms`, { headers: authHeaders() })
       .then(res => res.json())
       .then(data => setPlatforms(data.data || []))
       .catch(err => console.error('Failed to load platforms:', err));
 
     // Fetch notes for workflow
-    fetch(`${NOTES_API}`)
+    fetch(`${NOTES_API}`, { headers: authHeaders() })
       .then(res => res.json())
       .then(data => setNotes(data.data?.slice(0, 10) || []))
       .catch(err => console.error('Failed to load notes:', err));
-  }, []);
+  }, [token]);
 
   // Fetch accounts
   useEffect(() => {
@@ -108,7 +119,7 @@ export const Publish: React.FC = () => {
 
   const fetchAccounts = () => {
     setLoading(true);
-    fetch(`${API_BASE}/accounts`)
+    fetch(`${API_BASE}/accounts`, { headers: authHeaders() })
       .then(res => res.json())
       .then(data => {
         setAccounts(data.data || []);
@@ -122,7 +133,7 @@ export const Publish: React.FC = () => {
 
   const fetchTasks = () => {
     setLoading(true);
-    fetch(`${API_BASE}/tasks`)
+    fetch(`${API_BASE}/tasks`, { headers: authHeaders() })
       .then(res => res.json())
       .then(data => {
         setTasks(data.data || []);
@@ -145,7 +156,7 @@ export const Publish: React.FC = () => {
     try {
       const res = await fetch(`${API_BASE}/accounts`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({
           platform: newPlatform,
           accountName: newAccountName
@@ -165,7 +176,7 @@ export const Publish: React.FC = () => {
 
   const handleDeleteAccount = async (id: string) => {
     try {
-      await fetch(`${API_BASE}/accounts/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/accounts/${id}`, { method: 'DELETE', headers: authHeaders() });
       fetchAccounts();
     } catch (err) {
       setError('Failed to delete account');
@@ -173,20 +184,23 @@ export const Publish: React.FC = () => {
   };
 
   const handleLogin = async (id: string) => {
-    setLoading(true);
+    const account = accounts.find(a => a.id === id);
+    const platformName = account ? getPlatformName(account.platform) : id;
+    setLoginStatus({ accountId: id, platform: account?.platform || '', status: 'logging_in', message: `正在连接 ${platformName}...` });
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/accounts/${id}/login`, { method: 'POST' });
+      const res = await fetch(`${API_BASE}/accounts/${id}/login`, { method: 'POST', headers: authHeaders() });
       const data = await res.json();
       if (data.success) {
+        setLoginStatus({ accountId: id, platform: account?.platform || '', status: 'success', message: data.message || '登录成功！' });
         fetchAccounts();
+        setTimeout(() => setLoginStatus(null), 3000);
       } else {
-        setError(data.error || 'Login failed');
+        setLoginStatus({ accountId: id, platform: account?.platform || '', status: 'error', message: data.error || '登录失败' });
       }
     } catch (err) {
-      setError('Failed to login');
+      setLoginStatus({ accountId: id, platform: account?.platform || '', status: 'error', message: '连接失败，请确认 social-auto-upload 已安装' });
     }
-    setLoading(false);
   };
 
   const handlePublish = async () => {
@@ -201,7 +215,7 @@ export const Publish: React.FC = () => {
     try {
       const res = await fetch(`${API_BASE}/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({
           videoPath,
           title,
@@ -230,7 +244,7 @@ export const Publish: React.FC = () => {
 
   const handleDeleteTask = async (id: string) => {
     try {
-      await fetch(`${API_BASE}/tasks/${id}`, { method: 'DELETE' });
+      await fetch(`${API_BASE}/tasks/${id}`, { method: 'DELETE', headers: authHeaders() });
       fetchTasks();
     } catch (err) {
       setError('Failed to delete task');
@@ -244,31 +258,38 @@ export const Publish: React.FC = () => {
     setGenerating(true);
     try {
       // Call AI to generate social media content from note
-      const res = await fetch('http://localhost:8000/api/ai/chat', {
+      const res = await fetch('/api/ai/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: authHeaders(),
         body: JSON.stringify({
           message: `Based on the following note, generate a social media post. Create an engaging title and content suitable for posting on social platforms like Douyin, Xiaohongshu, and Bilibili.\n\nNote title: ${selectedNote.title}\nNote content: ${selectedNote.content}\n\nReturn the response in JSON format: { "title": "generated title", "content": "generated content" }`
         })
       });
       const data = await res.json();
       if (data.response) {
+        // Strip <think> blocks from MiniMax response
+        const cleaned = data.response.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
         try {
-          const parsed = JSON.parse(data.response);
-          setGeneratedContent({
-            title: parsed.title || selectedNote.title,
-            content: parsed.content || selectedNote.content
-          });
-          setTitle(parsed.title || selectedNote.title);
-          setContent(parsed.content || '');
+          // Try extracting JSON from response
+          const jsonMatch = cleaned.match(/\{[\s\S]*\}/);
+          const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : null;
+          if (parsed?.title || parsed?.content) {
+            setGeneratedContent({
+              title: parsed.title || selectedNote.title,
+              content: parsed.content || selectedNote.content
+            });
+            setTitle(parsed.title || selectedNote.title);
+            setContent(parsed.content || '');
+          } else {
+            throw new Error('no JSON');
+          }
         } catch {
-          // If not JSON, use the whole response
           setGeneratedContent({
             title: selectedNote.title,
-            content: data.response
+            content: cleaned
           });
           setTitle(selectedNote.title);
-          setContent(data.response);
+          setContent(cleaned);
         }
       }
     } catch (err) {
@@ -647,6 +668,44 @@ export const Publish: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* Login Status Dialog */}
+                  {loginStatus && (
+                    <div className={`mb-4 p-4 rounded-xl border-2 flex items-center gap-3 ${
+                      loginStatus.status === 'logging_in' ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20' :
+                      loginStatus.status === 'success' ? 'bg-green-50 border-green-300 dark:bg-green-900/20' :
+                      'bg-red-50 border-red-300 dark:bg-red-900/20'
+                    }`}>
+                      {loginStatus.status === 'logging_in' && (
+                        <VicooIcon name="sync" size={24} className="text-blue-600 animate-spin" />
+                      )}
+                      {loginStatus.status === 'success' && (
+                        <VicooIcon name="check_circle" size={24} className="text-green-600" />
+                      )}
+                      {loginStatus.status === 'error' && (
+                        <VicooIcon name="error" size={24} className="text-red-600" />
+                      )}
+                      <div className="flex-1">
+                        <p className="font-bold text-sm">{loginStatus.message}</p>
+                        {loginStatus.status === 'logging_in' && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            social-auto-upload 模式下会弹出浏览器窗口进行扫码登录
+                          </p>
+                        )}
+                        {loginStatus.status === 'error' && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            请确保已安装 social-auto-upload 并配置了 Python 环境
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => setLoginStatus(null)}
+                        className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg"
+                      >
+                        <VicooIcon name="close" size={16} />
+                      </button>
+                    </div>
+                  )}
 
                   {loading ? (
                     <div className="text-center py-8">

@@ -171,6 +171,20 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   }, [token]);
 
+  // Auto-obtain dev token if not present
+  useEffect(() => {
+    if (!token) {
+      fetch('/auth/dev-token', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data?.data?.token) {
+            setToken(data.data.token);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [token, setToken]);
+
   // Check health on mount
   useEffect(() => {
     const checkHealth = async () => {

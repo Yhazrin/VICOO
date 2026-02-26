@@ -8,7 +8,8 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useApi } from '../contexts/ApiContext';
 import { VicooIcon } from '../components/VicooIcon';
 import { eventBus, Events } from '@vicoo/events';
-import type { Note, NoteUpdate, NoteCategory, NoteCreate } from '@vicoo/types';
+import type { Note, NoteUpdate, NoteCategory } from '@vicoo/types';
+import ReactMarkdown from 'react-markdown';
 
 // Mock Knowledge Graph for "Cognitive Context"
 const KNOWLEDGE_GRAPH = [
@@ -47,7 +48,7 @@ interface EditorProps {
 
 export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
   const { t } = useLanguage();
-  const { getNote, createNote, updateNote } = useApi();
+  const { getNote, createNote, updateNote, token } = useApi();
 
   const [noteId, setNoteId] = useState<string | null>(initialNoteId === 'new' ? null : initialNoteId || null);
   const [content, setContent] = useState('');
@@ -58,6 +59,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showSummary, setShowSummary] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
+  const [showPreview, setShowPreview] = useState(false);
   const [detectedConcepts, setDetectedConcepts] = useState<typeof KNOWLEDGE_GRAPH>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [wikiLinks, setWikiLinks] = useState<string[]>([]);
@@ -96,7 +98,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
     eventBus.emit(Events.MASCOT_STATE, { state: 'saving', message: 'Saving...', duration: 0 });
 
     try {
-      const noteData: NoteCreate = {
+      const noteData = {
         title,
         content,
         category,
@@ -109,7 +111,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
         await updateNote(noteId, noteData);
       } else {
         // Create new note
-        const newNote = await createNote(noteData);
+        const newNote = await createNote(noteData as any);
         setNoteId(newNote.id);
       }
       setLastSaved(new Date());
@@ -154,7 +156,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
     if (title.trim()) {
       setIsSaving(true);
       try {
-        const noteData: NoteCreate = {
+        const noteData = {
           title,
           content,
           category,
@@ -165,7 +167,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
         if (noteId) {
           await updateNote(noteId, noteData);
         } else {
-          const newNote = await createNote(noteData);
+          const newNote = await createNote(noteData as any);
           setNoteId(newNote.id);
         }
         setLastSaved(new Date());
@@ -258,18 +260,47 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
     }
   }, [showSlashMenu, slashMenuIndex, slashQuery, handleSlashCommandSelect]);
 
-  const handleSummarize = () => {
+  const handleAIWrite = async (action: string) => {
+    if (!content || content.length < 10) return;
+    setIsSummarizing(true);
+    eventBus.emit(Events.MASCOT_STATE, { state: 'working', message: `AI ${action}...`, duration: 0 });
+    try {
+      const res = await fetch(`/api/writer/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify({ content }),
+      });
+      const data = await res.json();
+      if (data.result) {
+        const cleaned = data.result.replace(/<think>[\s\S]*?<\/think>\s*/g, '').trim();
+        setContent(cleaned);
+        eventBus.emit(Events.MASCOT_STATE, { state: 'celebrating', message: `${action} 完成!`, duration: 2000 });
+      }
+    } catch (err) {
+      console.error(`AI ${action} failed:`, err);
+    }
+    setIsSummarizing(false);
+  };
+
+  const handleSummarize = async () => {
+    if (!content || content.length < 30) return;
     setIsSummarizing(true);
     eventBus.emit(Events.MASCOT_STATE, { state: 'thinking', message: 'Analyzing...', duration: 0 });
-    setTimeout(() => {
-      setIsSummarizing(false);
-      setShowSummary(true);
-      eventBus.emit(Events.MASCOT_STATE, {
-        state: 'celebrating',
-        message: 'Analysis complete!',
-        duration: 2000
+    try {
+      const res = await fetch('/api/ai/summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+        body: JSON.stringify(noteId ? { noteId } : { text: content }),
       });
-    }, 1500);
+      const data = await res.json();
+      if (data.success && data.summary) {
+        setShowSummary(true);
+        eventBus.emit(Events.MASCOT_STATE, { state: 'celebrating', message: data.summary.slice(0, 50), duration: 3000 });
+      }
+    } catch (err) {
+      console.error('Summarize failed:', err);
+    }
+    setIsSummarizing(false);
   };
 
   // Typing detection - emit typing event
@@ -305,6 +336,29 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                 <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><VicooIcon name="format_italic" size={18} /></button>
                 <div className="w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
                 <button className="w-8 h-8 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center text-ink dark:text-white"><VicooIcon name="code" size={18} /></button>
+                <div className="w-px bg-gray-300 dark:bg-gray-600 mx-1"></div>
+                {/* AI Writing Tools */}
+                <button
+                  onClick={() => handleAIWrite('improve')}
+                  className="px-2 py-1 rounded text-xs font-bold bg-blue-100 hover:bg-blue-200 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 transition-colors"
+                  title="AI 润色"
+                >
+                  <VicooIcon name="auto_awesome" size={14} className="inline mr-0.5" />润色
+                </button>
+                <button
+                  onClick={() => handleAIWrite('expand')}
+                  className="px-2 py-1 rounded text-xs font-bold bg-purple-100 hover:bg-purple-200 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300 transition-colors"
+                  title="AI 扩写"
+                >
+                  扩写
+                </button>
+                <button
+                  onClick={() => handleAIWrite('outline')}
+                  className="px-2 py-1 rounded text-xs font-bold bg-amber-100 hover:bg-amber-200 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 transition-colors"
+                  title="AI 大纲"
+                >
+                  大纲
+                </button>
                 <button
                   onClick={handleSummarize}
                   className={`
@@ -321,6 +375,14 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                 </button>
              </div>
              
+             {/* Preview toggle */}
+             <button
+               onClick={() => setShowPreview(!showPreview)}
+               className={`px-2 py-1 rounded text-xs font-bold transition-colors ${showPreview ? 'bg-ink text-white dark:bg-white dark:text-ink' : 'bg-gray-100 hover:bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'}`}
+             >
+               {showPreview ? '编辑' : '预览'}
+             </button>
+
              {/* Publish Toggle */}
              <div className="flex items-center gap-3 pl-4 border-l-2 border-gray-200 dark:border-gray-600">
                 {/* Save Status */}
@@ -400,6 +462,11 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
              )}
 
              <div className="relative flex-1">
+                {showPreview ? (
+                  <div className="prose prose-lg dark:prose-invert max-w-none min-h-[500px] text-ink dark:text-gray-100">
+                    <ReactMarkdown>{content || '*开始写点什么...*'}</ReactMarkdown>
+                  </div>
+                ) : (
                 <textarea
                     ref={textareaRef}
                     value={content}
@@ -407,6 +474,7 @@ export const Editor: React.FC<EditorProps> = ({ initialNoteId }) => {
                     onKeyDown={handleKeyDown}
                     className="w-full h-full min-h-[500px] resize-none border-none focus:ring-0 p-0 text-lg leading-relaxed font-display text-ink dark:text-gray-100 bg-transparent placeholder-gray-300"
                 />
+                )}
 
                 {/* Slash Command Palette */}
                 <SlashCommandPalette

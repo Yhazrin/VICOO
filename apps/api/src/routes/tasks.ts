@@ -4,57 +4,36 @@ import { runQuery, getOne, getAll, getChanges, saveDatabase } from '../db/index.
 
 const router = Router();
 
-// Type definitions
-interface Task {
-  id: string;
-  title: string;
-  description: string;
-  status: string;
-  priority: string;
-  linked_note_id: string;
-  due_date: string;
-  created_at: string;
-  updated_at: string;
-  user_id: string;
-}
-
 // GET /api/tasks - List all tasks
 router.get('/', (req, res) => {
-  try {
-    const userId = (req as any).userId || 'dev_user_1';
-    const { status } = req.query;
+  const userId = (req as any).userId || 'dev_user_1';
+  const { status } = req.query;
 
-    let query = 'SELECT * FROM tasks WHERE user_id = ?';
-    const params: (string | undefined)[] = [userId];
+  let query = 'SELECT * FROM tasks WHERE user_id = ?';
+  const params: any[] = [userId];
 
-    if (status) {
-      query += ' AND status = ?';
-      params.push(status as string);
-    }
-
-    query += ' ORDER BY created_at DESC';
-
-    const tasks = getAll<Task>(query, params);
-
-    res.json({
-      data: tasks.map(t => ({
-        id: t.id,
-        title: t.title,
-        description: t.description,
-        status: t.status,
-        priority: t.priority,
-        linkedNoteId: t.linked_note_id,
-        dueDate: t.due_date,
-        createdAt: t.created_at,
-        updatedAt: t.updated_at
-      }))
-    });
-  } catch (error) {
-    console.error('[Tasks] Failed to fetch tasks:', error);
-    res.status(500).json({
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch tasks' }
-    });
+  if (status) {
+    query += ' AND status = ?';
+    params.push(status);
   }
+
+  query += ' ORDER BY created_at DESC';
+
+  const tasks = getAll<any>(query, params);
+
+  res.json({
+    data: tasks.map(t => ({
+      id: t.id,
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      priority: t.priority,
+      linkedNoteId: t.linked_note_id,
+      dueDate: t.due_date,
+      createdAt: t.created_at,
+      updatedAt: t.updated_at
+    }))
+  });
 });
 
 // POST /api/tasks - Create task
@@ -75,108 +54,80 @@ router.post('/', (req, res) => {
     runQuery(
       `INSERT INTO tasks (id, user_id, title, description, status, priority, linked_note_id, due_date, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, userId, title, description, status, priority, linkedNoteId, dueDate, timestamp, timestamp]
+      [id, userId, title, description || null, status, priority, linkedNoteId || null, dueDate || null, timestamp, timestamp]
     );
 
     saveDatabase();
 
-    const task = getOne<Task>('SELECT * FROM tasks WHERE id = ?', [id]);
-
     res.status(201).json({
-      data: {
-        id: task?.id,
-        title: task?.title,
-        description: task?.description,
-        status: task?.status,
-        priority: task?.priority,
-        linkedNoteId: task?.linked_note_id,
-        dueDate: task?.due_date,
-        createdAt: task?.created_at,
-        updatedAt: task?.updated_at
-      }
+      data: { id, title, description: description || null, status, priority, linkedNoteId: linkedNoteId || null, dueDate: dueDate || null, createdAt: timestamp, updatedAt: timestamp }
     });
-  } catch (error) {
-    console.error('[Tasks] Failed to create task:', error);
-    res.status(500).json({
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to create task' }
-    });
+  } catch (error: any) {
+    console.error('Create task error:', error);
+    res.status(500).json({ error: { code: 'INTERNAL_ERROR', message: error.message || 'Failed to create task' } });
   }
 });
 
 // PATCH /api/tasks/:id - Update task
 router.patch('/:id', (req, res) => {
-  try {
-    const userId = (req as any).userId || 'dev_user_1';
-    const { title, description, status, priority, linkedNoteId, dueDate } = req.body;
+  const userId = (req as any).userId || 'dev_user_1';
+  const { title, description, status, priority, linkedNoteId, dueDate } = req.body;
 
-    const existing = getOne<Task>('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+  const existing = getOne<any>('SELECT * FROM tasks WHERE id = ? AND user_id = ?', [req.params.id, userId]);
 
-    if (!existing) {
-      return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Task not found' }
-      });
-    }
-
-    const updates: string[] = [];
-    const params: (string | undefined)[] = [];
-
-    if (title !== undefined) { updates.push('title = ?'); params.push(title); }
-    if (description !== undefined) { updates.push('description = ?'); params.push(description); }
-    if (status !== undefined) { updates.push('status = ?'); params.push(status); }
-    if (priority !== undefined) { updates.push('priority = ?'); params.push(priority); }
-    if (linkedNoteId !== undefined) { updates.push('linked_note_id = ?'); params.push(linkedNoteId); }
-    if (dueDate !== undefined) { updates.push('due_date = ?'); params.push(dueDate); }
-
-    updates.push("updated_at = datetime('now')");
-    params.push(req.params.id, userId);
-
-    runQuery(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`, params);
-    saveDatabase();
-
-    const task = getOne<Task>('SELECT * FROM tasks WHERE id = ?', [req.params.id]);
-
-    res.json({
-      data: {
-        id: task?.id,
-        title: task?.title,
-        description: task?.description,
-        status: task?.status,
-        priority: task?.priority,
-        linkedNoteId: task?.linked_note_id,
-        dueDate: task?.due_date,
-        createdAt: task?.created_at,
-        updatedAt: task?.updated_at
-      }
-    });
-  } catch (error) {
-    console.error('[Tasks] Failed to update task:', error);
-    res.status(500).json({
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to update task' }
+  if (!existing) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Task not found' }
     });
   }
+
+  const updates: string[] = [];
+  const params: any[] = [];
+
+  if (title !== undefined) { updates.push('title = ?'); params.push(title); }
+  if (description !== undefined) { updates.push('description = ?'); params.push(description); }
+  if (status !== undefined) { updates.push('status = ?'); params.push(status); }
+  if (priority !== undefined) { updates.push('priority = ?'); params.push(priority); }
+  if (linkedNoteId !== undefined) { updates.push('linked_note_id = ?'); params.push(linkedNoteId); }
+  if (dueDate !== undefined) { updates.push('due_date = ?'); params.push(dueDate); }
+
+  updates.push("updated_at = datetime('now')");
+  params.push(req.params.id, userId);
+
+  runQuery(`UPDATE tasks SET ${updates.join(', ')} WHERE id = ? AND user_id = ?`, params);
+  saveDatabase();
+
+  const task = getOne<any>('SELECT * FROM tasks WHERE id = ?', [req.params.id]);
+
+  res.json({
+    data: {
+      id: task.id,
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      linkedNoteId: task.linked_note_id,
+      dueDate: task.due_date,
+      createdAt: task.created_at,
+      updatedAt: task.updated_at
+    }
+  });
 });
 
 // DELETE /api/tasks/:id - Delete task
 router.delete('/:id', (req, res) => {
-  try {
-    const userId = (req as any).userId || 'dev_user_1';
+  const userId = (req as any).userId || 'dev_user_1';
 
-    runQuery('DELETE FROM tasks WHERE id = ? AND user_id = ?', [req.params.id, userId]);
+  const result = runQuery('DELETE FROM tasks WHERE id = ? AND user_id = ?', [req.params.id, userId]);
 
-    if (getChanges() === 0) {
-      return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Task not found' }
-      });
-    }
-
-    saveDatabase();
-    res.status(204).send();
-  } catch (error) {
-    console.error('[Tasks] Failed to delete task:', error);
-    res.status(500).json({
-      error: { code: 'INTERNAL_ERROR', message: 'Failed to delete task' }
+  if (getChanges() === 0) {
+    return res.status(404).json({
+      error: { code: 'NOT_FOUND', message: 'Task not found' }
     });
   }
+
+  saveDatabase();
+  res.status(204).send();
 });
 
 export default router;

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { NeoCard } from '../components/NeoCard';
 import { NeoButton } from '../components/NeoButton';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
 
 interface Task {
   id: string;
@@ -13,25 +14,33 @@ interface Task {
   dueDate?: string;
 }
 
-const MOCK_TASKS: Task[] = [
-  { id: '1', title: 'Design new dashboard layout', description: 'Create wireframes for the new dashboard', status: 'todo', priority: 'high' },
-  { id: '2', title: 'Implement Quick Capture', description: 'Add Ctrl+Shift+N shortcut', status: 'doing', priority: 'high' },
-  { id: '3', title: 'Fix mobile responsive issues', status: 'todo', priority: 'medium' },
-  { id: '4', title: 'Add dark mode support', status: 'done', priority: 'low' },
-  { id: '5', title: 'Write API documentation', status: 'todo', priority: 'medium' },
-];
-
 interface ProjectsPageProps {
   onOpenNote?: (noteId: string) => void;
 }
 
 export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onOpenNote }) => {
   const { t } = useLanguage();
+  const { token } = useApi();
 
-  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [draggedTask, setDraggedTask] = useState<Task | null>(null);
   const [showNewTaskModal, setShowNewTaskModal] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
+
+  const headers = useCallback(() => {
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    return h;
+  }, [token]);
+
+  const fetchTasks = useCallback(() => {
+    fetch('/api/tasks', { headers: headers() })
+      .then(r => r.json())
+      .then(d => setTasks(d.data || []))
+      .catch(() => {});
+  }, [headers]);
+
+  useEffect(() => { fetchTasks(); }, [fetchTasks]);
 
   const columns: { id: Task['status']; label: string; color: string }[] = [
     { id: 'todo', label: 'To Do', color: 'bg-gray-100 dark:bg-gray-800' },
@@ -52,23 +61,23 @@ export const ProjectsPage: React.FC<ProjectsPageProps> = ({ onOpenNote }) => {
       setTasks(tasks.map(task =>
         task.id === draggedTask.id ? { ...task, status } : task
       ));
+      fetch(`/api/tasks/${draggedTask.id}`, {
+        method: 'PATCH', headers: headers(),
+        body: JSON.stringify({ status }),
+      }).catch(() => {});
       setDraggedTask(null);
     }
   };
 
   const handleAddTask = () => {
     if (!newTaskTitle.trim()) return;
-
-    const newTask: Task = {
-      id: Date.now().toString(),
-      title: newTaskTitle,
-      status: 'todo',
-      priority: 'medium'
-    };
-
-    setTasks([...tasks, newTask]);
-    setNewTaskTitle('');
-    setShowNewTaskModal(false);
+    fetch('/api/tasks', {
+      method: 'POST', headers: headers(),
+      body: JSON.stringify({ title: newTaskTitle, status: 'todo', priority: 'medium' }),
+    })
+      .then(r => r.json())
+      .then(() => { fetchTasks(); setNewTaskTitle(''); setShowNewTaskModal(false); })
+      .catch(() => {});
   };
 
   const getPriorityColor = (priority: Task['priority']) => {

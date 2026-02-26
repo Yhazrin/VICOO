@@ -139,37 +139,20 @@ router.post('/summarize', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/writer/improve - 使用 LangChain 改进内容
+// POST /api/writer/improve - 使用 MiniMax M2.5 改进内容
 router.post('/improve', async (req: Request, res: Response) => {
-  const { content, style = 'creative', action = 'improve' } = req.body;
+  const { content, action = 'improve' } = req.body;
 
   if (!content) {
-    return res.json({
-      success: false,
-      error: 'Content is required'
-    });
+    return res.json({ success: false, error: 'Content is required' });
   }
 
   try {
-    console.log(`[Writer-LC] Improving content with style: ${style}, action: ${action}`);
-
-    const chain = createWritingChain();
-    const result = await chain.invoke({
-      action: writingActions[action as keyof typeof writingActions] || '改进这段内容',
-      content,
-      style: writingStyles[style] || '创意风格',
-    });
-
-    res.json({
-      success: true,
-      result: result.text || result,
-    });
+    const result = await runWritingAgent({ content, action: action as any });
+    res.json(result);
   } catch (error: any) {
-    console.error('[Writer-LC] Error:', error);
-    res.json({
-      success: false,
-      error: error.message
-    });
+    console.error('[Writer Improve] Error:', error);
+    res.json({ success: false, error: error.message });
   }
 });
 

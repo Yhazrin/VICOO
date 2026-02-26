@@ -1,56 +1,65 @@
 """
 SDC - Sentient Desktop Companion
-Desktop Mascot Window
+Desktop Mascot Window — Enhanced with Vicoo deep binding
 
-A transparent, always-on-top, draggable desktop mascot window with state machine
-and LLM conversation support
+Features:
+  - Transparent, always-on-top, draggable mascot
+  - Vicoo API event bridge (note events → mascot reactions)
+  - Cute bubble notification / quick-action / mini-chat dialogs
+  - Auto-behavior: idle roaming, random ear twitches, self-driven state changes
+  - System tray integration
 """
 
-import asyncio
 import logging
-from PyQt6.QtCore import Qt, QTimer, QPoint, QDateTime, pyqtSignal, QRectF
+import math
+import random
+import time
+
+from PyQt6.QtCore import Qt, QTimer, QPoint, QDateTime, QRectF, pyqtSignal
 from PyQt6.QtGui import QPainter, QCursor, QAction, QMouseEvent, QIcon, QPixmap
 from PyQt6.QtWidgets import QWidget, QMenu, QApplication, QSystemTrayIcon
 
 from .renderer import MascotRenderer
 from .state_machine import MascotStateMachine, MascotState, setup_logging
 from .llm import get_llm_client
-from .conversation import ConversationWidget
+from .vicoo_bridge import VicooBridge, VicooEvent
+from .bubble_dialog import (
+    BubbleNotification,
+    QuickActionMenu,
+    MiniChatBubble,
+    QuickNoteDialog,
+)
 
 
 class MascotWindow(QWidget):
     """
-    Transparent, always-on-top, draggable desktop mascot window
-    With integrated state machine and LLM conversation
-
-    Signals:
-        quit_requested: Emitted when user requests to quit
+    Transparent, always-on-top, draggable desktop mascot with deep Vicoo binding.
     """
 
-    # Window configuration - 缩小三分之一
-    WINDOW_WIDTH = 133  # 原200缩小到约1/3
-    WINDOW_HEIGHT = 147  # 原220缩小到约1/3
+    WINDOW_WIDTH = 133
+    WINDOW_HEIGHT = 147
+    quit_requested = pyqtSignal()
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Initialize mascot renderer
-        self._mascot = MascotRenderer(self)
+        setup_logging()
+        self._logger = logging.getLogger("sdc.window")
 
-        # Initialize state machine
+        # Core components
+        self._mascot = MascotRenderer(self)
         self._state_machine = MascotStateMachine(self)
         self._state_machine.stateChanged.connect(self._on_state_changed)
-
-        # Initialize LLM client
         self._llm_client = get_llm_client()
 
-        # Chat widget
-        self._chat_widget = None
+        # Vicoo API bridge
+        self._bridge = VicooBridge(parent=self)
+        self._bridge.connected.connect(self._on_vicoo_connected)
+        self._bridge.disconnected.connect(self._on_vicoo_disconnected)
+        self._bridge.note_created.connect(self._on_note_created)
+        self._bridge.note_count_changed.connect(self._on_note_count_changed)
 
-        # Setup window attributes
-        self._setup_window()
-
-        # Drag state
+        # UI state
         self._is_dragging = False
         self._drag_offset = QPoint()
         self._click_count = 0
@@ -58,406 +67,404 @@ class MascotWindow(QWidget):
         self._click_timer.timeout.connect(self._reset_click)
         self._click_timer.setSingleShot(True)
 
-        # Animation timer
+        # Active dialogs (one at a time)
+        self._active_dialog: QWidget | None = None
+        self._notification_queue: list[BubbleNotification] = []
+
+        # Animation
         self._anim_timer = QTimer(self)
         self._anim_timer.timeout.connect(self._on_animation_tick)
-        self._anim_timer.start(16)  # ~60 FPS
+        self._anim_timer.start(16)
         self._last_tick = 0
 
-        # Context menu (lazy create)
+        # Auto-behavior
+        self._auto_timer = QTimer(self)
+        self._auto_timer.timeout.connect(self._auto_behavior)
+        self._auto_timer.start(8000)
+        self._idle_since = time.time()
+
+        # Window setup
+        self._setup_window()
         self._context_menu = None
-
-        # System tray icon
         self._tray_icon = None
-
-        # Setup logging & module logger
-        setup_logging()
-        self._logger = logging.getLogger("sdc.window")
-        self._logger.debug("MascotWindow initialized")
-
-        # Setup system tray icon (任务栏右侧图标)
         self._setup_tray_icon()
 
-    def _setup_tray_icon(self):
-        """Create a system tray icon with basic menu"""
-        if not QSystemTrayIcon.isSystemTrayAvailable():
-            self._logger.warning("System tray not available on this system")
-            return
+        # Start bridge
+        self._bridge.start()
 
-        # Render current mascot skin into a small pixmap as tray icon
+        self._logger.info("MascotWindow initialized with Vicoo bridge")
+
+    # ------------------------------------------------------------------
+    # Window setup
+    # ------------------------------------------------------------------
+
+    def _setup_window(self):
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        self.setWindowFlags(
+            Qt.WindowType.FramelessWindowHint
+            | Qt.WindowType.WindowStaysOnTopHint
+            | Qt.WindowType.Tool
+        )
+        self.resize(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
+        screen = QApplication.primaryScreen().geometry()
+        self.move(screen.width() - self.WINDOW_WIDTH - 20,
+                  screen.height() - self.WINDOW_HEIGHT - 60)
+
+    def _setup_tray_icon(self):
+        if not QSystemTrayIcon.isSystemTrayAvailable():
+            return
         pixmap = QPixmap(64, 64)
         pixmap.fill(Qt.GlobalColor.transparent)
-
         painter = QPainter(pixmap)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        # 缩放/居中渲染到 64x64 区域
-        base_size = 200.0  # renderer 默认坐标系大小
-        scale = min(pixmap.width(), pixmap.height()) / base_size
-
-        painter.translate(pixmap.width() / 2, pixmap.height() / 2)
+        scale = 64.0 / 200.0
+        painter.translate(32, 32)
         painter.scale(scale, scale)
-        painter.translate(-base_size / 2, -base_size / 2)
-
-        # 使用同一个渲染器绘制当前皮肤 & 状态
-        self._mascot.set_skin("cat")
-        self._mascot.set_state("idle")
-        self._mascot.render(painter, QRectF(0, 0, base_size, base_size))
-
+        painter.translate(-100, -100)
+        self._mascot.render(painter, QRectF(0, 0, 200, 200))
         painter.end()
-
         self._tray_icon = QSystemTrayIcon(QIcon(pixmap), self)
-
-        # Tray menu
         tray_menu = QMenu()
-        show_action = QAction("Show Mascot", tray_menu)
-        hide_action = QAction("Hide Mascot", tray_menu)
-        quit_action = QAction("Exit", tray_menu)
-
-        show_action.triggered.connect(self._show_from_tray)
-        hide_action.triggered.connect(self.hide)
-        quit_action.triggered.connect(self._on_quit)
-
-        tray_menu.addAction(show_action)
-        tray_menu.addAction(hide_action)
+        tray_menu.addAction("显示桌宠", self._show_from_tray)
+        tray_menu.addAction("隐藏桌宠", self.hide)
         tray_menu.addSeparator()
-        tray_menu.addAction(quit_action)
-
+        tray_menu.addAction("退出", self._on_quit)
         self._tray_icon.setContextMenu(tray_menu)
         self._tray_icon.activated.connect(self._on_tray_activated)
         self._tray_icon.show()
 
-        self._logger.info("System tray icon created")
-
     def _show_from_tray(self):
-        """Show and focus the mascot window from tray"""
-        self.show()
-        self.raise_()
-        self.activateWindow()
+        self.show(); self.raise_(); self.activateWindow()
 
     def _on_tray_activated(self, reason):
-        """Handle tray icon clicks (left click toggles show/hide)"""
         if reason == QSystemTrayIcon.ActivationReason.Trigger:
-            if self.isVisible():
-                self.hide()
-            else:
-                self._show_from_tray()
+            self._show_from_tray() if not self.isVisible() else self.hide()
 
-    @staticmethod
-    def _get_global_pos(event: QMouseEvent):
-        """
-        兼容不同 PyQt6 版本的全局坐标获取：
-        - 新版本使用 globalPosition().toPoint()
-        - 旧版本使用 globalPos()
-        """
-        if hasattr(event, "globalPosition"):
-            return event.globalPosition().toPoint()
-        return event.globalPos()
-
-    def _setup_window(self):
-        """Configure window for transparent, always-on-top, frameless"""
-        # Make window transparent
-        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-
-        # Always on top
-        self.setWindowFlags(
-            Qt.WindowType.FramelessWindowHint |
-            Qt.WindowType.WindowStaysOnTopHint |
-            Qt.WindowType.Tool
-        )
-
-        # Set window size
-        self.resize(self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
-
-        # Move to bottom-right corner of screen
-        screen = QApplication.primaryScreen().geometry()
-        self.move(
-            screen.width() - self.WINDOW_WIDTH - 20,
-            screen.height() - self.WINDOW_HEIGHT - 20
-        )
-
-    def _create_context_menu(self):
-        """Create right-click context menu"""
-        self._context_menu = QMenu(self)
-
-        # Status action
-        self._status_action = QAction("Status: Idle", self)
-        self._status_action.setEnabled(False)
-        self._context_menu.addAction(self._status_action)
-
-        self._context_menu.addSeparator()
-
-        # State actions
-        states = [
-            ("Idle", "idle"),
-            ("Walking", "walking"),
-            ("Sleeping", "sleeping"),
-            ("Listening", "listening"),
-            ("Thinking", "thinking"),
-        ]
-
-        for label, state in states:
-            action = QAction(label, self)
-            action.triggered.connect(lambda checked, s=state: self.set_state(s))
-            self._context_menu.addAction(action)
-
-        self._context_menu.addSeparator()
-
-        # Chat action
-        chat_action = QAction("Open Chat", self)
-        chat_action.triggered.connect(self._toggle_chat)
-        self._context_menu.addAction(chat_action)
-
-        # Clear conversation action
-        clear_action = QAction("Clear Chat History", self)
-        clear_action.triggered.connect(self._clear_conversation)
-        self._context_menu.addAction(clear_action)
-
-        self._context_menu.addSeparator()
-
-        # Quit action
-        self._quit_action = QAction("Exit", self)
-        self._quit_action.triggered.connect(self._on_quit)
-        self._context_menu.addAction(self._quit_action)
-
-    def _on_quit(self):
-        """Handle quit action"""
-        self.quit_requested.emit()
-        self.close()
-
-    # Signals
-    quit_requested = pyqtSignal()
+    # ------------------------------------------------------------------
+    # State management
+    # ------------------------------------------------------------------
 
     def set_state(self, state: str):
-        """Set mascot state via state machine"""
         try:
-            # Convert string to MascotState enum
             state_enum = MascotState(state.lower())
             if self._state_machine.transition(state_enum):
                 self._mascot.state = state
-                # Update status action if context menu exists
-                if hasattr(self, '_context_menu') and self._context_menu is not None:
-                    if hasattr(self, '_status_action') and self._status_action is not None:
-                        self._status_action.setText(f"Status: {state.capitalize()}")
         except Exception as e:
-            print(f"Set state error: {e}")
+            self._logger.debug("set_state(%s) failed: %s", state, e)
 
     def get_state(self) -> str:
-        """Get current state"""
         return self._state_machine.current_state.value
 
     def _on_state_changed(self, state: str):
-        """Handle state machine state change"""
         self._mascot.state = state
-        # 当右键菜单尚未创建时，_status_action 可能不存在或为 None
-        if hasattr(self, "_status_action") and self._status_action is not None:
-            self._status_action.setText(f"Status: {state.capitalize()}")
+        self._idle_since = time.time()
 
     @property
     def state_machine(self) -> MascotStateMachine:
-        """Get the state machine instance"""
         return self._state_machine
 
-    def _toggle_chat(self):
-        """Toggle chat widget visibility"""
-        if self._chat_widget is None:
-            # Top-level chat window so positioning uses global coordinates
-            self._chat_widget = ConversationWidget(None)
-            self._chat_widget.message_sent.connect(self._on_chat_message)
-            self._chat_widget.close_requested.connect(self._close_chat)
+    # ------------------------------------------------------------------
+    # Vicoo bridge event handlers
+    # ------------------------------------------------------------------
 
-            # Position chat widget near the mascot
-            mascot_pos = self.pos()
-            self._chat_widget.move(mascot_pos.x() - 280, mascot_pos.y())
+    def _on_vicoo_connected(self):
+        self.set_state("greeting")
+        self._show_notification("🟢 已连接 Vicoo！", icon="🔗")
+        QTimer.singleShot(2500, lambda: self.set_state("idle"))
 
-        if self._chat_widget.isVisible():
-            self._chat_widget.hide()
-        else:
-            self._chat_widget.show()
-            self._chat_widget.raise_()
-            self._chat_widget.activateWindow()
+    def _on_vicoo_disconnected(self):
+        self.set_state("sad")
+        self._show_notification("🔴 Vicoo 连接断开", icon="⚠️")
+        QTimer.singleShot(3000, lambda: self.set_state("idle"))
 
-    def _close_chat(self):
-        """Close chat widget"""
-        if self._chat_widget:
-            self._chat_widget.hide()
+    def _on_note_created(self, note: dict):
+        title = note.get("title", "新笔记")
+        self.set_state("celebrating")
+        self._show_notification(f"新笔记: {title}", icon="📝")
+        QTimer.singleShot(3000, lambda: self.set_state("idle"))
 
-    def _on_chat_message(self, message: str):
-        """Handle incoming chat message"""
-        if not self._chat_widget:
+    def _on_note_count_changed(self, count: int):
+        self._logger.info("Note count: %d", count)
+
+    # ------------------------------------------------------------------
+    # Auto-behavior system
+    # ------------------------------------------------------------------
+
+    def _auto_behavior(self):
+        """Self-driven state transitions when idle."""
+        current = self.get_state()
+        if current != "idle":
             return
 
-        # Add user message to chat
-        self._chat_widget.add_user_message(message)
+        idle_dur = time.time() - self._idle_since
+        roll = random.random()
 
-        # Set state to thinking (processing)
-        previous_state = self.get_state()
-        self.set_state("thinking")
+        if idle_dur > 300:
+            # Sleepy after 5 minutes idle
+            if roll < 0.3:
+                self.set_state("sleeping")
+                QTimer.singleShot(15000, lambda: self.set_state("idle"))
+                return
 
-        # Process message asynchronously
-        asyncio.create_task(self._process_message(message))
+        if idle_dur > 60:
+            # Occasional yawn/stretch
+            if roll < 0.15:
+                self.set_state("breathing")
+                QTimer.singleShot(5000, lambda: self.set_state("idle"))
+                return
 
-    async def _process_message(self, message: str):
-        """Process message with LLM"""
-        try:
-            # Get response from LLM
-            response = await self._llm_client.chat(message)
-
-            # Add response to chat
-            if self._chat_widget:
-                self._chat_widget.add_assistant_message(response)
-
-            # Set state back to listening
+        # Random micro-actions
+        if roll < 0.08:
             self.set_state("listening")
+            QTimer.singleShot(2000, lambda: self.set_state("idle"))
+        elif roll < 0.12:
+            self.set_state("question")
+            QTimer.singleShot(2000, lambda: self.set_state("idle"))
 
-            # Auto-revert to idle after 3 seconds
-            QTimer.singleShot(3000, lambda: self.set_state("idle"))
+        # Occasional helpful tips
+        if roll < 0.03 and self._bridge.is_connected:
+            tips = [
+                "点我可以快速创建笔记哦～",
+                "双击我可以和AI聊天！",
+                "试试用 Galaxy View 看看知识图谱？",
+                "记得给笔记添加标签～",
+            ]
+            self._show_notification(random.choice(tips), icon="💡")
 
-        except Exception as e:
-            # Handle error
-            if self._chat_widget:
-                self._chat_widget.add_assistant_message(f"Oops! Something went wrong: {str(e)}")
-            self.set_state("idle")
+    # ------------------------------------------------------------------
+    # Dialogs
+    # ------------------------------------------------------------------
 
-    def _clear_conversation(self):
-        """Clear conversation history"""
-        self._llm_client.clear_conversation()
-        if self._chat_widget:
-            self._chat_widget.clear()
+    def _show_notification(self, text: str, icon: str = "💬", duration: int = 4000):
+        """Show a kawaii notification bubble above the mascot."""
+        notif = BubbleNotification(text, icon=icon, duration_ms=duration)
+        pos = self.pos()
+        notif.move(pos.x() + self.width() // 2 - notif.width() // 2,
+                   pos.y() - notif.height() - 4)
+        notif.show()
+
+    def _show_quick_actions(self):
+        """Show the quick action menu."""
+        if self._active_dialog:
+            self._active_dialog.close()
+            self._active_dialog = None
+            return
+        menu = QuickActionMenu()
+        menu.action_triggered.connect(self._on_quick_action)
+        pos = self.pos()
+        menu.move(pos.x() + self.width() // 2 - menu.width() // 2,
+                  pos.y() - menu.height() - 4)
+        menu.show()
+        self._active_dialog = menu
+
+    def _on_quick_action(self, action_id: str):
+        self._active_dialog = None
+        if action_id == "new_note":
+            self._show_quick_note()
+        elif action_id == "ai_chat":
+            self._show_mini_chat()
+        elif action_id == "search":
+            self._show_mini_chat()  # reuse chat for search
+        elif action_id == "gen_graph":
+            self.set_state("thinking")
+            self._show_notification("正在生成知识图谱…", icon="🌌")
+            QTimer.singleShot(500, self._do_generate_graph)
+        elif action_id == "focus":
+            self.set_state("meditating")
+            self._show_notification("进入专注模式 🧘", icon="🍅")
+            QTimer.singleShot(25 * 60 * 1000, lambda: (
+                self.set_state("celebrating"),
+                self._show_notification("专注时间结束！休息一下吧 ☕", icon="🎉"),
+            ))
+        elif action_id == "sleep":
+            self.set_state("sleeping")
+            self._show_notification("晚安～ 💤", icon="😴")
+            QTimer.singleShot(10000, lambda: self.set_state("idle"))
+
+    def _show_quick_note(self):
+        dlg = QuickNoteDialog()
+        dlg.note_created.connect(self._on_quick_note_create)
+        pos = self.pos()
+        dlg.move(pos.x() + self.width() // 2 - dlg.width() // 2,
+                 pos.y() - dlg.height() - 4)
+        dlg.show()
+        self._active_dialog = dlg
+
+    def _on_quick_note_create(self, title: str, body: str):
+        self._active_dialog = None
+        self.set_state("saving")
+        result = self._bridge.create_note(title, body)
+        if result:
+            self.set_state("saved")
+            self._show_notification(f"已保存: {title}", icon="✅")
+        else:
+            self.set_state("error")
+            self._show_notification("保存失败…", icon="❌")
+        QTimer.singleShot(2000, lambda: self.set_state("idle"))
+
+    def _show_mini_chat(self):
+        chat = MiniChatBubble()
+        chat.message_sent.connect(self._on_mini_chat_send)
+        chat.close_requested.connect(lambda: setattr(self, '_active_dialog', None))
+        pos = self.pos()
+        chat.move(pos.x() + self.width() // 2 - chat.width() // 2,
+                  pos.y() - chat.height() - 4)
+        chat.show()
+        self._active_dialog = chat
+
+    def _on_mini_chat_send(self, message: str):
+        self.set_state("thinking")
+        # Run in background to avoid blocking
+        QTimer.singleShot(100, lambda: self._do_ai_chat(message))
+
+    def _do_ai_chat(self, message: str):
+        response = self._bridge.ai_chat(message)
+        if response and self._active_dialog and isinstance(self._active_dialog, MiniChatBubble):
+            self._active_dialog.add_message("ai", response)
+            self.set_state("happy")
+        else:
+            if self._active_dialog and isinstance(self._active_dialog, MiniChatBubble):
+                self._active_dialog.add_message("ai", "抱歉，暂时无法回答…")
+            self.set_state("sad")
+        QTimer.singleShot(2000, lambda: self.set_state("idle"))
+
+    def _do_generate_graph(self):
+        result = self._bridge.generate_graph()
+        if result:
+            nc = result.get("summary", {}).get("nodesCreated", 0)
+            lc = result.get("summary", {}).get("linksCreated", 0)
+            self.set_state("celebrating")
+            self._show_notification(f"图谱完成! {nc}节点 {lc}关联", icon="🌌")
+        else:
+            self.set_state("error")
+            self._show_notification("图谱生成失败", icon="❌")
+        QTimer.singleShot(3000, lambda: self.set_state("idle"))
+
+    # ------------------------------------------------------------------
+    # Context menu
+    # ------------------------------------------------------------------
+
+    def _create_context_menu(self):
+        self._context_menu = QMenu(self)
+        self._status_action = QAction("状态: Idle", self)
+        self._status_action.setEnabled(False)
+        self._context_menu.addAction(self._status_action)
+        self._context_menu.addSeparator()
+
+        for label, state_val in [
+            ("空闲", "idle"), ("行走", "walking"), ("睡觉", "sleeping"),
+            ("聆听", "listening"), ("思考", "thinking"), ("开心", "happy"),
+            ("冥想", "meditating"), ("庆祝", "celebrating"),
+        ]:
+            act = QAction(label, self)
+            act.triggered.connect(lambda checked, s=state_val: self.set_state(s))
+            self._context_menu.addAction(act)
+
+        self._context_menu.addSeparator()
+        self._context_menu.addAction("快速操作…", self._show_quick_actions)
+        self._context_menu.addAction("AI 聊天…", self._show_mini_chat)
+        self._context_menu.addAction("快速笔记…", self._show_quick_note)
+        self._context_menu.addSeparator()
+
+        conn_label = "✅ Vicoo 已连接" if self._bridge.is_connected else "❌ Vicoo 未连接"
+        conn_act = QAction(conn_label, self)
+        conn_act.setEnabled(False)
+        self._context_menu.addAction(conn_act)
+
+        self._context_menu.addSeparator()
+        self._context_menu.addAction("退出", self._on_quit)
+
+    def _on_quit(self):
+        self._bridge.stop()
+        self.quit_requested.emit()
+        self.close()
+
+    # ------------------------------------------------------------------
+    # Painting
+    # ------------------------------------------------------------------
 
     def paintEvent(self, event):
-        """Paint the mascot"""
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-        # Don't erase - let transparency show through
-        # Just render the mascot
-
-        # Render mascot centered in window
-        from PyQt6.QtCore import QRectF
         rect = QRectF(0, 0, self.WINDOW_WIDTH, self.WINDOW_HEIGHT)
         self._mascot.render(painter, rect)
 
     def _on_animation_tick(self):
-        """Animation timer tick"""
-        # Calculate delta time
         current_time = QDateTime.currentMSecsSinceEpoch()
-
         if self._last_tick == 0:
             self._last_tick = current_time
-
-        delta_time = (current_time - self._last_tick) / 1000.0  # Convert to seconds
         self._last_tick = current_time
-
-        # Update mascot animation
-        self._mascot.update_animation(delta_time)
-
-        # Trigger repaint
         self.update()
 
+    # ------------------------------------------------------------------
+    # Mouse interaction
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _get_global_pos(event: QMouseEvent):
+        if hasattr(event, "globalPosition"):
+            return event.globalPosition().toPoint()
+        return event.globalPos()
+
     def _reset_click(self):
-        """Reset click count"""
         self._click_count = 0
 
     def mousePressEvent(self, event: QMouseEvent):
-        """Handle mouse press for dragging"""
         try:
             if event.button() == Qt.MouseButton.LeftButton:
-                self._logger.debug("mousePressEvent: LeftButton")
-                # Check for double-click (two clicks within 300ms)
                 self._click_count += 1
-
                 if self._click_count == 2:
-                    # Double click detected
-                    self._logger.info("Double click detected, toggling chat")
-                    self._toggle_chat()
                     self._click_count = 0
                     self._click_timer.stop()
+                    self._show_quick_actions()
                     return
-                else:
-                    # Start drag
-                    self._is_dragging = True
-                    global_pos = self._get_global_pos(event)
-                    self._drag_offset = global_pos - self.pos()
-                    self._logger.info(
-                        "Start dragging mascot at global=(%d,%d) offset=(%d,%d)",
-                        global_pos.x(),
-                        global_pos.y(),
-                        self._drag_offset.x(),
-                        self._drag_offset.y(),
-                    )
-                    self.setCursor(QCursor(Qt.CursorShape.ClosedHandCursor))
-                    # Transition to walking (dragging) state
-                    self.set_state("walking")
-                    # Start timer for double-click detection
-                    self._click_timer.start(300)
-
+                self._is_dragging = True
+                self._drag_offset = self._get_global_pos(event) - self.pos()
+                self.setCursor(QCursor(Qt.CursorShape.ClosedHandCursor))
+                self.set_state("walking")
+                self._click_timer.start(300)
             elif event.button() == Qt.MouseButton.RightButton:
-                self._logger.debug("mousePressEvent: RightButton (context menu)")
-                # Create and show context menu
                 if self._context_menu is None:
                     self._create_context_menu()
-                global_pos = self._get_global_pos(event)
-                self._context_menu.exec(global_pos)
+                self._context_menu.exec(self._get_global_pos(event))
         except Exception:
-            if hasattr(self, "_logger"):
-                self._logger.exception("Mouse press error")
-            else:
-                print("Mouse press error", flush=True)
+            self._logger.exception("Mouse press error")
 
     def mouseMoveEvent(self, event: QMouseEvent):
-        """Handle mouse move for dragging"""
         try:
             if self._is_dragging:
                 new_pos = self._get_global_pos(event) - self._drag_offset
-                # Keep within screen bounds
                 screen = QApplication.primaryScreen().geometry()
                 new_pos.setX(max(0, min(new_pos.x(), screen.width() - self.width())))
                 new_pos.setY(max(0, min(new_pos.y(), screen.height() - self.height())))
-                self._logger.debug("Dragging move to (%d,%d)", new_pos.x(), new_pos.y())
                 self.move(new_pos)
-
-                # Move chat widget with mascot
-                if self._chat_widget and self._chat_widget.isVisible():
-                    self._chat_widget.move(new_pos.x() - 280, new_pos.y())
+                if self._active_dialog and self._active_dialog.isVisible():
+                    self._active_dialog.move(
+                        new_pos.x() + self.width() // 2 - self._active_dialog.width() // 2,
+                        new_pos.y() - self._active_dialog.height() - 4)
         except Exception:
-            if hasattr(self, "_logger"):
-                self._logger.exception("Mouse move error")
-            else:
-                print("Mouse move error", flush=True)
+            self._logger.exception("Mouse move error")
 
     def mouseReleaseEvent(self, event: QMouseEvent):
-        """Handle mouse release"""
         try:
             if event.button() == Qt.MouseButton.LeftButton:
                 self._is_dragging = False
                 self.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
-                # Revert to idle
                 self.set_state("idle")
-                self._logger.info(
-                    "Stop dragging mascot at (%d,%d)", self.pos().x(), self.pos().y()
-                )
         except Exception:
-            if hasattr(self, "_logger"):
-                self._logger.exception("Mouse release error")
-            else:
-                print("Mouse release error", flush=True)
+            self._logger.exception("Mouse release error")
 
     def enterEvent(self, event):
-        """Handle mouse enter"""
         self.setCursor(QCursor(Qt.CursorShape.OpenHandCursor))
 
     def leaveEvent(self, event):
-        """Handle mouse leave"""
         if not self._is_dragging:
             self.setCursor(QCursor(Qt.CursorShape.ArrowCursor))
 
     def closeEvent(self, event):
-        """Handle window close"""
-        # Close chat widget if open
-        if self._chat_widget:
-            self._chat_widget.close()
-        # Hide tray icon on close
+        self._bridge.stop()
+        if self._active_dialog:
+            self._active_dialog.close()
         if self._tray_icon:
             self._tray_icon.hide()
         super().closeEvent(event)

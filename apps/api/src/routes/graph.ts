@@ -1,51 +1,83 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getAll, getOne, runQuery, saveDatabase } from '../db/index.js';
-import { callClaudeCode, generateKnowledgeGraphPrompt } from '../services/claude-code.js';
+import { generateGraphWithMiniMax, generateKnowledgeGraphPrompt } from '../services/claude-code.js';
 
 const router = Router();
 
-// Type definitions for graph entities
-interface GraphNode {
-  id: string;
-  x: number;
-  y: number;
-  label: string;
-  type: string;
-  color: string;
-  icon: string;
-  description: string;
-  linked_note_id: string;
-  tags: string;
-}
+/**
+ * Simple force-directed layout: related nodes cluster together.
+ * Runs a few iterations of spring-electric simulation.
+ */
+function computeForceLayout(
+  nodes: Array<{ label: string }>,
+  links: Array<{ source: string; target: string; strength?: number }>
+): Array<{ x: number; y: number }> {
+  const n = nodes.length;
+  if (n === 0) return [];
 
-interface GraphLink {
-  id: string;
-  source: string;
-  target: string;
-  label: string;
-  color: string;
-}
+  const labelIdx = new Map(nodes.map((nd, i) => [nd.label, i]));
 
-interface ApiNode {
-  id: string;
-  x: number;
-  y: number;
-  label: string;
-  type: string;
-  color: string;
-  icon: string;
-  description: string;
-  linkedNoteId: string;
-  tags: string[];
-}
+  // Initial positions: circle layout
+  const pos = nodes.map((_, i) => ({
+    x: Math.cos((2 * Math.PI * i) / n) * 200,
+    y: Math.sin((2 * Math.PI * i) / n) * 150,
+  }));
 
-interface ApiLink {
-  id: string;
-  source: string;
-  target: string;
-  label: string;
-  color: string;
+  const REPULSION = 8000;
+  const SPRING_K = 0.04;
+  const DAMPING = 0.85;
+  const ITERATIONS = 80;
+
+  const vx = new Float64Array(n);
+  const vy = new Float64Array(n);
+
+  for (let iter = 0; iter < ITERATIONS; iter++) {
+    // Repulsion between all pairs
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        let dx = pos[i].x - pos[j].x;
+        let dy = pos[i].y - pos[j].y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        let force = REPULSION / (dist * dist);
+        let fx = (dx / dist) * force;
+        let fy = (dy / dist) * force;
+        vx[i] += fx; vy[i] += fy;
+        vx[j] -= fx; vy[j] -= fy;
+      }
+    }
+
+    // Attraction along edges
+    for (const link of links) {
+      const si = labelIdx.get(link.source);
+      const ti = labelIdx.get(link.target);
+      if (si === undefined || ti === undefined) continue;
+      let dx = pos[ti].x - pos[si].x;
+      let dy = pos[ti].y - pos[si].y;
+      let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      let strength = (link.strength ?? 0.5) * SPRING_K;
+      let fx = dx * strength;
+      let fy = dy * strength;
+      vx[si] += fx; vy[si] += fy;
+      vx[ti] -= fx; vy[ti] -= fy;
+    }
+
+    // Apply velocity with damping
+    for (let i = 0; i < n; i++) {
+      vx[i] *= DAMPING;
+      vy[i] *= DAMPING;
+      pos[i].x += vx[i];
+      pos[i].y += vy[i];
+    }
+  }
+
+  // Center the layout
+  let cx = 0, cy = 0;
+  for (const p of pos) { cx += p.x; cy += p.y; }
+  cx /= n; cy /= n;
+  for (const p of pos) { p.x -= cx; p.y -= cy; }
+
+  return pos.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
 }
 
 // ==================== NODES ====================
@@ -53,7 +85,7 @@ interface ApiLink {
 // GET /api/nodes - Get all nodes
 router.get('/', (req, res) => {
   try {
-    const nodes = getAll<GraphNode>('SELECT * FROM nodes ORDER BY label');
+    const nodes = getAll<any>('SELECT * FROM nodes ORDER BY label');
 
     res.json({
       data: nodes.map(n => ({
@@ -70,7 +102,6 @@ router.get('/', (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[Graph] Failed to fetch nodes:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch nodes' }
     });
@@ -107,14 +138,13 @@ router.post('/', (req, res) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create node' }
     });
-    console.error('[Graph] Failed to create node:', error);
   }
 });
 
 // GET /api/nodes/orphans - Get orphan nodes (not connected to any note)
 router.get('/orphans', (req, res) => {
   try {
-    const nodes = getAll<GraphNode>(
+    const nodes = getAll<any>(
       "SELECT * FROM nodes WHERE linked_note_id IS NULL OR linked_note_id = '' ORDER BY label"
     );
 
@@ -133,7 +163,6 @@ router.get('/orphans', (req, res) => {
       }))
     });
   } catch (error) {
-    console.error('[Graph] Failed to fetch orphan nodes:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch orphan nodes' }
     });
@@ -144,7 +173,7 @@ router.get('/orphans', (req, res) => {
 router.get('/:id', (req, res) => {
   try {
     const { id } = req.params;
-    const node = getOne<GraphNode>('SELECT * FROM nodes WHERE id = ?', [id]);
+    const node = getOne<any>('SELECT * FROM nodes WHERE id = ?', [id]);
 
     if (!node) {
       return res.status(404).json({
@@ -167,7 +196,6 @@ router.get('/:id', (req, res) => {
       }
     });
   } catch (error) {
-    console.error('[Graph] Failed to fetch node:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch node' }
     });
@@ -180,7 +208,7 @@ router.patch('/:id', (req, res) => {
     const { id } = req.params;
     const { x, y, label, type, color, icon, description, linkedNoteId, tags } = req.body;
 
-    const existing = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [id]);
+    const existing = getOne<any>('SELECT id FROM nodes WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Node not found' }
@@ -199,7 +227,7 @@ router.patch('/:id', (req, res) => {
 
     saveDatabase();
 
-    const updated = getOne<GraphNode>('SELECT * FROM nodes WHERE id = ?', [id]);
+    const updated = getOne<any>('SELECT * FROM nodes WHERE id = ?', [id]);
 
     res.json({
       data: {
@@ -219,7 +247,6 @@ router.patch('/:id', (req, res) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to update node' }
     });
-    console.error('[Graph] Failed to update node:', error);
   }
 });
 
@@ -228,7 +255,7 @@ router.delete('/:id', (req, res) => {
   try {
     const { id } = req.params;
 
-    const existing = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [id]);
+    const existing = getOne<any>('SELECT id FROM nodes WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Node not found' }
@@ -242,7 +269,6 @@ router.delete('/:id', (req, res) => {
 
     res.status(204).send();
   } catch (error) {
-    console.error('[Graph] Failed to delete node:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete node' }
     });
@@ -255,7 +281,7 @@ router.post('/:id/connect', (req, res) => {
     const { id } = req.params;
     const { noteId } = req.body;
 
-    const node = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [id]);
+    const node = getOne<any>('SELECT id FROM nodes WHERE id = ?', [id]);
     if (!node) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Node not found' }
@@ -267,7 +293,6 @@ router.post('/:id/connect', (req, res) => {
 
     res.json({ data: { success: true, nodeId: id, linkedNoteId: noteId } });
   } catch (error) {
-    console.error('[Graph] Failed to connect node:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to connect node' }
     });
@@ -279,21 +304,23 @@ router.post('/:id/connect', (req, res) => {
 // GET /api/links - Get all links
 router.get('/../links', (req, res) => {
   try {
-    const links = getAll<GraphLink>('SELECT * FROM links');
+    const links = getAll<any>('SELECT * FROM links');
 
     res.json({
       data: links.map(l => ({
         id: l.id,
         source: l.source,
         target: l.target,
-        type: l.type
+        type: l.type,
+        relation: l.relation || 'relates',
+        label: l.label || '',
+        strength: l.strength ?? 0.5
       }))
     });
   } catch (error) {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to fetch links' }
     });
-    console.error('[Graph] Failed to fetch links:', error);
   }
 });
 
@@ -309,8 +336,8 @@ router.post('/../links', (req, res) => {
     }
 
     // Check if nodes exist
-    const sourceNode = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [source]);
-    const targetNode = getOne<{ id: string }>('SELECT id FROM nodes WHERE id = ?', [target]);
+    const sourceNode = getOne<any>('SELECT id FROM nodes WHERE id = ?', [source]);
+    const targetNode = getOne<any>('SELECT id FROM nodes WHERE id = ?', [target]);
 
     if (!sourceNode || !targetNode) {
       return res.status(404).json({
@@ -319,7 +346,7 @@ router.post('/../links', (req, res) => {
     }
 
     // Check for duplicate
-    const existing = getOne<{ id: string }>(
+    const existing = getOne<any>(
       'SELECT id FROM links WHERE (source = ? AND target = ?) OR (source = ? AND target = ?)',
       [source, target, target, source]
     );
@@ -344,7 +371,6 @@ router.post('/../links', (req, res) => {
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to create link' }
     });
-    console.error('[Graph] Failed to create link:', error);
   }
 });
 
@@ -353,7 +379,7 @@ router.delete('/../links/:id', (req, res) => {
   try {
     const { id } = req.params;
 
-    const existing = getOne<{ id: string }>('SELECT id FROM links WHERE id = ?', [id]);
+    const existing = getOne<any>('SELECT id FROM links WHERE id = ?', [id]);
     if (!existing) {
       return res.status(404).json({
         error: { code: 'NOT_FOUND', message: 'Link not found' }
@@ -365,7 +391,6 @@ router.delete('/../links/:id', (req, res) => {
 
     res.status(204).send();
   } catch (error) {
-    console.error('[Graph] Failed to delete link:', error);
     res.status(500).json({
       error: { code: 'INTERNAL_ERROR', message: 'Failed to delete link' }
     });
@@ -383,7 +408,7 @@ router.post('/generate-from-notes', async (req, res) => {
     console.log('[Graph Generate] Starting knowledge graph generation from notes...');
 
     // 1. 获取所有笔记
-    const notes = getAll<{ id: string; title: string; content: string }>(
+    const notes = getAll<any>(
       'SELECT id, title, content FROM notes WHERE user_id = ? ORDER BY timestamp DESC',
       [userId]
     );
@@ -410,13 +435,11 @@ router.post('/generate-from-notes', async (req, res) => {
     // 3. 生成提示词
     const prompt = generateKnowledgeGraphPrompt(notesWithTags);
 
-    // 4. 调用 Claude Code 分析
-    console.log('[Graph Generate] Calling Claude Code...');
-    const result = await callClaudeCode(prompt, {
-      timeout: 5 * 60 * 1000 // 5 分钟超时
-    });
+    // 4. 调用 MiniMax-M2.5 分析
+    console.log('[Graph Generate] Calling MiniMax-M2.5...');
+    const result = await generateGraphWithMiniMax(prompt);
 
-    console.log(`[Graph Generate] Claude returned ${result.nodes.length} nodes and ${result.links.length} links`);
+    console.log(`[Graph Generate] MiniMax returned ${result.nodes.length} nodes and ${result.links.length} links`);
 
     // 5. 清除现有节点和边（如果用户要求）
     if (clearExisting) {
@@ -425,15 +448,18 @@ router.post('/generate-from-notes', async (req, res) => {
       console.log('[Graph Generate] Cleared existing nodes and links');
     }
 
-    // 6. 存储节点
-    const nodeIdMap = new Map<string, string>(); // label -> id
+    // 6. Force-directed layout: compute positions based on relationships
+    const nodePositions = computeForceLayout(result.nodes, result.links);
+
+    const nodeIdMap = new Map<string, string>();
     const createdNodes: any[] = [];
 
-    for (const node of result.nodes) {
+    for (let i = 0; i < result.nodes.length; i++) {
+      const node = result.nodes[i];
       const id = uuidv4();
-      // 随机位置分布在画布上
-      const x = Math.random() * 800 - 400;
-      const y = Math.random() * 600 - 300;
+      const pos = nodePositions[i] || { x: Math.random() * 600 - 300, y: Math.random() * 400 - 200 };
+      const x = pos.x;
+      const y = pos.y;
 
       runQuery(
         `INSERT INTO nodes (id, x, y, label, type, color, icon, description, created_at)
@@ -463,15 +489,21 @@ router.post('/generate-from-notes', async (req, res) => {
 
       if (sourceId && targetId) {
         const id = uuidv4();
+        const relation = link.relation || 'relates';
+        const label = link.label || '';
+        const strength = typeof link.strength === 'number' ? link.strength : 0.5;
         runQuery(
-          'INSERT INTO links (id, source, target, type) VALUES (?, ?, ?, ?)',
-          [id, sourceId, targetId, 'solid']
+          'INSERT INTO links (id, source, target, type, relation, label, strength) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [id, sourceId, targetId, 'solid', relation, label, strength]
         );
         createdLinks.push({
           id,
           source: sourceId,
           target: targetId,
-          type: 'solid'
+          type: 'solid',
+          relation,
+          label,
+          strength
         });
       } else {
         console.warn(`[Graph Generate] Skipping link: source="${link.source}", target="${link.target}" - node not found`);
@@ -517,32 +549,16 @@ router.post('/generate-from-notes', async (req, res) => {
   }
 });
 
-// GET /api/graph/status - 检查 Claude Code 是否可用
+// GET /api/graph/status - 检查 MiniMax AI 是否可用
 router.get('/status', async (req, res) => {
-  try {
-    const { execSync } = await import('child_process');
-    const version = execSync('claude --version', {
-      encoding: 'utf-8',
-      timeout: 5000,
-      windowsHide: true
-    });
-
-    res.json({
-      data: {
-        available: true,
-        version: version.trim(),
-        message: 'Claude Code 可用'
-      }
-    });
-  } catch (error: any) {
-    res.json({
-      data: {
-        available: false,
-        version: null,
-        message: 'Claude Code 不可用，请安装 Claude Code'
-      }
-    });
-  }
+  const available = !!process.env.MINIMAX_API_KEY;
+  res.json({
+    data: {
+      available,
+      provider: 'minimax/m2.5',
+      message: available ? 'MiniMax AI 可用' : 'MiniMax API Key 未配置'
+    }
+  });
 });
 
 export default router;
