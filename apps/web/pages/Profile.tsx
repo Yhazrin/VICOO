@@ -211,6 +211,20 @@ export const Profile: React.FC = () => {
         </NeoCard>
       )}
 
+      {/* Subscription */}
+      <NeoCard className="p-6 mb-6 bg-white dark:bg-gray-900">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-bold">订阅套餐</h3>
+            <p className="text-sm text-gray-500 mt-1">管理你的订阅和用量</p>
+          </div>
+          <a href="#" onClick={(e) => { e.preventDefault(); window.dispatchEvent(new CustomEvent('navigate-to-view', { detail: 'pricing' })); }}
+            className="px-4 py-2 bg-primary border-2 border-ink rounded-xl font-bold text-sm shadow-neo-sm hover:shadow-neo transition-all">
+            查看套餐 →
+          </a>
+        </div>
+      </NeoCard>
+
       {/* Account Info */}
       <NeoCard className="p-6 bg-white dark:bg-gray-900">
         <h3 className="text-lg font-bold mb-4">账号信息</h3>

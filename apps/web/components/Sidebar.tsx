@@ -16,12 +16,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
   const focusButtonRef = useRef<HTMLButtonElement>(null);
   const { token } = useApi();
   const [userName, setUserName] = useState('个人中心');
+  const [userPlan, setUserPlan] = useState('free');
 
   useEffect(() => {
     if (!token) return;
     fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
       .then(r => r.json())
       .then(d => { if (d.data?.username) setUserName(d.data.username); })
+      .catch(() => {});
+    fetch('/api/subscription', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.data?.plan) setUserPlan(d.data.plan); })
       .catch(() => {});
   }, [token]);
   const { t } = useLanguage();
@@ -217,7 +222,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
              `}
           >
             <p className="text-sm font-bold text-ink dark:text-white">{userName}</p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">{t('nav.user_role')}</p>
+            <div className="flex items-center gap-1.5">
+              <span className={`text-[10px] font-black px-1.5 py-0.5 rounded ${
+                userPlan === 'team' ? 'bg-purple-100 text-purple-700' :
+                userPlan === 'pro' ? 'bg-blue-100 text-blue-700' :
+                'bg-gray-100 text-gray-500'
+              }`}>
+                {userPlan === 'team' ? 'TEAM' : userPlan === 'pro' ? 'PRO' : 'FREE'}
+              </span>
+              {userPlan === 'free' && (
+                <button onClick={(e) => { e.stopPropagation(); onChangeView(View.PRICING); setMobileOpen(false); }}
+                  className="text-[10px] font-bold text-primary hover:underline">升级</button>
+              )}
+            </div>
           </div>
 
           {/* Mini Public Site Link (appears on hover) */}

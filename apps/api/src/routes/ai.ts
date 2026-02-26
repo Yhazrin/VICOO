@@ -108,7 +108,7 @@ router.post('/providers/test', async (req: Request, res: Response) => {
 });
 
 // POST /api/ai/summary - 生成笔记摘要
-router.post('/summary', async (req: Request, res: Response) => {
+router.post('/summary', planGuard('aiSummaryPerDay'), async (req: Request, res: Response) => {
   const { noteId, text } = req.body;
 
   if (!noteId && !text) {
@@ -174,6 +174,7 @@ router.post('/summary', async (req: Request, res: Response) => {
       saveDatabase();
     }
 
+    (req as any).trackUsage?.();
     res.json({
       success: true,
       summary,
@@ -189,7 +190,7 @@ router.post('/summary', async (req: Request, res: Response) => {
 });
 
 // POST /api/ai/suggest-tags - 智能标签建议
-router.post('/suggest-tags', async (req: Request, res: Response) => {
+router.post('/suggest-tags', planGuard('aiSummaryPerDay'), async (req: Request, res: Response) => {
   const { noteId, text } = req.body;
 
   if (!noteId && !text) {
