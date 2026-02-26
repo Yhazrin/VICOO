@@ -1,8 +1,9 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, NavItem } from '../types';
 import { AnimatedLogo } from './AnimatedLogo';
 import { VicooIcon } from './VicooIcon';
 import { useLanguage } from '../contexts/LanguageContext';
+import { useApi } from '../contexts/ApiContext';
 
 interface SidebarProps {
   currentView: View;
@@ -13,6 +14,16 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onEnterFocusMode }) => {
   const [isExpanded, setIsExpanded] = useState(true);
   const focusButtonRef = useRef<HTMLButtonElement>(null);
+  const { token } = useApi();
+  const [userName, setUserName] = useState('个人中心');
+
+  useEffect(() => {
+    if (!token) return;
+    fetch('/auth/me', { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.json())
+      .then(d => { if (d.data?.username) setUserName(d.data.username); })
+      .catch(() => {});
+  }, [token]);
   const { t } = useLanguage();
 
   const handleFocusClick = () => {
@@ -189,12 +200,15 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
         <div 
           onClick={() => { onChangeView(View.PROFILE); setMobileOpen(false); }}
           className={`
-            flex items-center gap-3 p-2 rounded-xl border-2 border-transparent hover:border-ink dark:hover:border-white hover:bg-white dark:hover:bg-gray-800 transition-all cursor-pointer relative group
+            flex items-center gap-3 p-2 rounded-xl border-2 transition-all cursor-pointer relative group
+            ${currentView === View.PROFILE
+              ? 'border-ink dark:border-white bg-primary/20 dark:bg-primary/10'
+              : 'border-transparent hover:border-ink dark:hover:border-white hover:bg-white dark:hover:bg-gray-800'}
             ${!isExpanded ? 'justify-center' : ''}
           `}
         >
-          <div className="w-10 h-10 rounded-full border-2 border-ink dark:border-white bg-secondary flex-shrink-0 flex items-center justify-center overflow-hidden">
-            <VicooIcon name="person" size={20} className="text-ink" />
+          <div className="w-10 h-10 rounded-full border-2 border-ink dark:border-white bg-secondary flex-shrink-0 flex items-center justify-center overflow-hidden text-lg font-black">
+            {userName?.[0]?.toUpperCase() || '?'}
           </div>
           <div 
              className={`
@@ -202,7 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentView, onChangeView, onE
                ${isExpanded ? 'opacity-100 w-auto' : 'opacity-0 w-0 hidden'}
              `}
           >
-            <p className="text-sm font-bold text-ink dark:text-white">个人中心</p>
+            <p className="text-sm font-bold text-ink dark:text-white">{userName}</p>
             <p className="text-xs text-gray-500 dark:text-gray-400 font-bold">{t('nav.user_role')}</p>
           </div>
 

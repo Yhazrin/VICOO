@@ -68,10 +68,13 @@ export const InboxPage: React.FC<InboxPageProps> = ({ onOpenNote }) => {
     return date.toLocaleDateString();
   };
 
+  const countByStatus = (status: string) =>
+    (allNotes || []).filter(n => ((n as any).status || 'inbox') === status).length;
+
   const tabs = [
-    { id: 'inbox', label: t('inbox.inbox') || 'Inbox', count: notes.length },
-    { id: 'clarified', label: t('inbox.clarified') || 'Clarified', count: 0 },
-    { id: 'archived', label: t('inbox.archived') || 'Archived', count: 0 }
+    { id: 'inbox', label: t('inbox.inbox') || 'Inbox', count: countByStatus('inbox') },
+    { id: 'clarified', label: t('inbox.clarified') || 'Clarified', count: countByStatus('clarified') },
+    { id: 'archived', label: t('inbox.archived') || 'Archived', count: countByStatus('archived') }
   ] as const;
 
   return (
