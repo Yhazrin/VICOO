@@ -12,6 +12,7 @@ import { runAIAssistant } from '../services/ai-assistant.js';
 import { getOne, runQuery, saveDatabase } from '../db/index.js';
 import { chatWithAgent } from '../services/langchain/index.js';
 import { planGuard } from '../middleware/plan-guard.js';
+import { getAvailableProviders, getActiveProvider, callProvider, type AIProviderId } from '../services/ai-providers.js';
 
 const router = Router();
 
@@ -68,25 +69,42 @@ router.post('/chat', planGuard('aiChatPerDay'), async (req: Request, res: Respon
   }
 });
 
-// GET /api/ai/status - AI 服务状态
+// GET /api/ai/status - AI 服务状态 + 所有可用 Provider
 router.get('/status', async (req: Request, res: Response) => {
   try {
-    const minimaxConfigured = !!process.env.MINIMAX_API_KEY;
+    const providers = getAvailableProviders();
+    const active = getActiveProvider();
 
     res.json({
       success: true,
       data: {
-        minimax: minimaxConfigured,
-        provider: 'minimax/langchain',
-        modes: ['auto', 'knowledge', 'search', 'action']
+        activeProvider: active.id,
+        activeProviderName: active.nameZh,
+        providers: providers.map(p => ({
+          id: p.id,
+          name: p.name,
+          nameZh: p.nameZh,
+          icon: p.icon,
+          models: p.models,
+          defaultModel: p.defaultModel,
+          configured: p.configured,
+          envKey: p.envKey,
+        })),
+        modes: ['auto', 'knowledge', 'search', 'action'],
       }
     });
   } catch (error: any) {
-    res.json({
-      success: false,
-      error: error.message
-    });
+    res.json({ success: false, error: error.message });
   }
+});
+
+// POST /api/ai/providers/test - Test a specific provider
+router.post('/providers/test', async (req: Request, res: Response) => {
+  const { provider, model } = req.body;
+  if (!provider) return res.status(400).json({ error: { code: 'VALIDATION', message: 'provider required' } });
+
+  const result = await callProvider(provider as AIProviderId, '请回复"连接成功"这四个字。', model);
+  res.json({ data: result });
 });
 
 // POST /api/ai/summary - 生成笔记摘要
