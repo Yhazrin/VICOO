@@ -1,9 +1,84 @@
 import { Router } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import { getAll, getOne, runQuery, saveDatabase } from '../db/index.js';
-import { callClaudeCode, generateKnowledgeGraphPrompt } from '../services/claude-code.js';
+import { generateGraphWithMiniMax, generateKnowledgeGraphPrompt } from '../services/claude-code.js';
 
 const router = Router();
+
+/**
+ * Simple force-directed layout: related nodes cluster together.
+ * Runs a few iterations of spring-electric simulation.
+ */
+function computeForceLayout(
+  nodes: Array<{ label: string }>,
+  links: Array<{ source: string; target: string; strength?: number }>
+): Array<{ x: number; y: number }> {
+  const n = nodes.length;
+  if (n === 0) return [];
+
+  const labelIdx = new Map(nodes.map((nd, i) => [nd.label, i]));
+
+  // Initial positions: circle layout
+  const pos = nodes.map((_, i) => ({
+    x: Math.cos((2 * Math.PI * i) / n) * 200,
+    y: Math.sin((2 * Math.PI * i) / n) * 150,
+  }));
+
+  const REPULSION = 8000;
+  const SPRING_K = 0.04;
+  const DAMPING = 0.85;
+  const ITERATIONS = 80;
+
+  const vx = new Float64Array(n);
+  const vy = new Float64Array(n);
+
+  for (let iter = 0; iter < ITERATIONS; iter++) {
+    // Repulsion between all pairs
+    for (let i = 0; i < n; i++) {
+      for (let j = i + 1; j < n; j++) {
+        let dx = pos[i].x - pos[j].x;
+        let dy = pos[i].y - pos[j].y;
+        let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        let force = REPULSION / (dist * dist);
+        let fx = (dx / dist) * force;
+        let fy = (dy / dist) * force;
+        vx[i] += fx; vy[i] += fy;
+        vx[j] -= fx; vy[j] -= fy;
+      }
+    }
+
+    // Attraction along edges
+    for (const link of links) {
+      const si = labelIdx.get(link.source);
+      const ti = labelIdx.get(link.target);
+      if (si === undefined || ti === undefined) continue;
+      let dx = pos[ti].x - pos[si].x;
+      let dy = pos[ti].y - pos[si].y;
+      let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      let strength = (link.strength ?? 0.5) * SPRING_K;
+      let fx = dx * strength;
+      let fy = dy * strength;
+      vx[si] += fx; vy[si] += fy;
+      vx[ti] -= fx; vy[ti] -= fy;
+    }
+
+    // Apply velocity with damping
+    for (let i = 0; i < n; i++) {
+      vx[i] *= DAMPING;
+      vy[i] *= DAMPING;
+      pos[i].x += vx[i];
+      pos[i].y += vy[i];
+    }
+  }
+
+  // Center the layout
+  let cx = 0, cy = 0;
+  for (const p of pos) { cx += p.x; cy += p.y; }
+  cx /= n; cy /= n;
+  for (const p of pos) { p.x -= cx; p.y -= cy; }
+
+  return pos.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+}
 
 // ==================== NODES ====================
 
@@ -236,7 +311,10 @@ router.get('/../links', (req, res) => {
         id: l.id,
         source: l.source,
         target: l.target,
-        type: l.type
+        type: l.type,
+        relation: l.relation || 'relates',
+        label: l.label || '',
+        strength: l.strength ?? 0.5
       }))
     });
   } catch (error) {
@@ -357,13 +435,11 @@ router.post('/generate-from-notes', async (req, res) => {
     // 3. 生成提示词
     const prompt = generateKnowledgeGraphPrompt(notesWithTags);
 
-    // 4. 调用 Claude Code 分析
-    console.log('[Graph Generate] Calling Claude Code...');
-    const result = await callClaudeCode(prompt, {
-      timeout: 5 * 60 * 1000 // 5 分钟超时
-    });
+    // 4. 调用 MiniMax-M2.5 分析
+    console.log('[Graph Generate] Calling MiniMax-M2.5...');
+    const result = await generateGraphWithMiniMax(prompt);
 
-    console.log(`[Graph Generate] Claude returned ${result.nodes.length} nodes and ${result.links.length} links`);
+    console.log(`[Graph Generate] MiniMax returned ${result.nodes.length} nodes and ${result.links.length} links`);
 
     // 5. 清除现有节点和边（如果用户要求）
     if (clearExisting) {
@@ -372,15 +448,18 @@ router.post('/generate-from-notes', async (req, res) => {
       console.log('[Graph Generate] Cleared existing nodes and links');
     }
 
-    // 6. 存储节点
-    const nodeIdMap = new Map<string, string>(); // label -> id
+    // 6. Force-directed layout: compute positions based on relationships
+    const nodePositions = computeForceLayout(result.nodes, result.links);
+
+    const nodeIdMap = new Map<string, string>();
     const createdNodes: any[] = [];
 
-    for (const node of result.nodes) {
+    for (let i = 0; i < result.nodes.length; i++) {
+      const node = result.nodes[i];
       const id = uuidv4();
-      // 随机位置分布在画布上
-      const x = Math.random() * 800 - 400;
-      const y = Math.random() * 600 - 300;
+      const pos = nodePositions[i] || { x: Math.random() * 600 - 300, y: Math.random() * 400 - 200 };
+      const x = pos.x;
+      const y = pos.y;
 
       runQuery(
         `INSERT INTO nodes (id, x, y, label, type, color, icon, description, created_at)
@@ -410,15 +489,21 @@ router.post('/generate-from-notes', async (req, res) => {
 
       if (sourceId && targetId) {
         const id = uuidv4();
+        const relation = link.relation || 'relates';
+        const label = link.label || '';
+        const strength = typeof link.strength === 'number' ? link.strength : 0.5;
         runQuery(
-          'INSERT INTO links (id, source, target, type) VALUES (?, ?, ?, ?)',
-          [id, sourceId, targetId, 'solid']
+          'INSERT INTO links (id, source, target, type, relation, label, strength) VALUES (?, ?, ?, ?, ?, ?, ?)',
+          [id, sourceId, targetId, 'solid', relation, label, strength]
         );
         createdLinks.push({
           id,
           source: sourceId,
           target: targetId,
-          type: 'solid'
+          type: 'solid',
+          relation,
+          label,
+          strength
         });
       } else {
         console.warn(`[Graph Generate] Skipping link: source="${link.source}", target="${link.target}" - node not found`);
@@ -464,32 +549,16 @@ router.post('/generate-from-notes', async (req, res) => {
   }
 });
 
-// GET /api/graph/status - 检查 Claude Code 是否可用
+// GET /api/graph/status - 检查 MiniMax AI 是否可用
 router.get('/status', async (req, res) => {
-  try {
-    const { execSync } = await import('child_process');
-    const version = execSync('claude --version', {
-      encoding: 'utf-8',
-      timeout: 5000,
-      windowsHide: true
-    });
-
-    res.json({
-      data: {
-        available: true,
-        version: version.trim(),
-        message: 'Claude Code 可用'
-      }
-    });
-  } catch (error: any) {
-    res.json({
-      data: {
-        available: false,
-        version: null,
-        message: 'Claude Code 不可用，请安装 Claude Code'
-      }
-    });
-  }
+  const available = !!process.env.MINIMAX_API_KEY;
+  res.json({
+    data: {
+      available,
+      provider: 'minimax/m2.5',
+      message: available ? 'MiniMax AI 可用' : 'MiniMax API Key 未配置'
+    }
+  });
 });
 
 export default router;

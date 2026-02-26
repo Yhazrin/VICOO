@@ -1,17 +1,17 @@
 /**
  * 后台知识图谱自动生成服务
- * 自动检测未生成节点的笔记，并调用 Claude Code 生成知识图谱
+ * 自动检测未生成节点的笔记，并调用 MiniMax-M2.5 生成知识图谱
  */
 
 import { getAll, runQuery, saveDatabase } from '../db/index.js';
-import { callClaudeCode, generateKnowledgeGraphPrompt } from './claude-code.js';
+import { generateGraphWithMiniMax, generateKnowledgeGraphPrompt } from './claude-code.js';
 import { v4 as uuidv4 } from 'uuid';
 
 // 配置
 const CONFIG = {
   CHECK_INTERVAL: 5 * 60 * 1000, // 每5分钟检查一次
-  BATCH_SIZE: 10, // 每次最多处理的笔记数量
-  MIN_NOTES_TO_GENERATE: 3, // 至少需要多少笔记才开始生成
+  BATCH_SIZE: 10,
+  MIN_NOTES_TO_GENERATE: 1, // 1条笔记即触发自动生成
   ENABLE_AUTO_GENERATE: process.env.ENABLE_AUTO_GRAPH !== 'false', // 默认启用
 };
 
@@ -112,9 +112,9 @@ async function generateFullGraphFromNotes(userId: string): Promise<{
       tags: getNoteTags(note.id)
     }));
 
-    // 调用 Claude Code 生成知识图谱
+    // 调用 MiniMax-M2.5 生成知识图谱
     const prompt = generateKnowledgeGraphPrompt(notesWithTags);
-    const result = await callClaudeCode(prompt, { timeout: 5 * 60 * 1000 });
+    const result = await generateGraphWithMiniMax(prompt);
 
     if (result.nodes.length === 0) {
       console.log(`[AutoGraph] Claude returned no nodes`);

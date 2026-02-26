@@ -121,6 +121,13 @@ export const FocusMode: React.FC<FocusModeProps> = ({ onExit }) => {
             }, 1000);
         } else if (timeLeft === 0) {
             setIsActive(false);
+            // Save completed session to API
+            const duration = 25 * 60;
+            fetch('/api/focus/sessions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ duration, task, type: 'pomodoro', completed: true }),
+            }).then(() => refreshFocusStats?.()).catch(() => {});
         }
         return () => clearInterval(interval);
     }, [isActive, timeLeft]);

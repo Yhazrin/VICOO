@@ -26,7 +26,12 @@ import { schema } from './graphql/schema.js';
 import { startAutoGraphService } from './services/auto-graph.js';
 import aiRouter from './routes/ai.js';
 import publishRouter from './routes/publish.js';
+import publishedRouter from './routes/published.js';
 import mcpRouter from './routes/mcp.js';
+import writerRouter from './routes/writer.js';
+import tasksRouter from './routes/tasks.js';
+import ragRouter from './routes/rag.js';
+import noteLinksRouter from './routes/note-links.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -55,15 +60,39 @@ async function start() {
       await seedDatabase();
     }
 
+    // Backfill timeline events & categories for existing notes
+    try {
+      const { getAll: gAll, runQuery: rQ, saveDatabase: sDB } = await import('./db/index.js');
+      const uuid = await import('uuid');
+      const existingNotes = gAll<any>('SELECT id, title, category, timestamp FROM notes WHERE user_id = ?', ['dev_user_1']);
+      let backfilled = 0;
+      for (const n of existingNotes) {
+        try {
+          rQ('INSERT INTO timeline_events (id, title, type, date, description, related_note_id) VALUES (?, ?, ?, ?, ?, ?)',
+            [uuid.v4(), `笔记: ${n.title}`, 'Idea', n.timestamp, `笔记「${n.title}」`, n.id]);
+          backfilled++;
+        } catch (_) {}
+        try {
+          rQ('INSERT OR IGNORE INTO categories (id, label, color) VALUES (?, ?, ?)',
+            [uuid.v4(), n.category, '#6B7280']);
+        } catch (_) {}
+      }
+      sDB();
+      if (backfilled > 0) console.log(`[Backfill] Created ${backfilled} timeline events from existing notes`);
+    } catch (e: any) { console.error('[Backfill] Error:', e.message); }
+
     // Initialize MCP servers
     initializeBuiltinMCPServers();
     if (process.env.AUTO_INIT_MCP === 'true') {
       initializeRecommendedMCPs();
     }
 
-    // Routes
+    // Public routes (no auth required)
     app.use('/health', healthRouter);
     app.use('/auth', authRouter);
+    app.use('/api/published', publishedRouter);
+
+    // Protected routes
     app.use('/api/notes', authMiddleware, notesRouter);
     app.use('/api/tags', authMiddleware, tagsRouter);
     app.use('/api/nodes', authMiddleware, graphRouter);
@@ -84,6 +113,10 @@ async function start() {
     app.use('/api/ai', authMiddleware, aiRouter);
     app.use('/api/publish', authMiddleware, publishRouter);
     app.use('/api/agent/mcp', mcpRouter);
+    app.use('/api/writer', authMiddleware, writerRouter);
+    app.use('/api/tasks', authMiddleware, tasksRouter);
+    app.use('/api/rag', authMiddleware, ragRouter);
+    app.use('/api/note-links', authMiddleware, noteLinksRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({

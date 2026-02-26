@@ -172,14 +172,35 @@ function initializeTables() {
     )
   `);
 
-  // Links table (for Galaxy View)
+  // Links table (for Galaxy View) — with semantic relationship fields
   db.run(`
     CREATE TABLE IF NOT EXISTS links (
       id TEXT PRIMARY KEY,
       source TEXT NOT NULL,
       target TEXT NOT NULL,
       type TEXT DEFAULT 'solid',
+      relation TEXT DEFAULT 'relates',
+      label TEXT DEFAULT '',
+      strength REAL DEFAULT 0.5,
       created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Migrate: add columns if they don't exist (safe for existing DBs)
+  try { db.run(`ALTER TABLE links ADD COLUMN relation TEXT DEFAULT 'relates'`); } catch (_) {}
+  try { db.run(`ALTER TABLE links ADD COLUMN label TEXT DEFAULT ''`); } catch (_) {}
+  try { db.run(`ALTER TABLE links ADD COLUMN strength REAL DEFAULT 0.5`); } catch (_) {}
+
+  // Note embeddings table for RAG vector search
+  db.run(`
+    CREATE TABLE IF NOT EXISTS note_embeddings (
+      id TEXT PRIMARY KEY,
+      note_id TEXT NOT NULL,
+      chunk_text TEXT NOT NULL,
+      embedding TEXT,
+      chunk_index INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
     )
   `);
 

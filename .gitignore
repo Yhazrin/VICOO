@@ -37,3 +37,4 @@ apps/api/dist
 
 # Windows special file
 nul
+*.pyc

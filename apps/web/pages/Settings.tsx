@@ -638,31 +638,46 @@ export const Settings: React.FC = () => {
           {activeTab === 'ai' && (
              <div className="space-y-6">
                 <NeoCard className="p-6">
-                   <h2 className="text-xl font-bold mb-4">{t('settings.model_config')}</h2>
+                   <h2 className="text-xl font-bold mb-4">MiniMax AI 配置</h2>
+                   <p className="text-sm text-gray-500 mb-4">当前所有 AI 功能（聊天、摘要、标签、图谱、写作）均由 MiniMax 驱动。</p>
                    <div className="space-y-4">
                       <div>
-                         <label className="block text-sm font-bold mb-2">{t('settings.default_model')}</label>
-                         <select className="w-full bg-white dark:bg-gray-800 border-2 border-ink dark:border-gray-500 rounded-lg px-3 py-3 font-bold shadow-neo-sm text-ink dark:text-white">
-                            <option>Gemini 1.5 Pro</option>
-                            <option>Gemini 1.5 Flash</option>
-                         </select>
+                         <label className="block text-sm font-bold mb-2">当前 Provider</label>
+                         <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border-2 border-green-400 rounded-xl">
+                            <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                            <span className="font-bold text-green-700 dark:text-green-400">MiniMax M2.5 / M2-her</span>
+                         </div>
                       </div>
                       <div>
-                         <label className="block text-sm font-bold mb-2">{t('settings.summary_style')}</label>
-                         <div className="grid grid-cols-3 gap-3">
-                            {[t('settings.style.concise'), t('settings.style.creative'), t('settings.style.technical')].map(s => (
-                               <button key={s} className={`border-2 border-ink dark:border-gray-500 rounded-lg py-2 font-bold ${s.includes('Concise') || s === '简洁' ? 'bg-primary shadow-neo-sm text-ink' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 text-gray-500'}`}>{s}</button>
-                            ))}
+                         <label className="block text-sm font-bold mb-2">模型分工</label>
+                         <div className="space-y-2 text-sm">
+                            <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                               <span className="font-bold">AI 聊天（LangChain Agent）</span>
+                               <span className="text-blue-600 font-bold">MiniMax-M2.5</span>
+                            </div>
+                            <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                               <span className="font-bold">摘要 / 标签 / 图谱</span>
+                               <span className="text-blue-600 font-bold">MiniMax-M2.5</span>
+                            </div>
+                            <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                               <span className="font-bold">日常对话</span>
+                               <span className="text-purple-600 font-bold">M2-her</span>
+                            </div>
                          </div>
+                      </div>
+                      <div>
+                         <label className="block text-sm font-bold mb-2">API Key 状态</label>
+                         <p className="text-xs text-gray-500">API Key 通过环境变量 <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">MINIMAX_API_KEY</code> 配置，请在服务端 .env 文件中设置。</p>
                       </div>
                    </div>
                 </NeoCard>
-                <NeoCard color="info" className="p-6">
-                   <h2 className="text-xl font-bold mb-2">{t('settings.usage')}</h2>
-                   <div className="w-full bg-white/30 h-4 rounded-full border-2 border-ink overflow-hidden mb-2">
-                      <div className="w-[45%] h-full bg-white"></div>
+                <NeoCard className="p-6">
+                   <h2 className="text-xl font-bold mb-4">{t('settings.summary_style')}</h2>
+                   <div className="grid grid-cols-3 gap-3">
+                      {[t('settings.style.concise'), t('settings.style.creative'), t('settings.style.technical')].map(s => (
+                         <button key={s} className={`border-2 border-ink dark:border-gray-500 rounded-lg py-2 font-bold ${s.includes('Concise') || s === '简洁' ? 'bg-primary shadow-neo-sm text-ink' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 text-gray-500'}`}>{s}</button>
+                      ))}
                    </div>
-                   <p className="text-xs font-bold text-white">45,200 / 100,000 {t('settings.tokens_used')}</p>
                 </NeoCard>
              </div>
           )}
