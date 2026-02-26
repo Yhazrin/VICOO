@@ -137,9 +137,9 @@ export const Habitat: React.FC = () => {
       {/* TOP ANALYTICS STRIP (Merged from Analytics.tsx) */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
          {[
-            { label: 'Total Notes', value: '1,248', icon: 'article', color: 'bg-primary' },
-            { label: 'Recall Rate', value: '84%', icon: 'psychology', color: 'bg-secondary' },
-            { label: 'Connections', value: '3,402', icon: 'hub', color: 'bg-accent' },
+            { label: 'Total Notes', value: String(notes?.length || 0), icon: 'article', color: 'bg-primary' },
+            { label: 'Graph Nodes', value: String(nodes?.length || 0), icon: 'hub', color: 'bg-secondary' },
+            { label: 'Health', value: nodes?.length > 0 ? `${Math.round(((nodes.length - orphans.length) / Math.max(nodes.length, 1)) * 100)}%` : '—', icon: 'psychology', color: 'bg-accent' },
             { label: 'Orphans', value: orphans.length.toString(), icon: 'link_off', color: 'bg-orange-300' },
          ].map((stat, i) => (
             <NeoCard key={i} className="p-4 flex items-center gap-4">

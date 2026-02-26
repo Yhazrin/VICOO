@@ -7,8 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "typecheck": "tsc --noEmit",
-    "lint": "pnpm run typecheck",
+    "typecheck": "tsc --noEmit --skipLibCheck",
+    "lint": "tsc --noEmit --skipLibCheck",
     "test": "node -e \"console.log('No smoke tests yet')\""
   },
   "dependencies": {

@@ -1,0 +1,17 @@
+/* Vicoo Neubrutalism — Settings */
+.container { padding: 16px; background: #f8f9fa; min-height: 100vh; }
+.header { margin-bottom: 16px; }
+.title-large { font-size: 28px; font-weight: 900; color: #1a1a1a; }
+
+.card { background: #fff; border: 3px solid #1a1a1a; border-radius: 16px; padding: 4px 0; margin-bottom: 12px; box-shadow: 4px 4px 0px 0px #1a1a1a; }
+.setting-row { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-bottom: 1px solid #f0f0f0; }
+.setting-row:last-child { border-bottom: none; }
+.setting-label { font-size: 15px; font-weight: 700; color: #1a1a1a; }
+.setting-value { font-size: 13px; font-weight: 700; color: #3b82f6; }
+.setting-arrow { font-size: 16px; color: #ccc; }
+
+.lang-group { display: flex; gap: 8px; }
+.lang-btn { padding: 6px 14px; border-radius: 8px; border: 2px solid #ddd; }
+.lang-btn text { font-size: 13px; font-weight: 700; color: #999; }
+.lang-active { border-color: #1a1a1a; background: #FFD166; }
+.lang-active text { color: #1a1a1a; }

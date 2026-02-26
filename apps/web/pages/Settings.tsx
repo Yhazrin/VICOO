@@ -636,50 +636,7 @@ export const Settings: React.FC = () => {
           )}
 
           {activeTab === 'ai' && (
-             <div className="space-y-6">
-                <NeoCard className="p-6">
-                   <h2 className="text-xl font-bold mb-4">MiniMax AI 配置</h2>
-                   <p className="text-sm text-gray-500 mb-4">当前所有 AI 功能（聊天、摘要、标签、图谱、写作）均由 MiniMax 驱动。</p>
-                   <div className="space-y-4">
-                      <div>
-                         <label className="block text-sm font-bold mb-2">当前 Provider</label>
-                         <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border-2 border-green-400 rounded-xl">
-                            <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
-                            <span className="font-bold text-green-700 dark:text-green-400">MiniMax M2.5 / M2-her</span>
-                         </div>
-                      </div>
-                      <div>
-                         <label className="block text-sm font-bold mb-2">模型分工</label>
-                         <div className="space-y-2 text-sm">
-                            <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                               <span className="font-bold">AI 聊天（LangChain Agent）</span>
-                               <span className="text-blue-600 font-bold">MiniMax-M2.5</span>
-                            </div>
-                            <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                               <span className="font-bold">摘要 / 标签 / 图谱</span>
-                               <span className="text-blue-600 font-bold">MiniMax-M2.5</span>
-                            </div>
-                            <div className="flex justify-between p-2 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                               <span className="font-bold">日常对话</span>
-                               <span className="text-purple-600 font-bold">M2-her</span>
-                            </div>
-                         </div>
-                      </div>
-                      <div>
-                         <label className="block text-sm font-bold mb-2">API Key 状态</label>
-                         <p className="text-xs text-gray-500">API Key 通过环境变量 <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">MINIMAX_API_KEY</code> 配置，请在服务端 .env 文件中设置。</p>
-                      </div>
-                   </div>
-                </NeoCard>
-                <NeoCard className="p-6">
-                   <h2 className="text-xl font-bold mb-4">{t('settings.summary_style')}</h2>
-                   <div className="grid grid-cols-3 gap-3">
-                      {[t('settings.style.concise'), t('settings.style.creative'), t('settings.style.technical')].map(s => (
-                         <button key={s} className={`border-2 border-ink dark:border-gray-500 rounded-lg py-2 font-bold ${s.includes('Concise') || s === '简洁' ? 'bg-primary shadow-neo-sm text-ink' : 'bg-white dark:bg-gray-800 hover:bg-gray-50 text-gray-500'}`}>{s}</button>
-                      ))}
-                   </div>
-                </NeoCard>
-             </div>
+             <AIProvidersTab />
           )}
 
           {activeTab === 'skills' && (
@@ -796,6 +753,90 @@ export const Settings: React.FC = () => {
         </div>
 
       </div>
+    </div>
+  );
+};
+
+// AI Providers Tab
+const AIProvidersTab: React.FC = () => {
+  const { token } = useApi();
+  const [providers, setProviders] = useState<any[]>([]);
+  const [active, setActive] = useState('');
+  const [testResult, setTestResult] = useState<string | null>(null);
+
+  useEffect(() => {
+    const h: Record<string, string> = {};
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    fetch('/api/ai/status', { headers: h })
+      .then(r => r.json())
+      .then(d => {
+        if (d.data) {
+          setProviders(d.data.providers || []);
+          setActive(d.data.activeProvider || '');
+        }
+      })
+      .catch(() => {});
+  }, [token]);
+
+  const testProvider = async (id: string) => {
+    setTestResult(null);
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    const res = await fetch('/api/ai/providers/test', { method: 'POST', headers: h, body: JSON.stringify({ provider: id }) });
+    const d = await res.json();
+    setTestResult(d.data?.success ? `✅ ${id}: ${d.data.content}` : `❌ ${id}: ${d.data?.error || '失败'}`);
+  };
+
+  return (
+    <div className="space-y-6">
+      <NeoCard className="p-6">
+        <h2 className="text-xl font-bold mb-2">AI Provider 管理</h2>
+        <p className="text-sm text-gray-500 mb-4">配置和切换不同的 AI 服务商。通过环境变量设置 API Key。</p>
+
+        {testResult && (
+          <div className={`mb-4 p-3 rounded-xl border-2 text-sm font-bold ${testResult.startsWith('✅') ? 'bg-green-50 border-green-400 text-green-700' : 'bg-red-50 border-red-400 text-red-700'}`}>
+            {testResult}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          {providers.map(p => (
+            <div key={p.id} className={`p-4 rounded-xl border-2 ${p.id === active ? 'border-blue-400 bg-blue-50 dark:bg-blue-900/20' : p.configured ? 'border-green-300 bg-green-50/50 dark:bg-green-900/10' : 'border-gray-200 dark:border-gray-700'}`}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">{p.icon}</span>
+                  <div>
+                    <p className="font-bold">{p.nameZh} <span className="text-xs text-gray-400">({p.name})</span></p>
+                    <p className="text-xs text-gray-500">默认模型: {p.defaultModel}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {p.configured ? (
+                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded-lg text-xs font-bold">已配置</span>
+                  ) : (
+                    <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded-lg text-xs font-bold">未配置</span>
+                  )}
+                  {p.id === active && <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-lg text-xs font-bold">当前使用</span>}
+                  {p.configured && (
+                    <button onClick={() => testProvider(p.id)}
+                      className="px-3 py-1 border-2 border-ink dark:border-gray-600 rounded-lg text-xs font-bold hover:bg-gray-100 dark:hover:bg-gray-700">
+                      测试
+                    </button>
+                  )}
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1">
+                {p.models.map((m: string) => (
+                  <span key={m} className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 rounded text-xs font-bold text-gray-600 dark:text-gray-400">{m}</span>
+                ))}
+              </div>
+              {!p.configured && (
+                <p className="mt-2 text-xs text-gray-400">设置环境变量 <code className="bg-gray-100 dark:bg-gray-800 px-1 rounded">{p.envKey}</code> 即可启用</p>
+              )}
+            </div>
+          ))}
+        </div>
+      </NeoCard>
     </div>
   );
 };

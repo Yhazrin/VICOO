@@ -52,16 +52,31 @@ export function getDb(): Database {
 function initializeTables() {
   if (!db) return;
 
-  // Users table
+  // Users table — full auth support
   db.run(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
+      username TEXT NOT NULL,
       email TEXT UNIQUE NOT NULL,
+      password_hash TEXT,
+      avatar_url TEXT,
+      bio TEXT DEFAULT '',
+      provider TEXT DEFAULT 'local',
+      provider_id TEXT,
+      role TEXT DEFAULT 'user',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `);
+
+  // Migrate existing users table
+  try { db.run(`ALTER TABLE users ADD COLUMN username TEXT DEFAULT ''`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN password_hash TEXT`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN avatar_url TEXT`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN bio TEXT DEFAULT ''`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN provider TEXT DEFAULT 'local'`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN provider_id TEXT`); } catch (_) {}
+  try { db.run(`ALTER TABLE users ADD COLUMN role TEXT DEFAULT 'user'`); } catch (_) {}
 
   // Notes table
   db.run(`
@@ -190,6 +205,65 @@ function initializeTables() {
   try { db.run(`ALTER TABLE links ADD COLUMN relation TEXT DEFAULT 'relates'`); } catch (_) {}
   try { db.run(`ALTER TABLE links ADD COLUMN label TEXT DEFAULT ''`); } catch (_) {}
   try { db.run(`ALTER TABLE links ADD COLUMN strength REAL DEFAULT 0.5`); } catch (_) {}
+
+  // Subscriptions table
+  db.run(`
+    CREATE TABLE IF NOT EXISTS subscriptions (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL UNIQUE,
+      plan_id TEXT NOT NULL DEFAULT 'free',
+      status TEXT NOT NULL DEFAULT 'active',
+      payment_provider TEXT,
+      payment_id TEXT,
+      current_period_start TEXT,
+      current_period_end TEXT,
+      cancel_at_period_end INTEGER DEFAULT 0,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Usage tracking table (daily counters)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS usage_tracking (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      date TEXT NOT NULL,
+      feature TEXT NOT NULL,
+      count INTEGER DEFAULT 0,
+      UNIQUE(user_id, date, feature)
+    )
+  `);
+
+  // Payment history
+  db.run(`
+    CREATE TABLE IF NOT EXISTS payments (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      amount INTEGER NOT NULL,
+      currency TEXT DEFAULT 'CNY',
+      provider TEXT NOT NULL,
+      provider_payment_id TEXT,
+      plan_id TEXT NOT NULL,
+      billing_period TEXT,
+      status TEXT DEFAULT 'pending',
+      metadata TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Note revisions (version history)
+  db.run(`
+    CREATE TABLE IF NOT EXISTS note_revisions (
+      id TEXT PRIMARY KEY,
+      note_id TEXT NOT NULL,
+      title TEXT,
+      content TEXT,
+      created_by TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE
+    )
+  `);
 
   // Note embeddings table for RAG vector search
   db.run(`

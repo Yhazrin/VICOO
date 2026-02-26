@@ -1,0 +1,27 @@
+/* Vicoo Neubrutalism — Profile */
+.container { padding: 16px; background: #f8f9fa; min-height: 100vh; }
+.header { margin-bottom: 16px; }
+.title-large { font-size: 28px; font-weight: 900; color: #1a1a1a; }
+
+.card { background: #fff; border: 3px solid #1a1a1a; border-radius: 16px; padding: 16px; margin-bottom: 12px; box-shadow: 4px 4px 0px 0px #1a1a1a; }
+.user-card { display: flex; flex-direction: column; align-items: center; padding: 24px 16px; }
+.avatar { width: 64px; height: 64px; border-radius: 32px; background: #FFD166; border: 3px solid #1a1a1a; display: flex; align-items: center; justify-content: center; margin-bottom: 8px; }
+.avatar-text { font-size: 28px; font-weight: 900; color: #1a1a1a; }
+.user-name { font-size: 22px; font-weight: 900; color: #1a1a1a; }
+.user-email { font-size: 13px; color: #999; margin-top: 2px; }
+.badge { margin-top: 8px; padding: 4px 12px; border-radius: 12px; }
+.badge-green { background: #e8f5e9; }
+.badge-text { font-size: 12px; font-weight: 700; color: #2e7d32; }
+
+.menu-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid #f0f0f0; }
+.menu-item:last-child { border-bottom: none; }
+.menu-icon { font-size: 18px; margin-right: 12px; }
+.menu-label { flex: 1; font-size: 15px; font-weight: 700; color: #1a1a1a; }
+.menu-arrow { font-size: 16px; color: #ccc; }
+
+.info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+.info-row:last-child { border-bottom: none; }
+.info-label { font-size: 13px; font-weight: 700; color: #999; }
+.info-value { font-size: 13px; font-weight: 700; color: #1a1a1a; }
+
+.version { text-align: center; margin-top: 24px; color: #ccc; font-size: 12px; }

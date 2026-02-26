@@ -169,6 +169,18 @@ router.get('/orphans', (req, res) => {
   }
 });
 
+// GET /api/graph/status — must be before /:id
+router.get('/status', async (req, res) => {
+  const available = !!process.env.MINIMAX_API_KEY;
+  res.json({
+    data: {
+      available,
+      provider: 'minimax/m2.5',
+      message: available ? 'MiniMax AI 可用' : 'MiniMax API Key 未配置'
+    }
+  });
+});
+
 // GET /api/nodes/:id - Get a specific node
 router.get('/:id', (req, res) => {
   try {
@@ -547,18 +559,6 @@ router.post('/generate-from-notes', async (req, res) => {
       error: { code: 'GENERATION_ERROR', message: error.message || '生成知识图谱失败' }
     });
   }
-});
-
-// GET /api/graph/status - 检查 MiniMax AI 是否可用
-router.get('/status', async (req, res) => {
-  const available = !!process.env.MINIMAX_API_KEY;
-  res.json({
-    data: {
-      available,
-      provider: 'minimax/m2.5',
-      message: available ? 'MiniMax AI 可用' : 'MiniMax API Key 未配置'
-    }
-  });
 });
 
 export default router;

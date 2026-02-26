@@ -11,11 +11,12 @@
 import { Router, Request, Response } from 'express';
 import { runWritingAgent, WritingAction } from '../services/ai-writer.js';
 import { createWritingChain, writingActions, writingStyles } from '../services/langchain/index.js';
+import { planGuard } from '../middleware/plan-guard.js';
 
 const router = Router();
 
 // POST /api/writer/rewrite - Rewrite in different styles
-router.post('/rewrite', async (req: Request, res: Response) => {
+router.post('/rewrite', planGuard('aiWriterPerDay'), async (req: Request, res: Response) => {
   const { content, style = 'improve', tone } = req.body;
 
   if (!content) {
@@ -48,7 +49,7 @@ router.post('/rewrite', async (req: Request, res: Response) => {
 });
 
 // POST /api/writer/outline - Generate outline
-router.post('/outline', async (req: Request, res: Response) => {
+router.post('/outline', planGuard('aiWriterPerDay'), async (req: Request, res: Response) => {
   const { content } = req.body;
 
   if (!content) {
@@ -71,7 +72,7 @@ router.post('/outline', async (req: Request, res: Response) => {
 });
 
 // POST /api/writer/expand - Expand content
-router.post('/expand', async (req: Request, res: Response) => {
+router.post('/expand', planGuard('aiWriterPerDay'), async (req: Request, res: Response) => {
   const { content } = req.body;
 
   if (!content) {
@@ -94,7 +95,7 @@ router.post('/expand', async (req: Request, res: Response) => {
 });
 
 // POST /api/writer/translate - Translate content
-router.post('/translate', async (req: Request, res: Response) => {
+router.post('/translate', planGuard('aiWriterPerDay'), async (req: Request, res: Response) => {
   const { content, language = 'English' } = req.body;
 
   if (!content) {
@@ -117,7 +118,7 @@ router.post('/translate', async (req: Request, res: Response) => {
 });
 
 // POST /api/writer/summarize - Summarize content
-router.post('/summarize', async (req: Request, res: Response) => {
+router.post('/summarize', planGuard('aiWriterPerDay'), async (req: Request, res: Response) => {
   const { content } = req.body;
 
   if (!content) {
@@ -140,7 +141,7 @@ router.post('/summarize', async (req: Request, res: Response) => {
 });
 
 // POST /api/writer/improve - 使用 MiniMax M2.5 改进内容
-router.post('/improve', async (req: Request, res: Response) => {
+router.post('/improve', planGuard('aiWriterPerDay'), async (req: Request, res: Response) => {
   const { content, action = 'improve' } = req.body;
 
   if (!content) {
