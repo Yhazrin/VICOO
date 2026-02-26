@@ -6,14 +6,16 @@
     "pages/editor/editor",
     "pages/search/search",
     "pages/projects/projects",
-    "pages/ai/ai"
+    "pages/ai/ai",
+    "pages/profile/profile",
+    "pages/settings/settings"
   ],
   "window": {
     "backgroundTextStyle": "light",
     "navigationBarBackgroundColor": "#FFD166",
     "navigationBarTitleText": "Vicoo",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f9fafb"
+    "backgroundColor": "#f8f9fa"
   },
   "tabBar": {
     "color": "#9CA3AF",
@@ -23,19 +25,23 @@
     "list": [
       {
         "pagePath": "pages/index/index",
-        "text": "Home"
+        "text": "首页"
       },
       {
         "pagePath": "pages/inbox/inbox",
-        "text": "Inbox"
+        "text": "收件箱"
+      },
+      {
+        "pagePath": "pages/ai/ai",
+        "text": "AI"
       },
       {
         "pagePath": "pages/library/library",
-        "text": "Library"
+        "text": "知识库"
       },
       {
-        "pagePath": "pages/search/search",
-        "text": "Search"
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
       }
     ]
   },
