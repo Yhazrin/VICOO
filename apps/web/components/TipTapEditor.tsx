@@ -59,7 +59,7 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
       handleDrop: (view, event, _slice, moved) => {
         if (!moved && event.dataTransfer?.files?.length) {
           const file = event.dataTransfer.files[0];
-          if (file.type.startsWith('image/')) {
+          if (file.type.startsWith('image/') || file.type.startsWith('video/')) {
             event.preventDefault();
             uploadAndInsertImage(file);
             return true;
@@ -96,14 +96,27 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
 
   const uploadAndInsertImage = useCallback(async (file: File) => {
     if (!editor) return;
-    // Convert to base64 for now (in production: upload to server)
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        editor.chain().focus().setImage({ src: reader.result }).run();
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const token = localStorage.getItem('vicoo_token');
+      const h: Record<string, string> = {};
+      if (token) h['Authorization'] = `Bearer ${token}`;
+      const res = await fetch('/api/upload', { method: 'POST', headers: h, body: fd });
+      const data = await res.json();
+      if (data.data?.url) {
+        if (data.data.type === 'video') {
+          editor.chain().focus().insertContent(`<p><video src="${data.data.url}" controls style="max-width:100%;border-radius:0.75rem"></video></p>`).run();
+        } else {
+          editor.chain().focus().setImage({ src: data.data.url }).run();
+        }
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (err) {
+      // Fallback to base64
+      const reader = new FileReader();
+      reader.onload = () => { if (typeof reader.result === 'string') editor.chain().focus().setImage({ src: reader.result }).run(); };
+      reader.readAsDataURL(file);
+    }
   }, [editor]);
 
   if (!editor) return null;

@@ -34,6 +34,7 @@ import ragRouter from './routes/rag.js';
 import noteLinksRouter from './routes/note-links.js';
 import subscriptionRouter from './routes/subscription.js';
 import adminRouter from './routes/admin.js';
+import uploadRouter from './routes/upload.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -127,6 +128,7 @@ async function start() {
     app.use('/api/note-links', authMiddleware, noteLinksRouter);
     app.use('/api/subscription', authMiddleware, subscriptionRouter);
     app.use('/api/admin', authMiddleware, adminRouter);
+    app.use('/api/upload', authMiddleware, uploadRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({
