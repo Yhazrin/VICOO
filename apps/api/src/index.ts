@@ -99,7 +99,7 @@ async function start() {
 
     // Public routes (no auth required)
     app.use('/health', healthRouter);
-    app.use('/auth', authRateLimiter, authRouter);
+    app.use('/auth', authRouter); // rate limiting applied per-route inside auth.ts
     app.use('/api/published', publishedRouter);
 
     // Protected routes

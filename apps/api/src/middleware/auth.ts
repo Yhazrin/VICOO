@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { runQuery, getOne, saveDatabase } from '../db/index.js';
+import { authRateLimiter } from './security.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -72,7 +73,7 @@ const avatarUpload = multer({ storage: avatarStorage, limits: { fileSize: 5 * 10
 const authRouter = Router();
 
 // POST /auth/register
-authRouter.post('/register', async (req: Request, res: Response) => {
+authRouter.post('/register', authRateLimiter, async (req: Request, res: Response) => {
   try {
     const { username, email, password } = req.body;
     if (!username || !email || !password) {
@@ -108,7 +109,7 @@ authRouter.post('/register', async (req: Request, res: Response) => {
 });
 
 // POST /auth/login
-authRouter.post('/login', async (req: Request, res: Response) => {
+authRouter.post('/login', authRateLimiter, async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) {

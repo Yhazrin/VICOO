@@ -4,7 +4,7 @@
  */
 
 import React, { useEffect, useCallback } from 'react';
-import { useEditor, EditorContent, BubbleMenu } from '@tiptap/react';
+import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Image from '@tiptap/extension-image';
@@ -192,29 +192,6 @@ export const TipTapEditor: React.FC<TipTapEditorProps> = ({
           </>
         )}
       </div>
-
-      {/* Bubble menu (appears on text selection) */}
-      {editor && (
-        <BubbleMenu editor={editor} tippyOptions={{ duration: 150 }}
-          className="bg-ink dark:bg-white text-white dark:text-ink rounded-xl shadow-lg px-2 py-1 flex gap-1">
-          <button onClick={() => editor.chain().focus().toggleBold().run()}
-            className={`px-2 py-1 rounded text-xs font-bold ${editor.isActive('bold') ? 'bg-white/20' : 'hover:bg-white/10'}`}>B</button>
-          <button onClick={() => editor.chain().focus().toggleItalic().run()}
-            className={`px-2 py-1 rounded text-xs font-bold italic ${editor.isActive('italic') ? 'bg-white/20' : 'hover:bg-white/10'}`}>I</button>
-          <button onClick={() => editor.chain().focus().toggleHighlight().run()}
-            className={`px-2 py-1 rounded text-xs font-bold ${editor.isActive('highlight') ? 'bg-white/20' : 'hover:bg-white/10'}`}>H</button>
-          <button onClick={() => {
-            const url = window.prompt('链接:');
-            if (url) editor.chain().focus().setLink({ href: url }).run();
-          }} className="px-2 py-1 rounded text-xs font-bold hover:bg-white/10">🔗</button>
-          {onAIAction && (
-            <button onClick={() => {
-              const sel = editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to);
-              if (sel) onAIAction('improve', sel);
-            }} className="px-2 py-1 rounded text-xs font-bold hover:bg-white/10">✨AI</button>
-          )}
-        </BubbleMenu>
-      )}
 
       {/* Editor content */}
       <div className="border-2 border-ink/10 dark:border-gray-700 rounded-xl p-4 bg-white dark:bg-gray-900 min-h-[400px]">
