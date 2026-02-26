@@ -7,7 +7,7 @@ export default function FocusModeScreen() {
   const [duration] = useState(25 * 60); // 25 min
   const [timeLeft, setTimeLeft] = useState(25 * 60);
   const [isActive, setIsActive] = useState(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (isActive && timeLeft > 0) {

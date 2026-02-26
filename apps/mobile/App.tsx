@@ -42,8 +42,8 @@ function TabNavigator() {
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: { borderTopWidth: 3, borderTopColor: '#1a1a1a', backgroundColor: '#ffffff', paddingBottom: 4, height: 60 },
         tabBarLabelStyle: { fontWeight: '700', fontSize: 11 },
-        headerStyle: { backgroundColor: '#FFD166', borderBottomWidth: 3, borderBottomColor: '#1a1a1a', elevation: 0, shadowOpacity: 0 },
-        headerTitleStyle: { fontWeight: '900', fontSize: 18, color: '#1a1a1a' },
+        headerStyle: { backgroundColor: '#FFD166', borderBottomWidth: 3, borderBottomColor: '#1a1a1a', elevation: 0, shadowOpacity: 0 } as any,
+        headerTitleStyle: { fontWeight: '900', fontSize: 18, color: '#1a1a1a' } as any,
       })}
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: '首页' }} />
@@ -61,8 +61,8 @@ export default function App() {
       <StatusBar style="dark" />
       <Stack.Navigator
         screenOptions={{
-          headerStyle: { backgroundColor: '#FFD166', borderBottomWidth: 3, borderBottomColor: '#1a1a1a', elevation: 0, shadowOpacity: 0 },
-          headerTitleStyle: { fontWeight: '900', color: '#1a1a1a', fontSize: 18 },
+          headerStyle: { backgroundColor: '#FFD166', borderBottomWidth: 3, borderBottomColor: '#1a1a1a', elevation: 0, shadowOpacity: 0 } as any,
+          headerTitleStyle: { fontWeight: '900', color: '#1a1a1a', fontSize: 18 } as any,
           headerTintColor: '#1a1a1a',
         }}
       >
