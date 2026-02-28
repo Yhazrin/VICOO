@@ -8,7 +8,7 @@ import { Mascot } from '../components/Mascot';
 import { VicooIcon } from '../components/VicooIcon';
 import { cozeService, type CozeConfig } from '../utils/coze';
 
-type Tab = 'general' | 'integration' | 'ai' | 'music' | 'coze' | 'skills' | 'mcp';
+type Tab = 'general' | 'integration' | 'ai' | 'music' | 'coze' | 'notion' | 'skills' | 'mcp';
 
 interface CozeMessage {
   role: 'user' | 'assistant';
@@ -176,6 +176,7 @@ export const Settings: React.FC = () => {
             { id: 'music', label: 'Music', icon: 'music_note' },
             { id: 'integration', label: t('settings.tab.integration'), icon: 'terminal' },
             { id: 'ai', label: t('settings.tab.ai'), icon: 'psychology' },
+            { id: 'notion', label: 'Notion', icon: 'integration_instructions' },
             { id: 'coze', label: 'Coze AI', icon: 'smart_toy' },
             { id: 'skills', label: 'Skills', icon: 'construction' },
             { id: 'mcp', label: 'MCP', icon: 'extension' },
@@ -647,6 +648,10 @@ export const Settings: React.FC = () => {
             <MCPTab />
           )}
 
+          {activeTab === 'notion' && (
+            <NotionTab />
+          )}
+
           {activeTab === 'coze' && (
              <div className="space-y-6">
                 {/* Coze 配置 */}
@@ -836,6 +841,129 @@ const AIProvidersTab: React.FC = () => {
             </div>
           ))}
         </div>
+      </NeoCard>
+    </div>
+  );
+};
+
+// Notion Tab Component
+const NotionTab: React.FC = () => {
+  const { token } = useApi();
+  const [status, setStatus] = useState<{ connected: boolean; configured: boolean } | null>(null);
+  const [pages, setPages] = useState<any[]>([]);
+  const [manualToken, setManualToken] = useState('');
+  const [syncing, setSyncing] = useState(false);
+  const [msg, setMsg] = useState('');
+
+  const headers = (): Record<string, string> => {
+    const h: Record<string, string> = { 'Content-Type': 'application/json' };
+    if (token) h['Authorization'] = `Bearer ${token}`;
+    return h;
+  };
+
+  useEffect(() => {
+    fetch('/api/notion/status', { headers: headers() }).then(r => r.json()).then(d => setStatus(d.data)).catch(() => {});
+  }, [token]);
+
+  useEffect(() => {
+    if (status?.connected) {
+      fetch('/api/notion/pages?limit=10', { headers: headers() }).then(r => r.json()).then(d => setPages(d.data || [])).catch(() => {});
+    }
+  }, [status]);
+
+  const connectOAuth = () => { window.location.href = '/api/notion/auth'; };
+
+  const connectManual = async () => {
+    if (!manualToken.trim()) return;
+    await fetch('/api/notion/connect', { method: 'POST', headers: headers(), body: JSON.stringify({ token: manualToken }) });
+    setManualToken('');
+    setStatus({ connected: true, configured: true });
+    setMsg('✅ Notion 已连接');
+  };
+
+  const disconnect = async () => {
+    await fetch('/api/notion/disconnect', { method: 'POST', headers: headers() });
+    setStatus({ connected: false, configured: status?.configured || false });
+    setPages([]);
+    setMsg('已断开 Notion');
+  };
+
+  const syncPageToVicoo = async (pageId: string) => {
+    setSyncing(true);
+    try {
+      const res = await fetch('/api/notion/sync/from', { method: 'POST', headers: headers(), body: JSON.stringify({ notionPageId: pageId }) });
+      const d = await res.json();
+      setMsg(d.data ? `✅ 已导入: ${d.data.title}` : `❌ ${d.error?.message}`);
+    } catch { setMsg('❌ 导入失败'); }
+    setSyncing(false);
+  };
+
+  return (
+    <div className="space-y-6">
+      <NeoCard className="p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">📓</span>
+          <div>
+            <h2 className="text-xl font-bold">Notion 集成</h2>
+            <p className="text-sm text-gray-500">同步笔记到 Notion，浏览和导入 Notion 页面</p>
+          </div>
+        </div>
+
+        {msg && <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-300 rounded-xl text-sm font-bold">{msg}</div>}
+
+        {status?.connected ? (
+          <div>
+            <div className="flex items-center gap-3 p-3 bg-green-50 dark:bg-green-900/20 border-2 border-green-400 rounded-xl mb-4">
+              <span className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
+              <span className="font-bold text-green-700 dark:text-green-400">已连接 Notion</span>
+              <button onClick={disconnect} className="ml-auto text-xs text-red-500 font-bold hover:underline">断开</button>
+            </div>
+
+            <h3 className="font-bold mb-3">最近页面</h3>
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {pages.map(p => (
+                <div key={p.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span>{p.icon || '📄'}</span>
+                    <span className="font-bold text-sm truncate">{p.title}</span>
+                  </div>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <a href={p.url} target="_blank" rel="noopener" className="text-xs font-bold text-blue-600 hover:underline">打开</a>
+                    <button onClick={() => syncPageToVicoo(p.id)} disabled={syncing}
+                      className="text-xs font-bold text-green-600 hover:underline">{syncing ? '...' : '导入'}</button>
+                  </div>
+                </div>
+              ))}
+              {pages.length === 0 && <p className="text-sm text-gray-400 text-center py-4">没有找到页面</p>}
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {status?.configured ? (
+              <button onClick={connectOAuth}
+                className="w-full py-3 bg-ink text-white font-bold rounded-xl border-2 border-ink hover:bg-gray-800 transition-colors">
+                🔗 通过 Notion OAuth 授权连接
+              </button>
+            ) : (
+              <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 rounded-xl text-sm">
+                <p className="font-bold text-amber-700">OAuth 未配置</p>
+                <p className="text-amber-600 text-xs mt-1">设置 NOTION_CLIENT_ID 和 NOTION_CLIENT_SECRET 环境变量启用 OAuth 登录</p>
+              </div>
+            )}
+
+            <div>
+              <p className="text-sm font-bold mb-2">或使用 Internal Integration Token:</p>
+              <div className="flex gap-2">
+                <input type="password" value={manualToken} onChange={e => setManualToken(e.target.value)}
+                  placeholder="secret_xxxxx..."
+                  className="flex-1 border-2 border-ink dark:border-gray-600 rounded-xl px-3 py-2 text-sm font-bold bg-light dark:bg-gray-800 focus:border-primary focus:outline-none" />
+                <button onClick={connectManual}
+                  className="px-4 py-2 bg-primary border-2 border-ink rounded-xl font-bold text-sm">连接</button>
+              </div>
+              <p className="text-xs text-gray-400 mt-2">在 <a href="https://www.notion.so/my-integrations" target="_blank" className="text-blue-500 underline">notion.so/my-integrations</a> 创建内部集成获取 Token</p>
+            </div>
+          </div>
+        )}
       </NeoCard>
     </div>
   );
