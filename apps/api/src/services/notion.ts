@@ -44,7 +44,7 @@ export function clearNotionToken(userId: string) {
 function getClient(userId: string): Client | null {
   const token = getNotionToken(userId);
   if (!token) return null;
-  return new Client({ auth: token });
+  return new Client({ auth: token, notionVersion: '2025-09-03' });
 }
 
 // --- Search ---
@@ -61,7 +61,7 @@ export async function searchNotion(userId: string, query: string, limit = 10): P
 
   return res.results.map((page: any) => ({
     id: page.id,
-    type: page.object, // 'page' or 'database'
+    type: page.object, // 'page' or 'data_source' (v2025-09-03)
     title: extractTitle(page),
     url: page.url,
     lastEdited: page.last_edited_time,
@@ -110,26 +110,29 @@ export async function listNotionPages(userId: string, limit = 20): Promise<any[]
     url: page.url,
     lastEdited: page.last_edited_time,
     icon: page.icon?.emoji || null,
+    parent: page.parent,
   }));
 }
 
 // --- Create page ---
 
-export async function createNotionPage(userId: string, title: string, content: string, parentPageId?: string): Promise<any> {
+export async function createNotionPage(userId: string, title: string, content: string, parentId?: string, parentType?: 'page' | 'data_source'): Promise<any> {
   const client = getClient(userId);
   if (!client) throw new Error('Notion 未连接');
 
   const children = markdownToBlocks(content);
 
-  // If no parent specified, create in the first available page
+  // Determine parent (v2025-09-03: data_source_id for database pages)
   let parent: any;
-  if (parentPageId) {
-    parent = { page_id: parentPageId };
+  if (parentId && parentType === 'data_source') {
+    parent = { type: 'data_source_id', data_source_id: parentId };
+  } else if (parentId) {
+    parent = { type: 'page_id', page_id: parentId };
   } else {
-    // Search for a root page to use as parent
+    // Find first available page as parent
     const pages = await client.search({ filter: { property: 'object', value: 'page' }, page_size: 1 });
     if (pages.results.length > 0) {
-      parent = { page_id: (pages.results[0] as any).id };
+      parent = { type: 'page_id', page_id: (pages.results[0] as any).id };
     } else {
       throw new Error('Notion 中没有可用的父级页面，请先在 Notion 中创建一个页面');
     }
@@ -141,7 +144,7 @@ export async function createNotionPage(userId: string, title: string, content: s
       title: { title: [{ text: { content: title } }] },
     },
     children,
-  });
+  } as any);
 
   return {
     id: (page as any).id,

@@ -144,9 +144,9 @@ router.get('/pages/:id', async (req: Request, res: Response) => {
 router.post('/pages', async (req: Request, res: Response) => {
   try {
     const userId = (req as any).userId;
-    const { title, content, parentPageId } = req.body;
+    const { title, content, parentId, parentType } = req.body;
     if (!title) return res.status(400).json({ error: { code: 'VALIDATION', message: 'title 必填' } });
-    const page = await createNotionPage(userId, title, content || '', parentPageId);
+    const page = await createNotionPage(userId, title, content || '', parentId, parentType);
     res.json({ data: page });
   } catch (err: any) {
     res.status(500).json({ error: { code: 'NOTION_ERROR', message: err.message } });
@@ -173,6 +173,36 @@ router.get('/search', async (req: Request, res: Response) => {
     const limit = Number(req.query.limit) || 10;
     const results = await searchNotion(userId, query, limit);
     res.json({ data: results });
+  } catch (err: any) {
+    res.status(500).json({ error: { code: 'NOTION_ERROR', message: err.message } });
+  }
+});
+
+// GET /api/notion/databases — list databases with data_source_ids (v2025-09-03)
+router.get('/databases', async (req: Request, res: Response) => {
+  try {
+    const userId = (req as any).userId;
+    const token = getNotionToken(userId);
+    if (!token) throw new Error('Notion 未连接');
+
+    const { Client } = await import('@notionhq/client');
+    const client = new Client({ auth: token, notionVersion: '2025-09-03' });
+
+    const searchRes = await client.search({
+      filter: { property: 'object', value: 'data_source' as any },
+      page_size: Number(req.query.limit) || 20,
+    });
+
+    res.json({
+      data: searchRes.results.map((ds: any) => ({
+        id: ds.id,
+        object: ds.object,
+        title: ds.title?.map((t: any) => t.plain_text).join('') || ds.name || 'Untitled',
+        parent: ds.parent,
+        properties: ds.properties ? Object.keys(ds.properties) : [],
+        lastEdited: ds.last_edited_time,
+      }))
+    });
   } catch (err: any) {
     res.status(500).json({ error: { code: 'NOTION_ERROR', message: err.message } });
   }
