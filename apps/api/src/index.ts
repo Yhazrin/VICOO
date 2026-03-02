@@ -36,6 +36,7 @@ import subscriptionRouter from './routes/subscription.js';
 import adminRouter from './routes/admin.js';
 import uploadRouter from './routes/upload.js';
 import importRouter from './routes/import.js';
+import notionRouter from './routes/notion.js';
 
 const app = express();
 const PORT = process.env.PORT || 8000;
@@ -131,6 +132,7 @@ async function start() {
     app.use('/api/admin', authMiddleware, adminRouter);
     app.use('/api/upload', authMiddleware, uploadRouter);
     app.use('/api/import', authMiddleware, importRouter);
+    app.use('/api/notion', authMiddleware, notionRouter);
 
     // GraphQL endpoint
     app.use('/graphql', graphqlHTTP({

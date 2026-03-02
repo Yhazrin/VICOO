@@ -324,9 +324,11 @@ function initializeTables() {
     CREATE TABLE IF NOT EXISTS settings (
       key TEXT PRIMARY KEY,
       value TEXT,
+      user_id TEXT,
       updated_at TEXT DEFAULT (datetime('now'))
     )
   `);
+  try { db.run(`ALTER TABLE settings ADD COLUMN user_id TEXT`); } catch (_) {}
 
   // Music/Playlist table for Focus Mode
   db.run(`
