@@ -80,7 +80,12 @@
       "Bash(pnpm --filter vicoo-web exec tsc:*)",
       "Bash(pnpm exec node:*)",
       "Bash(pnpm exec tsx -e \"\nimport { initDatabase, runQuery, getAll } from ''./src/db/index.js'';\n\nawait initDatabase\\(\\);\n\n// 先删除测试 MCP\nrunQuery\\(\"\"DELETE FROM mcp_servers WHERE type = ''mcp''\"\", []\\);\n\n// 添加推荐的 MCP 服务器\nconst mcps = [\n  { id: ''mcp_filesystem'', name: ''文件系统'', desc: ''读取、写入和管理本地文件'', cmd: ''npx'', args: ''[\"\"-y\"\", \"\"@modelcontextprotocol/server-filesystem\"\", \"\"./\"\"]'' },\n  { id: ''mcp_github'', name: ''GitHub'', desc: ''GitHub API 操作'', cmd: ''npx'', args: ''[\"\"-y\"\", \"\"@modelcontextprotocol/server-github\"\"]'' },\n  { id: ''mcp_brave'', name: ''Brave 搜索'', desc: ''使用 Brave 搜索引擎进行网络搜索'', cmd: ''npx'', args: ''[\"\"-y\"\", \"\"@modelcontextprotocol/server-brave-search\"\"]'' },\n  { id: ''mcp_postgres'', name: ''PostgreSQL'', desc: ''连接和查询 PostgreSQL 数据库'', cmd: ''npx'', args: ''[\"\"-y\"\", \"\"@modelcontextprotocol/server-postgres\"\"]'' },\n  { id: ''mcp_time'', name: ''时间工具'', desc: ''获取当前时间、时区转换等'', cmd: ''npx'', args: ''[\"\"-y\"\", \"\"@modelcontextprotocol/server-time\"\"]'' },\n  { id: ''mcp_memory'', name: ''内存存储'', desc: ''键值存储，用于跨会话保存数据'', cmd: ''npx'', args: ''[\"\"-y\"\", \"\"@modelcontextprotocol/server-memory\"\"]'' }\n];\n\nfor \\(const mcp of mcps\\) {\n  runQuery\\(\"\"INSERT OR IGNORE INTO mcp_servers \\(id, user_id, name, type, description, icon, command, args, env, url, config, enabled, created_at, updated_at\\) VALUES \\(?, ?, ?, ''mcp'', ?, ''📁'', ?, ?, ''{}'', null, ''{}'', 0, datetime\\(''now''\\), datetime\\(''now''\\)\\)\"\", \n    [mcp.id, ''dev_user_1'', mcp.name, mcp.desc, mcp.cmd, mcp.args]\\);\n  console.log\\(''Added:'', mcp.name\\);\n}\n\nconsole.log\\(''Done!''\\);\n\")",
-      "Bash(ping:*)"
+      "Bash(ping:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(gh repo view:*)",
+      "Bash(echo:*)",
+      "Bash(npx playwright install chromium)",
+      "Bash(npm search:*)"
     ]
   }
 }

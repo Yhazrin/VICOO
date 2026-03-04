@@ -54,10 +54,12 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
     createLink,
     deleteLink,
     generateGraphFromNotes,
+    cleanupGraph,
     loading
   } = useApi();
 
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
 
   // 将 API 数据转换为 React Flow 格式
   const initialNodes: Node[] = useMemo(() => 
@@ -237,6 +239,24 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
     }
   }, [generateGraphFromNotes]);
 
+  // 清理重复节点
+  const handleCleanupGraph = useCallback(async () => {
+    if (!confirm('确定要清理重复的节点吗？这将保留每个标签的第一个节点，删除其余重复节点。')) {
+      return;
+    }
+
+    setIsCleaningUp(true);
+    try {
+      const result = await cleanupGraph();
+      alert(`清理完成！\n发现重复组: ${result.duplicatesFound}\n删除节点: ${result.nodesDeleted}\n删除关联: ${result.linksDeleted}`);
+    } catch (err) {
+      console.error('Failed to cleanup graph:', err);
+      alert('清理失败，请重试');
+    } finally {
+      setIsCleaningUp(false);
+    }
+  }, [cleanupGraph]);
+
   // 处理删除边
   const onEdgeClick = useCallback(async (_: React.MouseEvent, edge: Edge) => {
     if (edge.id) {
@@ -280,35 +300,34 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
           type: 'smoothstep',
           style: { stroke: 'var(--edge-color, #6B7280)', strokeWidth: 2, opacity: 0.35 },
         }}
-        className="[--edge-color:#6B7280] dark:[--edge-color:#9CA3AF]"
+        className="[--edge-color:#6B7280] dark:[--edge-color:#9CA3AF] bg-[#f0f4f8] dark:bg-[#0a0a0a]"
         proOptions={{ hideAttribution: true }}
-        className="bg-[#f0f4f8] dark:bg-[#0a0a0a]"
       >
         {/* 网格背景 */}
-        <Background 
-          variant={BackgroundVariant.Dots} 
-          gap={40} 
+        <Background
+          variant={BackgroundVariant.Dots}
+          gap={40}
           size={1}
           color="#1a1a1a"
           className="opacity-10 dark:opacity-5"
         />
 
         {/* 缩放控制 */}
-        <Controls 
-          className="!bg-white dark:!bg-gray-800 !border-3 !border-ink dark:!border-gray-500 !rounded-lg !shadow-neo-sm"
+        <Controls
+          className="!bg-white dark:!bg-gray-800 !border-3 !border-ink dark:!border-gray-500 !rounded-neo !shadow-neo-sm"
           showInteractive={false}
         />
 
         {/* 小地图 */}
-        <MiniMap 
-          className="!bg-white dark:!bg-gray-800 !border-3 !border-ink dark:!border-gray-500 !rounded-lg !shadow-neo-sm"
+        <MiniMap
+          className="!bg-white dark:!bg-gray-800 !border-3 !border-ink dark:!border-gray-500 !rounded-neo !shadow-neo-sm"
           nodeColor={(node) => node.data?.color || '#FFD166'}
           maskColor="rgba(240, 244, 248, 0.8)"
         />
 
         {/* 搜索面板 */}
         <Panel position="top-left" className="!left-4 !top-4">
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur border-3 border-ink dark:border-gray-500 shadow-neo-sm rounded-xl p-2 flex items-center gap-2 max-w-md w-full">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur border-3 border-ink dark:border-gray-500 shadow-neo-sm rounded-neo p-2 flex items-center gap-2 max-w-md w-full animate-fade-in">
             <VicooIcon name="search" size={20} className="text-gray-400 ml-2" />
             <input
               type="text"
@@ -319,12 +338,12 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
             />
           </div>
           {searchQuery && filteredNodes.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-xl shadow-neo-lg overflow-hidden z-50">
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-neo shadow-neo-lg overflow-hidden z-50 animate-scale-in">
               {filteredNodes.slice(0, 5).map(node => (
                 <button
                   key={node.id}
                   onClick={() => handleFocusNode(node.id)}
-                  className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-2 text-ink dark:text-white"
+                  className="w-full text-left px-4 py-3 hover:bg-gray-100 dark:hover:bg-gray-700 font-bold border-b border-gray-100 dark:border-gray-700 last:border-0 flex items-center gap-2 text-ink dark:text-white transition-colors"
                 >
                   <VicooIcon name={node.data.icon} size={14} />
                   {node.data.label}
@@ -336,25 +355,41 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
 
         {/* 从笔记生成图谱按钮 */}
         <Panel position="top-left" className="!left-4 !top-20">
-          <button
-            onClick={handleGenerateFromNotes}
-            disabled={isGenerating}
-            className={`
-              bg-white/90 dark:bg-gray-900/90 backdrop-blur border-3 border-ink dark:border-gray-500
-              shadow-neo-sm rounded-xl px-4 py-2 flex items-center gap-2 font-bold text-sm
-              hover:shadow-neo-md transition-all
-              ${isGenerating ? 'opacity-50 cursor-wait' : 'cursor-pointer hover:scale-105'}
-              text-ink dark:text-white
-            `}
-          >
-            <VicooIcon name={isGenerating ? 'hourglass_empty' : 'auto_awesome'} size={14} />
-            {isGenerating ? '生成中...' : '从笔记生成'}
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleGenerateFromNotes}
+              disabled={isGenerating}
+              className={`
+                bg-white/95 dark:bg-gray-900/95 backdrop-blur border-3 border-ink dark:border-gray-500
+                shadow-neo-sm rounded-neo px-4 py-2 flex items-center gap-2 font-bold text-sm
+                hover:shadow-neo transition-all hover:-translate-y-0.5
+                ${isGenerating ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
+                text-ink dark:text-white
+              `}
+            >
+              <VicooIcon name={isGenerating ? 'hourglass_empty' : 'auto_awesome'} size={14} />
+              {isGenerating ? '生成中...' : '从笔记生成'}
+            </button>
+            <button
+              onClick={handleCleanupGraph}
+              disabled={isCleaningUp}
+              className={`
+                bg-white/95 dark:bg-gray-900/95 backdrop-blur border-3 border-ink dark:border-gray-500
+                shadow-neo-sm rounded-neo px-4 py-2 flex items-center gap-2 font-bold text-sm
+                hover:shadow-neo transition-all hover:-translate-y-0.5
+                ${isCleaningUp ? 'opacity-50 cursor-wait' : 'cursor-pointer'}
+                text-ink dark:text-white
+              `}
+            >
+              <VicooIcon name={isCleaningUp ? 'hourglass_empty' : 'cleaning_services'} size={14} />
+              {isCleaningUp ? '清理中...' : '清理重复'}
+            </button>
+          </div>
         </Panel>
 
         {/* 帮助提示 */}
         <Panel position="bottom-left" className="!left-4 !bottom-4">
-          <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur border-3 border-ink dark:border-gray-500 rounded-xl px-4 py-3 shadow-neo-sm">
+          <div className="bg-white/95 dark:bg-gray-900/95 backdrop-blur border-3 border-ink dark:border-gray-500 rounded-neo px-4 py-3 shadow-neo-sm animate-fade-in">
             <div className="flex items-center gap-4 text-xs font-bold text-gray-600 dark:text-gray-300">
               <span className="flex items-center gap-1">
                 <span className="w-4 h-4 border-2 border-gray-400 rounded flex items-center justify-center bg-gray-100 dark:bg-gray-800">↔</span> 
@@ -374,24 +409,24 @@ const GalaxyViewContent: React.FC<GalaxyViewProps> = ({ onOpenNote }) => {
       </ReactFlow>
 
       {/* 节点详情面板 */}
-      <div 
+      <div
         className={`
-          absolute top-4 bottom-4 right-4 w-96 bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-2xl shadow-neo-lg z-50 
-          transform transition-transform duration-300 flex flex-col overflow-hidden
-          ${selectedNodeId ? 'translate-x-0' : 'translate-x-[120%]'}
+          absolute top-4 bottom-4 right-4 w-96 bg-white dark:bg-gray-800 border-3 border-ink dark:border-gray-500 rounded-neo-lg shadow-neo-lg z-50
+          transform transition-all duration-300 ease-out flex flex-col overflow-hidden
+          ${selectedNodeId ? 'translate-x-0 animate-scale-in' : 'translate-x-[120%]'}
         `}
       >
         {selectedNode && (
           <>
             <div className={`p-6 ${selectedNode.color} border-b-3 border-ink dark:border-gray-600 relative`}>
-              <button 
+              <button
                 onClick={() => setSelectedNodeId(null)}
-                className="absolute top-4 right-4 w-8 h-8 bg-white/50 border-2 border-ink dark:border-gray-600 rounded-lg flex items-center justify-center hover:bg-white/80 shadow-neo-sm"
+                className="absolute top-4 right-4 w-8 h-8 bg-white/70 border-2 border-ink dark:border-gray-600 rounded-neo-sm flex items-center justify-center hover:bg-white/90 shadow-neo-sm transition-all hover:scale-105 active:scale-95"
               >
                 <VicooIcon name="close" size={14} className="text-ink" />
               </button>
-              <div className="w-12 h-12 bg-white border-2 border-ink dark:border-gray-600 rounded-xl flex items-center justify-center shadow-neo-sm mb-3">
-                <VicooIcon name={selectedNode.icon} size={24} className="text-ink" />
+              <div className="w-14 h-14 bg-white border-3 border-ink dark:border-gray-600 rounded-neo flex items-center justify-center shadow-neo-sm mb-3">
+                <VicooIcon name={selectedNode.icon} size={28} className="text-ink" />
               </div>
               <h2 className="text-2xl font-bold font-display text-ink">{selectedNode.label}</h2>
               <p className="text-xs font-bold opacity-70 uppercase tracking-wider mt-1 text-ink">

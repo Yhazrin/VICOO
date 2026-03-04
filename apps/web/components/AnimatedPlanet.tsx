@@ -96,7 +96,7 @@ export const AnimatedPlanet: React.FC<AnimatedPlanetProps> = ({
           </g>
 
           {/* Planet body */}
-          <circle cx="50" cy="50" r="28" fill={`url(#pg-${uid})`} stroke="#1a1a1a" strokeWidth="2.5" />
+          <circle cx="50" cy="50" r="28" fill={`url(#pg-${uid})`} stroke="var(--planet-stroke, #1a1a1a)" strokeWidth="3" />
 
           {/* Surface detail band - slow self-rotation */}
           <g opacity="0.12">
@@ -138,7 +138,7 @@ export const AnimatedPlanet: React.FC<AnimatedPlanetProps> = ({
               from="0 50 50" to="360 50 50"
               dur="8s" repeatCount="indefinite"
             />
-            <circle cx="50" cy="6" r="4" fill="#fff" stroke="#1a1a1a" strokeWidth="1.5" opacity="0.8">
+            <circle cx="50" cy="6" r="4" fill="#fff" stroke="var(--planet-stroke, #1a1a1a)" strokeWidth="2" opacity="0.9">
               <animate attributeName="opacity" values="0.8;0.4;0.8" dur="8s" repeatCount="indefinite" />
             </circle>
           </g>
@@ -150,10 +150,10 @@ export const AnimatedPlanet: React.FC<AnimatedPlanetProps> = ({
         <VicooIcon name={icon} size={size * 0.26} className="text-ink drop-shadow-sm" />
       </div>
 
-      {/* Label */}
+      {/* Label - Neo-Brutalism 风格标签 */}
       {label && (
-        <div className="absolute -bottom-8 bg-white border-2 border-ink px-3 py-1 rounded-xl shadow-neo-sm transform transition-transform group-hover:scale-110">
-          <span className="font-bold text-sm whitespace-nowrap">{label}</span>
+        <div className="absolute -bottom-10 bg-white border-3 border-ink px-4 py-1.5 rounded-neo shadow-neo-sm transform transition-all duration-200 group-hover:scale-110 group-hover:-translate-y-1 group-hover:shadow-neo">
+          <span className="font-bold text-sm whitespace-nowrap text-ink">{label}</span>
         </div>
       )}
     </div>

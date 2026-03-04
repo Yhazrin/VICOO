@@ -114,6 +114,12 @@ function createClient(config: SdkConfig) {
         { method: 'POST' }
       );
     },
+    cleanupGraph() {
+      return request<{ data: { success: boolean; duplicatesFound: number; nodesDeleted: number; linksDeleted: number } }>(
+        '/api/graph/cleanup',
+        { method: 'POST' }
+      );
+    },
     searchNotes(query: string) {
       return request<{ data: unknown[] }>(`/api/search/notes?q=${encodeURIComponent(query)}`);
     },

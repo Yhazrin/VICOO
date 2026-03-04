@@ -323,6 +323,13 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return res.data;
   }, [refreshGraph]);
 
+  // 清理重复节点
+  const cleanupGraph = useCallback(async () => {
+    const res = await vicoo.cleanupGraph();
+    await refreshGraph();
+    return res.data;
+  }, [refreshGraph]);
+
   // ==================== Search ====================
 
   const searchNotes = useCallback(async (query: string): Promise<SearchResult[]> => {
@@ -544,6 +551,7 @@ export const ApiProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         createLink,
         deleteLink,
         generateGraphFromNotes,
+        cleanupGraph,
         searchNotes,
         semanticSearch,
         generateAISummary,

@@ -11,8 +11,8 @@ import { v4 as uuidv4 } from 'uuid';
 const CONFIG = {
   CHECK_INTERVAL: 5 * 60 * 1000, // 每5分钟检查一次
   BATCH_SIZE: 10,
-  MIN_NOTES_TO_GENERATE: 1, // 1条笔记即触发自动生成
-  ENABLE_AUTO_GENERATE: process.env.ENABLE_AUTO_GRAPH !== 'false', // 默认启用
+  MIN_NOTES_TO_GENERATE: 999, // 默认禁用自动生成，需要手动触发
+  ENABLE_AUTO_GENERATE: process.env.ENABLE_AUTO_GRAPH === 'true', // 默认禁用
 };
 
 let isRunning = false;
@@ -86,7 +86,7 @@ async function generateNodeForNote(
 /**
  * 从所有笔记生成完整的知识图谱（包含关联）
  */
-async function generateFullGraphFromNotes(userId: string): Promise<{
+async function generateFullGraphFromNotes(userId: string, clearExisting: boolean = true): Promise<{
   success: boolean;
   nodesCreated: number;
   linksCreated: number;
@@ -121,15 +121,28 @@ async function generateFullGraphFromNotes(userId: string): Promise<{
       return { success: true, nodesCreated: 0, linksCreated: 0 };
     }
 
-    // 清除现有节点和关联（可选）
-    // runQuery('DELETE FROM links');
-    // runQuery('DELETE FROM nodes');
+    // 清除现有节点和关联（根据参数决定）
+    if (clearExisting) {
+      runQuery('DELETE FROM links');
+      runQuery('DELETE FROM nodes');
+      console.log('[AutoGraph] Cleared existing nodes and links');
+    }
+
+    // 获取已存在的节点标签，避免重复创建
+    const existingNodes = getAll<{ label: string }>('SELECT label FROM nodes');
+    const existingLabels = new Set(existingNodes.map(n => n.label.toLowerCase()));
 
     // 存储节点
     const nodeIdMap = new Map<string, string>();
     let nodesCreated = 0;
 
     for (const node of result.nodes) {
+      // 检查节点是否已存在
+      if (existingLabels.has(node.label.toLowerCase())) {
+        console.log(`[AutoGraph] Node already exists: ${node.label}, skipping...`);
+        continue;
+      }
+
       const id = uuidv4();
       const x = Math.random() * 800 - 400;
       const y = Math.random() * 600 - 300;
@@ -147,6 +160,7 @@ async function generateFullGraphFromNotes(userId: string): Promise<{
       );
 
       nodeIdMap.set(node.label, id);
+      existingLabels.add(node.label.toLowerCase()); // 添加到已存在集合
       nodesCreated++;
     }
 
@@ -179,8 +193,13 @@ async function generateFullGraphFromNotes(userId: string): Promise<{
 
 /**
  * 检查并自动生成知识图谱
+ * 注意：此函数现在主要被手动触发调用，自动运行已禁用
  */
 async function checkAndGenerateGraph(): Promise<void> {
+  if (!CONFIG.ENABLE_AUTO_GENERATE) {
+    return; // 自动生成已禁用
+  }
+
   if (isRunning) {
     console.log('[AutoGraph] Previous run still in progress, skipping...');
     return;
@@ -204,12 +223,12 @@ async function checkAndGenerateGraph(): Promise<void> {
     } else if (unlinkedNotes.length > 0) {
       // 笔记不够，但有未关联的，先单独创建节点
       console.log(`[AutoGraph] ${unlinkedNotes.length} unlinked notes, creating individual nodes...`);
-      
+
       for (const note of unlinkedNotes) {
         const tags = getNoteTags(note.id);
         await generateNodeForNote(note, tags);
       }
-      
+
       saveDatabase();
       console.log(`[AutoGraph] Created ${unlinkedNotes.length} individual nodes`);
     }
@@ -223,19 +242,18 @@ async function checkAndGenerateGraph(): Promise<void> {
 
 /**
  * 启动后台任务
+ * 注意：现在默认禁用自动生成，只在手动触发时运行
  */
 export function startAutoGraphService(): void {
   if (!CONFIG.ENABLE_AUTO_GENERATE) {
-    console.log('[AutoGraph] Auto graph generation is disabled');
+    console.log('[AutoGraph] Auto graph generation is disabled by default');
+    console.log('[AutoGraph] Set ENABLE_AUTO_GRAPH=true to enable auto generation');
     return;
   }
 
   console.log(`[AutoGraph] Starting auto graph service (interval: ${CONFIG.CHECK_INTERVAL / 1000}s)...`);
-  
-  // 立即执行一次
-  setTimeout(checkAndGenerateGraph, 5000);
 
-  // 设置定期检查
+  // 启用时才定期执行
   intervalId = setInterval(checkAndGenerateGraph, CONFIG.CHECK_INTERVAL);
 }
 
@@ -252,8 +270,9 @@ export function stopAutoGraphService(): void {
 
 /**
  * 手动触发一次生成（用于调试或手动刷新）
+ * @param clearExisting 是否清除现有节点，默认为 true
  */
-export async function triggerGraphGeneration(): Promise<{
+export async function triggerGraphGeneration(clearExisting: boolean = true): Promise<{
   success: boolean;
   nodesCreated: number;
   linksCreated: number;
@@ -261,17 +280,17 @@ export async function triggerGraphGeneration(): Promise<{
 }> {
   const userId = 'dev_user_1';
   const unlinkedNotes = getUnlinkedNotes(userId);
-  
+
   if (unlinkedNotes.length < CONFIG.MIN_NOTES_TO_GENERATE) {
-    return { 
-      success: false, 
-      nodesCreated: 0, 
-      linksCreated: 0, 
-      error: `笔记数量不足 (${unlinkedNotes.length}/${CONFIG.MIN_NOTES_TO_GENERATE})` 
+    return {
+      success: false,
+      nodesCreated: 0,
+      linksCreated: 0,
+      error: `笔记数量不足 (${unlinkedNotes.length}/${CONFIG.MIN_NOTES_TO_GENERATE})`
     };
   }
 
-  return generateFullGraphFromNotes(userId);
+  return generateFullGraphFromNotes(userId, clearExisting);
 }
 
 export default {

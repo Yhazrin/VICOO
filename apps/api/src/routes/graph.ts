@@ -561,4 +561,57 @@ router.post('/generate-from-notes', async (req, res) => {
   }
 });
 
+// POST /api/graph/cleanup - 清理重复节点
+router.post('/cleanup', (req, res) => {
+  try {
+    // 查找重复的节点（相同的 label）
+    const duplicates = getAll<any>(`
+      SELECT label, COUNT(*) as count, GROUP_CONCAT(id) as ids
+      FROM nodes
+      GROUP BY LOWER(label)
+      HAVING count > 1
+    `);
+
+    let nodesDeleted = 0;
+    let linksDeleted = 0;
+
+    for (const dup of duplicates) {
+      const ids = dup.ids.split(',');
+      // 保留第一个，删除其余的
+      const toKeep = ids[0];
+      const toDelete = ids.slice(1);
+
+      // 删除关联的 links
+      for (const id of toDelete) {
+        runQuery('DELETE FROM links WHERE source = ? OR target = ?', [id, id]);
+        linksDeleted++;
+      }
+
+      // 删除重复的节点
+      for (const id of toDelete) {
+        runQuery('DELETE FROM nodes WHERE id = ?', [id]);
+        nodesDeleted++;
+      }
+
+      console.log(`[Graph Cleanup] Removed ${toDelete.length} duplicate nodes for label: ${dup.label}`);
+    }
+
+    saveDatabase();
+
+    res.json({
+      data: {
+        success: true,
+        duplicatesFound: duplicates.length,
+        nodesDeleted,
+        linksDeleted
+      }
+    });
+  } catch (error: any) {
+    console.error('[Graph Cleanup] Error:', error);
+    res.status(500).json({
+      error: { code: 'CLEANUP_ERROR', message: error.message || '清理重复节点失败' }
+    });
+  }
+});
+
 export default router;
