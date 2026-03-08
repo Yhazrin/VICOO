@@ -60,8 +60,8 @@ export class CRDT<T extends { id: string }> {
   }
 
   // 更新或插入项
-  update timestamp: number = Date.now()): SyncItem<T> {
-    const existing(item: T, = this.items.get(item.id);
+  update(item: T, timestamp: number = Date.now()): SyncItem<T> {
+    const existing = this.items.get(item.id);
     
     // LWW 策略：如果新版本的时间戳更晚，则更新
     if (!existing || timestamp >= existing.timestamp) {
